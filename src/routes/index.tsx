@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OnboardingLayout from '../layouts/OnboardingLayout';
 import MainLayout from '../layouts/MainLayout';
+import PrivateRoute from '../components/PrivateRoute';
 import SplashPage from './SplashPage';
 import LoginPage from './onboarding/LoginPage';
 import GradeSelectionPage from './onboarding/GradeSelectionPage';
@@ -38,7 +39,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/main',
-    element: <MainLayout />,
+    element: <PrivateRoute><MainLayout /></PrivateRoute>,
     children: [
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
