@@ -4,6 +4,7 @@ export interface User {
   email: string | null;
   provider: string | null;
   name: string | null;
+  nickname: string | null;
   grade: number | null;
   isTested: boolean;
 }

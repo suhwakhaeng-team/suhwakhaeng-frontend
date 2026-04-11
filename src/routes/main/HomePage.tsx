@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const displayName = user?.nickname || user?.name || '';
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2>님, 오늘도 학습해볼까요?</h2>
+          <h2>{displayName}님, 오늘도 학습해볼까요?</h2>
           <p style={{ color: '#888' }}>고3 · 확률과 통계</p>
         </div>
         <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

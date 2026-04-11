@@ -1,7 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function MyPagePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const displayName = user?.nickname || user?.name || '닉네임';
+  const gradeLabel = user?.grade ? `고${user.grade}` : '';
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto' }}>
@@ -12,8 +16,8 @@ export default function MyPagePage() {
           👤
         </div>
         <div>
-          <p style={{ fontWeight: 'bold', fontSize: '18px' }}>닉네임</p>
-          <p style={{ color: '#888' }}>고3</p>
+          <p style={{ fontWeight: 'bold', fontSize: '18px' }}>{displayName}</p>
+          <p style={{ color: '#888' }}>{gradeLabel}</p>
         </div>
       </div>
 
