@@ -37,6 +37,10 @@ export const tokenStorage = {
     localStorage.setItem(KEYS.USER, JSON.stringify(user));
   },
 
+  saveUser(user: User) {
+    localStorage.setItem(KEYS.USER, JSON.stringify(user));
+  },
+
   clear() {
     localStorage.removeItem(KEYS.ACCESS_TOKEN);
     localStorage.removeItem(KEYS.REFRESH_TOKEN);

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import type { User } from '../types/auth';
 import { tokenStorage } from '../lib/tokenStorage';
 import { loginWithGoogle } from '../lib/googleAuth';
-import { apiClient } from '../lib/apiClient';
+import { apiClient, resetAuthState } from '../lib/apiClient';
 
 interface AuthContextValue {
   user: User | null;
@@ -10,6 +10,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (credential: string) => {
+    resetAuthState();
     const result = await loginWithGoogle(credential);
     setUser(result.user);
   }, []);
@@ -48,8 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/onboarding/login';
   }, []);
 
+  // 닉네임 등 부분 필드 갱신용. user가 null이면 아무 일도 하지 않는다.
+  const updateUser = useCallback((partial: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...partial };
+      tokenStorage.saveUser(next);
+      return next;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
