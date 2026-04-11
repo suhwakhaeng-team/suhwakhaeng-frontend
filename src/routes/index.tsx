@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OnboardingLayout from '../layouts/OnboardingLayout';
+import { OnboardingProvider } from '../contexts/OnboardingContext';
 import MainLayout from '../layouts/MainLayout';
 import PrivateRoute from '../components/PrivateRoute';
 import SplashPage from './SplashPage';
@@ -24,7 +25,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/onboarding',
-    element: <OnboardingLayout />,
+    element: (
+      <OnboardingProvider>
+        <OnboardingLayout />
+      </OnboardingProvider>
+    ),
     children: [
       { index: true, element: <Navigate to="login" replace /> },
       { path: 'login', element: <LoginPage /> },

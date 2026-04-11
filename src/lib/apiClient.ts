@@ -7,6 +7,11 @@ if (!BASE_URL) throw new Error('VITE_API_BASE_URL 환경변수가 설정되지 �
 let refreshPromise: Promise<boolean> | null = null;
 let refreshFailed = false;
 
+export function resetAuthState() {
+  refreshFailed = false;
+  refreshPromise = null;
+}
+
 async function refreshTokens(): Promise<boolean> {
   const uid = tokenStorage.getUid();
   const refreshToken = tokenStorage.getRefreshToken();
@@ -95,6 +100,9 @@ export const apiClient = {
   },
   put<T>(path: string, body?: unknown) {
     return request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined });
+  },
+  patch<T>(path: string, body?: unknown) {
+    return request<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
   },
   delete<T>(path: string) {
     return request<T>(path, { method: 'DELETE' });
