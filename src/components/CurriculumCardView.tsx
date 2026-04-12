@@ -20,8 +20,8 @@ export default function CurriculumCardView({ card }: Props) {
   return (
     <div
       style={{
-        width: 320,
-        minWidth: 320,
+        flex: '0 1 calc(50% - 6px)',
+        minWidth: 260,
         background: colors.white,
         borderRadius: radius.lg,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
