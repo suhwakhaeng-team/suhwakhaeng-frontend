@@ -24,6 +24,7 @@ export const colors = {
   brand700: '#1D4ED8',
 
   red500: '#EF4444',
+  yellow500: '#EAB308',
   green500: '#22C55E',
 } as const;
 
