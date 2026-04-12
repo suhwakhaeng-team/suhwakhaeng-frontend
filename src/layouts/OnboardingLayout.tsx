@@ -14,13 +14,14 @@ const stepNames: Record<string, string> = {
 export default function OnboardingLayout() {
   const location = useLocation();
   const currentStep = location.pathname.split('/').pop() || '';
+  const isResultPage = currentStep === 'result';
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' }}>
       <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
         온보딩 &gt; {stepNames[currentStep] || currentStep}
       </div>
-      <div style={{ width: '100%', maxWidth: '480px', flex: 1 }}>
+      <div style={{ width: '100%', maxWidth: isResultPage ? 960 : 480, flex: 1 }}>
         <Outlet />
       </div>
     </div>
