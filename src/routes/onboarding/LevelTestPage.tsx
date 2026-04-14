@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import type {
   LearningProblem,
@@ -21,6 +22,7 @@ function normalize(s: string): string {
 export default function LevelTestPage() {
   const navigate = useNavigate();
   const { setLevelTestResult } = useOnboarding();
+  const { markOnboardingCompleted } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [problems, setProblems] = useState<LearningProblem[]>([]);
@@ -99,6 +101,10 @@ export default function LevelTestPage() {
     }
 
     setLevelTestResult(response.data);
+    // 서버에 온보딩 완료(isTested=true)를 기록한다.
+    // 이 호출이 실패하면 재로그인/재시작 시 다시 온보딩으로 빠지므로
+    // 그때 재시도하게 두고, 여기서는 학습 진행을 막지 않는다.
+    void markOnboardingCompleted().catch(() => {});
     navigate('/onboarding/result');
   };
 

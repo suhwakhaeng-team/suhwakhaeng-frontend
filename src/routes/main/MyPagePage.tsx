@@ -1,11 +1,25 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function MyPagePage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const displayName = user?.nickname || user?.name || '닉네임';
   const gradeLabel = user?.grade ? `고${user.grade}` : '';
+
+  const handleItemClick = async (item: string) => {
+    if (item === '로그아웃') {
+      await logout();
+      return;
+    }
+    if (item === '회원 탈퇴') {
+      const confirmed = window.confirm(
+        '정말 탈퇴하시겠어요?\n모든 학습 기록이 삭제되며 복구할 수 없습니다.',
+      );
+      if (!confirmed) return;
+      await deleteAccount();
+      return;
+    }
+    // 고객센터 / 이용약관: 추후 구현
+  };
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto' }}>
@@ -25,9 +39,7 @@ export default function MyPagePage() {
         {['고객센터', '이용약관', '로그아웃', '회원 탈퇴'].map((item) => (
           <button
             key={item}
-            onClick={() => {
-              if (item === '로그아웃') navigate('/onboarding/login');
-            }}
+            onClick={() => { void handleItemClick(item); }}
             style={{ padding: '16px', background: '#fff', border: 'none', borderBottom: '1px solid #eee', textAlign: 'left', fontSize: '16px', cursor: 'pointer', color: item === '회원 탈퇴' ? '#ef4444' : '#333' }}
           >
             {item}
