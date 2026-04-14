@@ -16,8 +16,13 @@ export default function LoginPage() {
 
     try {
       setError(null);
-      await login(credentialResponse.credential);
-      navigate('/onboarding/grade');
+      const loggedInUser = await login(credentialResponse.credential);
+      // 이미 레벨테스트까지 마친 사용자는 메인으로 직행, 아니면 온보딩 진행.
+      if (loggedInUser.isTested) {
+        navigate('/main/home');
+      } else {
+        navigate('/onboarding/grade');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '로그인에 실패했습니다.');
     }
