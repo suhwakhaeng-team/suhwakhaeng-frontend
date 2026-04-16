@@ -29,7 +29,7 @@ export default function HomePage() {
                 <p style={{ fontSize: '12px', color: '#aaa' }}>문제 5개</p>
                 {i === 0 && (
                   <button
-                    onClick={() => navigate('/main/problem/1')}
+                    onClick={() => navigate('/main/problem/start')}
                     style={{ marginTop: '8px', padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}
                   >
                     문제 풀기
