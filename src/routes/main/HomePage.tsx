@@ -1,60 +1,79 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors, spacing } from '../../lib/designTokens';
+import {
+  curriculumPlaceholder,
+  reviewPlaceholder,
+  type ReviewItem,
+} from '../../types/home';
+import HomeHeader from '../../components/home/HomeHeader';
+import CurriculumListSection from '../../components/home/CurriculumListSection';
+import ReviewListSection from '../../components/home/ReviewListSection';
+import ProgressGauge from '../../components/home/ProgressGauge';
+import DailyStatsCard from '../../components/home/DailyStatsCard';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const displayName = user?.nickname || user?.name || '';
+  const displayName = user?.nickname || user?.name || '학생';
+
+  // TODO: 추후 `GET /users/{uid}/curriculum`, `/review`, `/daily-stats`, `/streak`, `/progress` 연동
+  const curriculumItems = curriculumPlaceholder;
+  const activeCurriculumId = curriculumPlaceholder[0]?.id ?? null;
+  const reviewItems = reviewPlaceholder;
+  const progressPercent = 0.35;
+  const progressLabel = '성장 중';
+  const todaySolvedCount = 10;
+  const streakDays = 3;
+
+  const handleSolveClick = () => navigate('/main/problem/start');
+  const handleReviewSeeAll = () => {
+    // TODO: 복습 전체보기 화면 라우팅
+  };
+  const handleReviewItemClick = (_item: ReviewItem) => {
+    // TODO: 복습 상세 화면 라우팅
+  };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div>
-          <h2>{displayName}님, 오늘도 학습해볼까요?</h2>
-          <p style={{ color: '#888' }}>고3 · 확률과 통계</p>
-        </div>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          👤
-        </div>
-      </div>
+    <div
+      style={{
+        background: colors.gray100,
+        minHeight: '100%',
+        margin: `-${spacing.xl}px`,
+        padding: spacing.xl,
+      }}
+    >
+      <HomeHeader nickname={displayName} grade={user?.grade} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        {/* 커리큘럼 섹션 */}
-        <div>
-          <h3>커리큘럼</h3>
-          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {['경우의 수 > 여러 가지 순열', '경우의 수 > 중복조합', '확률 > 조건부확률'].map((topic, i) => (
-              <div key={i} style={{ padding: '16px', border: '1px solid #eee', borderRadius: '8px' }}>
-                <p style={{ fontSize: '14px', color: '#666' }}>{topic}</p>
-                <p style={{ fontSize: '12px', color: '#aaa' }}>문제 5개</p>
-                {i === 0 && (
-                  <button
-                    onClick={() => navigate('/main/problem/start')}
-                    style={{ marginTop: '8px', padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}
-                  >
-                    문제 풀기
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+          gap: spacing.lg,
+          alignItems: 'start',
+        }}
+      >
+        <CurriculumListSection
+          items={curriculumItems}
+          activeId={activeCurriculumId}
+          onSolveClick={handleSolveClick}
+        />
 
-        {/* 복습 + 진도 */}
-        <div>
-          <h3>복습하기</h3>
-          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {['원순열 → 여러 가지 순열', '중복조합 → 중복조합과 이항정리'].map((item, i) => (
-              <div key={i} style={{ padding: '12px', border: '1px solid #eee', borderRadius: '8px', fontSize: '14px' }}>
-                {item}
-              </div>
-            ))}
-          </div>
-
-          <h3 style={{ marginTop: '24px' }}>학습 진도</h3>
-          <div style={{ marginTop: '12px', padding: '24px', background: '#f9f9f9', borderRadius: '12px', textAlign: 'center', color: '#aaa' }}>
-            TODO: 진도 차트
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+          <ReviewListSection
+            items={reviewItems}
+            onSeeAllClick={handleReviewSeeAll}
+            onItemClick={handleReviewItemClick}
+          />
+          <ProgressGauge
+            nickname={displayName}
+            percent={progressPercent}
+            label={progressLabel}
+          />
+          <DailyStatsCard
+            todaySolvedCount={todaySolvedCount}
+            streakDays={streakDays}
+          />
         </div>
       </div>
     </div>
