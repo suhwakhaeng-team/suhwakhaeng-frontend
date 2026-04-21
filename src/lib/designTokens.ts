@@ -50,6 +50,12 @@ export const radius = {
 } as const;
 
 export const typography = {
+  displayXLBold: {
+    fontSize: 24,
+    fontWeight: 700,
+    lineHeight: 1.4,
+    letterSpacing: '-0.084px',
+  },
   headingXLBold: {
     fontSize: 20,
     fontWeight: 700,
@@ -62,11 +68,35 @@ export const typography = {
     lineHeight: 1.4,
     letterSpacing: '-0.07px',
   },
+  headingLgBold: {
+    fontSize: 18,
+    fontWeight: 700,
+    lineHeight: 1.4,
+    letterSpacing: '-0.063px',
+  },
+  headingLgSemiBold: {
+    fontSize: 18,
+    fontWeight: 600,
+    lineHeight: 1.4,
+    letterSpacing: '-0.063px',
+  },
   headingMdBold: {
     fontSize: 16,
     fontWeight: 700,
     lineHeight: 1.4,
     letterSpacing: '-0.056px',
+  },
+  headingMdSemiBold: {
+    fontSize: 16,
+    fontWeight: 600,
+    lineHeight: 1.4,
+    letterSpacing: '-0.056px',
+  },
+  headingSmBold: {
+    fontSize: 15,
+    fontWeight: 700,
+    lineHeight: 1.4,
+    letterSpacing: '-0.053px',
   },
   bodyTextXLSemiBold: {
     fontSize: 14,
@@ -80,9 +110,27 @@ export const typography = {
     lineHeight: 1.5,
     letterSpacing: '-0.049px',
   },
+  bodyTextLgMedium: {
+    fontSize: 13,
+    fontWeight: 500,
+    lineHeight: 1.5,
+    letterSpacing: '-0.046px',
+  },
+  bodyTextLgRegular: {
+    fontSize: 13,
+    fontWeight: 400,
+    lineHeight: 1.5,
+    letterSpacing: '-0.046px',
+  },
   captionSemiBold: {
     fontSize: 12,
     fontWeight: 600,
+    lineHeight: 1.5,
+    letterSpacing: '-0.042px',
+  },
+  captionMedium: {
+    fontSize: 12,
+    fontWeight: 500,
     lineHeight: 1.5,
     letterSpacing: '-0.042px',
   },
