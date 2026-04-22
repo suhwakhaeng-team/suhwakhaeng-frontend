@@ -1,11 +1,14 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { colors, spacing } from '../../lib/designTokens';
+import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import {
-  curriculumPlaceholder,
   reviewPlaceholder,
+  type CurriculumItem,
   type ReviewItem,
 } from '../../types/home';
+import { fetchCurriculum } from '../../lib/curriculumClient';
+import { tokenStorage } from '../../lib/tokenStorage';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
 import ReviewListSection from '../../components/home/ReviewListSection';
@@ -17,16 +20,64 @@ export default function HomePage() {
   const { user } = useAuth();
   const displayName = user?.nickname || user?.name || '학생';
 
-  // TODO: 추후 `GET /users/{uid}/curriculum`, `/review`, `/daily-stats`, `/streak`, `/progress` 연동
-  const curriculumItems = curriculumPlaceholder;
-  const activeCurriculumId = curriculumPlaceholder[0]?.id ?? null;
+  // 커리큘럼 (GET /users/{uid}/curriculum)
+  const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
+  const [activeCurriculumId, setActiveCurriculumId] = useState<string | null>(null);
+  const [isCurriculumLoading, setIsCurriculumLoading] = useState(false);
+  const [curriculumError, setCurriculumError] = useState<string | null>(null);
+
+  // 복습·진도·오늘통계는 BE 미구현 → placeholder 유지 (iOS 와 동일)
   const reviewItems = reviewPlaceholder;
   const progressPercent = 0.35;
   const progressLabel = '성장 중';
   const todaySolvedCount = 10;
   const streakDays = 3;
 
+  useEffect(() => {
+    const uid = tokenStorage.getUid();
+    if (!uid) return; // 미로그인 상황은 AppRouter 차원에서 이미 차단됨. 방어용.
+
+    let cancelled = false;
+    setIsCurriculumLoading(true);
+    setCurriculumError(null);
+
+    fetchCurriculum(uid)
+      .then((result) => {
+        if (cancelled) return;
+        setCurriculumItems(result.items);
+        setActiveCurriculumId(result.activeId);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : '커리큘럼을 불러오지 못했습니다.';
+        setCurriculumError(message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsCurriculumLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSolveClick = () => navigate('/main/problem/start');
+  const handleRetry = () => {
+    const uid = tokenStorage.getUid();
+    if (!uid) return;
+    setIsCurriculumLoading(true);
+    setCurriculumError(null);
+    fetchCurriculum(uid)
+      .then((result) => {
+        setCurriculumItems(result.items);
+        setActiveCurriculumId(result.activeId);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : '커리큘럼을 불러오지 못했습니다.';
+        setCurriculumError(message);
+      })
+      .finally(() => setIsCurriculumLoading(false));
+  };
   const handleReviewSeeAll = () => {
     // TODO: 복습 전체보기 화면 라우팅
   };
@@ -53,11 +104,14 @@ export default function HomePage() {
           alignItems: 'start',
         }}
       >
-        <CurriculumListSection
-          items={curriculumItems}
-          activeId={activeCurriculumId}
-          onSolveClick={handleSolveClick}
-        />
+        {renderCurriculumSection({
+          isLoading: isCurriculumLoading,
+          error: curriculumError,
+          items: curriculumItems,
+          activeId: activeCurriculumId,
+          onSolveClick: handleSolveClick,
+          onRetry: handleRetry,
+        })}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
           <ReviewListSection
@@ -77,5 +131,130 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// MARK: - Curriculum Section (로딩/에러/빈/정상 4분기)
+
+interface CurriculumSectionProps {
+  isLoading: boolean;
+  error: string | null;
+  items: CurriculumItem[];
+  activeId: string | null;
+  onSolveClick: () => void;
+  onRetry: () => void;
+}
+
+function renderCurriculumSection({
+  isLoading,
+  error,
+  items,
+  activeId,
+  onSolveClick,
+  onRetry,
+}: CurriculumSectionProps) {
+  if (isLoading) {
+    return <CurriculumPlaceholderCard message="커리큘럼을 불러오는 중입니다…" />;
+  }
+  if (error) {
+    return <CurriculumErrorCard message={error} onRetry={onRetry} />;
+  }
+  if (items.length === 0) {
+    return <CurriculumPlaceholderCard message="표시할 커리큘럼이 아직 없어요." />;
+  }
+  return (
+    <CurriculumListSection
+      items={items}
+      activeId={activeId}
+      onSolveClick={onSolveClick}
+    />
+  );
+}
+
+function CurriculumPlaceholderCard({ message }: { message: string }) {
+  return (
+    <section
+      style={{
+        padding: spacing.xl,
+        background: colors.white,
+        borderRadius: radius.lg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: spacing.lg,
+        minHeight: 200,
+      }}
+    >
+      <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
+        커리큘럼
+      </h3>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: colors.gray500,
+          ...typography.bodyTextLgMedium,
+        }}
+      >
+        {message}
+      </div>
+    </section>
+  );
+}
+
+function CurriculumErrorCard({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <section
+      style={{
+        padding: spacing.xl,
+        background: colors.white,
+        borderRadius: radius.lg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: spacing.lg,
+        minHeight: 200,
+      }}
+    >
+      <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
+        커리큘럼
+      </h3>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing.md,
+        }}
+      >
+        <p
+          style={{
+            ...typography.bodyTextLgMedium,
+            color: colors.gray700,
+            margin: 0,
+            textAlign: 'center',
+          }}
+        >
+          {message}
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          style={{
+            padding: `${spacing.sm}px ${spacing.lg}px`,
+            background: colors.brand500,
+            color: colors.white,
+            border: 'none',
+            borderRadius: radius.md,
+            cursor: 'pointer',
+            ...typography.bodyTextXLSemiBold,
+          }}
+        >
+          다시 시도
+        </button>
+      </div>
+    </section>
   );
 }
