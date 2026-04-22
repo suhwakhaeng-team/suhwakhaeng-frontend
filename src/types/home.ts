@@ -1,11 +1,14 @@
-// 홈 화면 placeholder 타입. 추후 BE API(`/users/{uid}/curriculum`, `/users/{uid}/review`)가
-// 구현되면 응답 스키마로 교체.
+// 홈 화면 타입. CurriculumItem 은 BE `GET /users/{uid}/curriculum` 응답과 매핑.
+// 변환은 `lib/curriculumClient.ts#fetchCurriculum` 에서 수행.
 
 export interface CurriculumItem {
-  id: number;
+  // BE topicId (String). 서버 스키마에 맞춰 string 으로 유지.
+  id: string;
   topicName: string;
   categoryPath: string;
   problemCount: number;
+  // 커리큘럼 생성 이유 (학생 친화적 문구). 현재 UI 미표시, 향후 카드 확장용.
+  reasoning: string;
 }
 
 export interface ReviewItem {
@@ -14,12 +17,13 @@ export interface ReviewItem {
   categoryName: string;
 }
 
+// BE /curriculum API 미호출 상황(개발/프리뷰)용 샘플. 런타임 기본값으로 쓰지 말 것.
 export const curriculumPlaceholder: CurriculumItem[] = [
-  { id: 1, topicName: '원순열',               categoryPath: '경우의 수 > 여러 가지 순열',         problemCount: 3 },
-  { id: 2, topicName: '중복순열',             categoryPath: '경우의 수 > 여러 가지 순열',         problemCount: 3 },
-  { id: 3, topicName: '같은 것이 있는 순열',  categoryPath: '경우의 수 > 여러 가지 순열',         problemCount: 3 },
-  { id: 4, topicName: '중복조합',             categoryPath: '경우의 수 > 중복조합과 이항정리',   problemCount: 3 },
-  { id: 5, topicName: '중복조합과 수의 활용', categoryPath: '경우의 수 > 중복조합과 이항정리',   problemCount: 3 },
+  { id: 'placeholder-1', topicName: '원순열',               categoryPath: '경우의 수 > 여러 가지 순열',       problemCount: 3, reasoning: '' },
+  { id: 'placeholder-2', topicName: '중복순열',             categoryPath: '경우의 수 > 여러 가지 순열',       problemCount: 3, reasoning: '' },
+  { id: 'placeholder-3', topicName: '같은 것이 있는 순열',  categoryPath: '경우의 수 > 여러 가지 순열',       problemCount: 3, reasoning: '' },
+  { id: 'placeholder-4', topicName: '중복조합',             categoryPath: '경우의 수 > 중복조합과 이항정리', problemCount: 3, reasoning: '' },
+  { id: 'placeholder-5', topicName: '중복조합과 수의 활용', categoryPath: '경우의 수 > 중복조합과 이항정리', problemCount: 3, reasoning: '' },
 ];
 
 export const reviewPlaceholder: ReviewItem[] = [
