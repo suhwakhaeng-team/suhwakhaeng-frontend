@@ -8,6 +8,8 @@ import {
   type ReviewItem,
 } from '../../types/home';
 import { fetchCurriculum } from '../../lib/curriculumClient';
+import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
+import { fetchDailyStats } from '../../lib/dailyStatsClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
@@ -26,12 +28,18 @@ export default function HomePage() {
   const [isCurriculumLoading, setIsCurriculumLoading] = useState(false);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
 
-  // 복습·진도·오늘통계는 BE 미구현 → placeholder 유지 (iOS 와 동일)
+  // 학습 진도 (GET /users/{uid}/masteries 평균 기반).
+  // 로드 전/실패 시 0/"시작 단계" 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [progressLabel, setProgressLabel] = useState('시작 단계');
+
+  // 복습은 BE 미구현 → placeholder 유지
   const reviewItems = reviewPlaceholder;
-  const progressPercent = 0.35;
-  const progressLabel = '성장 중';
-  const todaySolvedCount = 10;
-  const streakDays = 3;
+
+  // 오늘 통계 (GET /users/{uid}/daily-stats).
+  // 로드 전/실패 시 0 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
+  const [todaySolvedCount, setTodaySolvedCount] = useState(0);
+  const [streakDays, setStreakDays] = useState(0);
 
   useEffect(() => {
     const uid = tokenStorage.getUid();
@@ -54,6 +62,29 @@ export default function HomePage() {
       })
       .finally(() => {
         if (!cancelled) setIsCurriculumLoading(false);
+      });
+
+    // 숙련도 조회 (홈 반원 게이지용). 실패는 조용히 무시.
+    fetchMasteries(uid)
+      .then((masteries) => {
+        if (cancelled) return;
+        const percent = averageProgress(masteries);
+        setProgressPercent(percent);
+        setProgressLabel(progressLabelFor(percent));
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
+      });
+
+    // 오늘 통계 조회 (오늘 푼 문제 수 + 연속 학습일). 실패는 조용히 무시.
+    fetchDailyStats(uid)
+      .then((stats) => {
+        if (cancelled) return;
+        setTodaySolvedCount(stats.todaySolvedCount);
+        setStreakDays(stats.streakDays);
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
       });
 
     return () => {

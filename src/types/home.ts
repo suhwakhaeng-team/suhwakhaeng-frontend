@@ -17,6 +17,16 @@ export interface ReviewItem {
   categoryName: string;
 }
 
+// BE GET /users/{uid}/daily-stats 응답과 1:1.
+// - todaySolvedCount: Asia/Seoul 기준 오늘 풀이 건수
+// - streakDays: 최근 풀이 날짜가 오늘 또는 어제일 때 그 날짜부터 역순 연속 일수, 아니면 0
+// - today: 집계 기준 날짜 (yyyy-MM-dd)
+export interface DailyStats {
+  todaySolvedCount: number;
+  streakDays: number;
+  today: string;
+}
+
 // BE /curriculum API 미호출 상황(개발/프리뷰)용 샘플. 런타임 기본값으로 쓰지 말 것.
 export const curriculumPlaceholder: CurriculumItem[] = [
   { id: 'placeholder-1', topicName: '원순열',               categoryPath: '경우의 수 > 여러 가지 순열',       problemCount: 3, reasoning: '' },
