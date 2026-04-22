@@ -9,6 +9,7 @@ import {
 } from '../../types/home';
 import { fetchCurriculum } from '../../lib/curriculumClient';
 import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
+import { fetchDailyStats } from '../../lib/dailyStatsClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
@@ -32,10 +33,13 @@ export default function HomePage() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [progressLabel, setProgressLabel] = useState('시작 단계');
 
-  // 복습·오늘통계는 BE 미구현 → placeholder 유지 (iOS 와 동일)
+  // 복습은 BE 미구현 → placeholder 유지
   const reviewItems = reviewPlaceholder;
-  const todaySolvedCount = 10;
-  const streakDays = 3;
+
+  // 오늘 통계 (GET /users/{uid}/daily-stats).
+  // 로드 전/실패 시 0 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
+  const [todaySolvedCount, setTodaySolvedCount] = useState(0);
+  const [streakDays, setStreakDays] = useState(0);
 
   useEffect(() => {
     const uid = tokenStorage.getUid();
@@ -67,6 +71,17 @@ export default function HomePage() {
         const percent = averageProgress(masteries);
         setProgressPercent(percent);
         setProgressLabel(progressLabelFor(percent));
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
+      });
+
+    // 오늘 통계 조회 (오늘 푼 문제 수 + 연속 학습일). 실패는 조용히 무시.
+    fetchDailyStats(uid)
+      .then((stats) => {
+        if (cancelled) return;
+        setTodaySolvedCount(stats.todaySolvedCount);
+        setStreakDays(stats.streakDays);
       })
       .catch(() => {
         // 의도적으로 에러 UI 표시하지 않음.
