@@ -4,7 +4,7 @@ import CurriculumItemCard from './CurriculumItemCard';
 
 interface Props {
   items: CurriculumItem[];
-  activeId: number | null;
+  activeId: string | null;
   onSolveClick: () => void;
 }
 
