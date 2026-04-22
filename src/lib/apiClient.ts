@@ -12,7 +12,7 @@ export function resetAuthState() {
   refreshPromise = null;
 }
 
-async function refreshTokens(): Promise<boolean> {
+export async function refreshTokens(): Promise<boolean> {
   const uid = tokenStorage.getUid();
   const refreshToken = tokenStorage.getRefreshToken();
   if (!uid || !refreshToken) return false;
