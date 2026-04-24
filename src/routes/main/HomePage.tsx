@@ -8,11 +8,14 @@ import {
   type ReviewItem,
 } from '../../types/home';
 import { fetchCurriculum } from '../../lib/curriculumClient';
+import { fetchCurriculumOverview } from '../../lib/curriculumOverviewClient';
 import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
 import { fetchDailyStats } from '../../lib/dailyStatsClient';
 import { tokenStorage } from '../../lib/tokenStorage';
+import type { CurriculumMapItem } from '../../types/curriculumMap';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
+import CurriculumMapSection from '../../components/home/CurriculumMapSection';
 import ReviewListSection from '../../components/home/ReviewListSection';
 import ProgressGauge from '../../components/home/ProgressGauge';
 import DailyStatsCard from '../../components/home/DailyStatsCard';
@@ -27,6 +30,10 @@ export default function HomePage() {
   const [activeCurriculumId, setActiveCurriculumId] = useState<string | null>(null);
   const [isCurriculumLoading, setIsCurriculumLoading] = useState(false);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
+
+  // 전체 커리큘럼 미니맵 (GET /users/{uid}/curriculum/overview)
+  // 실패 시 UI 에러 미표시, 빈 배열 유지 (상단 추천 흐름 보호).
+  const [curriculumMapItems, setCurriculumMapItems] = useState<CurriculumMapItem[]>([]);
 
   // 학습 진도 (GET /users/{uid}/masteries 평균 기반).
   // 로드 전/실패 시 0/"시작 단계" 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
@@ -62,6 +69,16 @@ export default function HomePage() {
       })
       .finally(() => {
         if (!cancelled) setIsCurriculumLoading(false);
+      });
+
+    // 전체 커리큘럼 미니맵 조회. 실패는 조용히 무시 (iOS 와 동일 정책).
+    fetchCurriculumOverview(uid)
+      .then((items) => {
+        if (cancelled) return;
+        setCurriculumMapItems(items);
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
       });
 
     // 숙련도 조회 (홈 반원 게이지용). 실패는 조용히 무시.
@@ -129,37 +146,47 @@ export default function HomePage() {
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+          display: 'flex',
+          flexDirection: 'column',
           gap: spacing.lg,
-          alignItems: 'start',
         }}
       >
-        {renderCurriculumSection({
-          isLoading: isCurriculumLoading,
-          error: curriculumError,
-          items: curriculumItems,
-          activeId: activeCurriculumId,
-          onSolveClick: handleSolveClick,
-          onRetry: handleRetry,
-        })}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+            gap: spacing.lg,
+            alignItems: 'start',
+          }}
+        >
+          {renderCurriculumSection({
+            isLoading: isCurriculumLoading,
+            error: curriculumError,
+            items: curriculumItems,
+            activeId: activeCurriculumId,
+            onSolveClick: handleSolveClick,
+            onRetry: handleRetry,
+          })}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-          <ReviewListSection
-            items={reviewItems}
-            onSeeAllClick={handleReviewSeeAll}
-            onItemClick={handleReviewItemClick}
-          />
-          <ProgressGauge
-            nickname={displayName}
-            percent={progressPercent}
-            label={progressLabel}
-          />
-          <DailyStatsCard
-            todaySolvedCount={todaySolvedCount}
-            streakDays={streakDays}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+            <ReviewListSection
+              items={reviewItems}
+              onSeeAllClick={handleReviewSeeAll}
+              onItemClick={handleReviewItemClick}
+            />
+            <ProgressGauge
+              nickname={displayName}
+              percent={progressPercent}
+              label={progressLabel}
+            />
+            <DailyStatsCard
+              todaySolvedCount={todaySolvedCount}
+              streakDays={streakDays}
+            />
+          </div>
         </div>
+
+        <CurriculumMapSection items={curriculumMapItems} />
       </div>
     </div>
   );
@@ -216,7 +243,7 @@ function CurriculumPlaceholderCard({ message }: { message: string }) {
       }}
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        커리큘럼
+        오늘의 추천
       </h3>
       <div
         style={{
@@ -248,7 +275,7 @@ function CurriculumErrorCard({ message, onRetry }: { message: string; onRetry: (
       }}
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        커리큘럼
+        오늘의 추천
       </h3>
       <div
         style={{

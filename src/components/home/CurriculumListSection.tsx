@@ -21,7 +21,7 @@ export default function CurriculumListSection({ items, activeId, onSolveClick }:
       }}
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        커리큘럼
+        오늘의 추천
       </h3>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
