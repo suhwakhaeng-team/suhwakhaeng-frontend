@@ -36,12 +36,6 @@ export const curriculumPlaceholder: CurriculumItem[] = [
   { id: 'placeholder-5', topicName: '중복조합과 수의 활용', categoryPath: '경우의 수 > 중복조합과 이항정리', problemCount: 3, reasoning: '' },
 ];
 
-export const reviewPlaceholder: ReviewItem[] = [
-  { id: 1, topicName: '원순열',              categoryName: '여러 가지 순열' },
-  { id: 2, topicName: '중복조합',            categoryName: '중복조합과 이항정리' },
-  { id: 3, topicName: '같은 것이 있는 순열', categoryName: '여러 가지 순열' },
-];
-
 // BE `grade: number | null`(1~3 중1~중3, 4~6 고1~고3) 전제 단순 매핑
 export function gradeLabel(grade: number | null | undefined): string | null {
   if (grade == null) return null;
