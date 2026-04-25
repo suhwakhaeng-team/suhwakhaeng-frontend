@@ -3,25 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 
-const unitOptions = ['전체', '확률', '통계'];
+// iOS/BE 시드와 통일. 전체선택은 baseUnits 모두 토글하는 가상 옵션.
+const SELECT_ALL = '전체선택';
+const baseUnits = ['경우의 수', '확률', '통계'];
+const unitOptions = [SELECT_ALL, ...baseUnits];
 
 export default function UnitSelectionPage() {
   const navigate = useNavigate();
   const { setUnits } = useOnboarding();
   const [selected, setSelected] = useState<string[]>([]);
 
+  // iOS UnitSelectionReducer 의 토글 로직 포팅 (Reducer:42-60).
+  // - 전체선택 클릭: 모든 baseUnits 가 선택돼 있으면 전부 해제, 아니면 전부 선택.
+  // - 개별 단원 클릭: 토글 후 baseUnits 가 모두 선택되면 SELECT_ALL 자동 ON, 아니면 OFF.
   const toggle = (unit: string) => {
-    setSelected((prev) =>
-      prev.includes(unit) ? prev.filter((u) => u !== unit) : [...prev, unit]
-    );
+    setSelected((prev) => {
+      if (unit === SELECT_ALL) {
+        const allBaseSelected = baseUnits.every((u) => prev.includes(u));
+        return allBaseSelected ? [] : [...unitOptions];
+      }
+      const alreadySelected = prev.includes(unit);
+      const withoutSelectAll = prev.filter((u) => u !== SELECT_ALL);
+      const next = alreadySelected
+        ? withoutSelectAll.filter((u) => u !== unit)
+        : [...withoutSelectAll, unit];
+      const allBaseNowSelected = baseUnits.every((u) => next.includes(u));
+      return allBaseNowSelected ? [SELECT_ALL, ...next] : next;
+    });
   };
 
   const handleNext = () => {
-    setUnits(selected);
+    // 서버/컨텍스트에는 가상 옵션 SELECT_ALL 을 빼고 실제 단원만 저장.
+    const actualUnits = selected.filter((u) => u !== SELECT_ALL);
+    setUnits(actualUnits);
     navigate('/onboarding/nickname');
   };
 
-  const canProceed = selected.length > 0;
+  // 실제 단원 1개 이상 선택돼야 진행 가능.
+  const canProceed = selected.some((u) => u !== SELECT_ALL);
 
   return (
     <div>
