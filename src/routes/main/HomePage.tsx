@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import {
-  reviewPlaceholder,
   type CurriculumItem,
   type ReviewItem,
 } from '../../types/home';
@@ -11,6 +10,7 @@ import { fetchCurriculum } from '../../lib/curriculumClient';
 import { fetchCurriculumOverview } from '../../lib/curriculumOverviewClient';
 import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
 import { fetchDailyStats } from '../../lib/dailyStatsClient';
+import { fetchReviewItems } from '../../lib/reviewClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import type { CurriculumMapItem } from '../../types/curriculumMap';
 import HomeHeader from '../../components/home/HomeHeader';
@@ -40,8 +40,9 @@ export default function HomePage() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [progressLabel, setProgressLabel] = useState('시작 단계');
 
-  // 복습은 BE 미구현 → placeholder 유지
-  const reviewItems = reviewPlaceholder;
+  // 복습 (GET /users/{uid}/review).
+  // 로드 전/실패 시 빈 배열 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
 
   // 오늘 통계 (GET /users/{uid}/daily-stats).
   // 로드 전/실패 시 0 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
@@ -104,6 +105,16 @@ export default function HomePage() {
         // 의도적으로 에러 UI 표시하지 않음.
       });
 
+    // 복습 항목 조회 (최근 오답 Tag 최대 5개). 실패는 조용히 무시.
+    fetchReviewItems(uid)
+      .then((items) => {
+        if (cancelled) return;
+        setReviewItems(items);
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
+      });
+
     return () => {
       cancelled = true;
     };
@@ -127,10 +138,10 @@ export default function HomePage() {
       .finally(() => setIsCurriculumLoading(false));
   };
   const handleReviewSeeAll = () => {
-    // TODO: 복습 전체보기 화면 라우팅
+    navigate('/main/review');
   };
-  const handleReviewItemClick = (_item: ReviewItem) => {
-    // TODO: 복습 상세 화면 라우팅
+  const handleReviewItemClick = (item: ReviewItem) => {
+    navigate(`/main/review/${item.id}`, { state: { tagName: item.topicName } });
   };
 
   return (
