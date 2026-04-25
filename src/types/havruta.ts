@@ -3,12 +3,14 @@
 export interface StartHavrutaSessionRequest {
   uid: string;
   questionId: number | null;
+  tagId?: number | null;
   transcript: string;
 }
 
 export interface SendHavrutaMessageRequest {
   uid: string;
   questionId: number | null;
+  tagId?: number | null;
   transcript: string;
 }
 

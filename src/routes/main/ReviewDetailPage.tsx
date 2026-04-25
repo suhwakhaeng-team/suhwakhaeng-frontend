@@ -234,10 +234,19 @@ export default function ReviewDetailPage() {
         </section>
       </div>
 
-      {/* AI 챗 진입 — iOS 와 동일한 보조 동선 */}
+      {/* AI 챗 진입 — iOS 와 동일한 보조 동선.
+          단원 컨텍스트(seedTagId/seedTagName)를 location.state 로 전달해
+          AIConceptPage 빈 상태에서 추천 질문 칩 3개를 자동 구성. */}
       <button
         type="button"
-        onClick={() => navigate('/main/ai-concept')}
+        onClick={() =>
+          navigate('/main/ai-concept', {
+            state: {
+              seedTagId: tagId,
+              seedTagName: concept?.tagName || initialTagName || undefined,
+            },
+          })
+        }
         style={{
           padding: `${spacing.md}px ${spacing.xl}px`,
           background: colors.brand500,
