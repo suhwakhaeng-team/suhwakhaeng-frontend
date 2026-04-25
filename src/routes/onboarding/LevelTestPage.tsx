@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
-import { useOnboarding } from '../../contexts/OnboardingContext';
+import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import type {
@@ -19,9 +19,23 @@ function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
+// 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6). plan 문서의 통일된 매핑.
+function gradeStringToInt(g: Grade | null): number | undefined {
+  if (!g) return undefined;
+  const map: Record<Grade, number> = {
+    middle1: 1,
+    middle2: 2,
+    middle3: 3,
+    high1: 4,
+    high2: 5,
+    high3: 6,
+  };
+  return map[g];
+}
+
 export default function LevelTestPage() {
   const navigate = useNavigate();
-  const { setLevelTestResult } = useOnboarding();
+  const { grade, subject, units, setLevelTestResult } = useOnboarding();
   const { markOnboardingCompleted } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -101,10 +115,12 @@ export default function LevelTestPage() {
     }
 
     setLevelTestResult(response.data);
-    // 서버에 온보딩 완료(isTested=true)를 기록한다.
+    // 서버에 온보딩 완료(isTested=true) + 학년/과목/단원 일괄 기록.
     // 이 호출이 실패하면 재로그인/재시작 시 다시 온보딩으로 빠지므로
     // 그때 재시도하게 두고, 여기서는 학습 진행을 막지 않는다.
-    void markOnboardingCompleted().catch(() => {});
+    const gradeInt = gradeStringToInt(grade);
+    const unitsCsv = units.length ? units.join(',') : undefined;
+    void markOnboardingCompleted(gradeInt, subject ?? undefined, unitsCsv).catch(() => {});
     navigate('/onboarding/result');
   };
 

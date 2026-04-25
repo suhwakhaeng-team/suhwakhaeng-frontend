@@ -6,7 +6,19 @@ export interface User {
   name: string | null;
   nickname: string | null;
   grade: number | null;
+  subject: string | null;
+  selectedUnits: string | null;
   isTested: boolean;
+}
+
+// 온보딩 PUT/GET 응답 — `AuthContext.markOnboardingCompleted` 가 사용한다.
+// BE `OnboardingStatusResponse` 와 1:1 매핑.
+export interface OnboardingStatusResponse {
+  uid: string;
+  isTested: boolean;
+  grade: number | null;
+  subject: string | null;
+  selectedUnits: string | null;
 }
 
 export interface TokenResponse {

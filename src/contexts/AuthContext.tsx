@@ -1,13 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { User } from '../types/auth';
+import type { User, OnboardingStatusResponse } from '../types/auth';
 import { tokenStorage } from '../lib/tokenStorage';
 import { loginWithGoogle } from '../lib/googleAuth';
 import { apiClient, resetAuthState } from '../lib/apiClient';
-
-interface OnboardingStatusResponse {
-  uid: string;
-  isTested: boolean;
-}
 
 interface AuthContextValue {
   user: User | null;
@@ -16,7 +11,12 @@ interface AuthContextValue {
   login: (credential: string) => Promise<User>;
   logout: () => Promise<void>;
   updateUser: (partial: Partial<User>) => void;
-  markOnboardingCompleted: () => Promise<boolean>;
+  // 온보딩 완료 PUT — 학년/과목/단원 모두 optional. 미전달 필드는 BE 가 partial update 로 무시.
+  markOnboardingCompleted: (
+    grade?: number,
+    subject?: string,
+    selectedUnits?: string,
+  ) => Promise<boolean>;
   deleteAccount: () => Promise<void>;
 }
 
@@ -71,22 +71,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 레벨테스트 완료 직후 서버에 온보딩 완료(isTested=true)를 기록한다.
   // 이 호출이 있어야 재로그인/재시작 시 메인으로 직행한다.
   // 서버는 PUT /users/{uid}/onboarding 호출 시에만 isTested 를 플립한다.
-  const markOnboardingCompleted = useCallback(async (): Promise<boolean> => {
+  // 학년/과목/단원은 optional — undefined 인 필드는 본문에서 빼서 BE 가 해당 컬럼을 건드리지 않게 한다.
+  const markOnboardingCompleted = useCallback(async (
+    grade?: number,
+    subject?: string,
+    selectedUnits?: string,
+  ): Promise<boolean> => {
     const uid = tokenStorage.getUid();
     if (!uid) return false;
 
+    // partial update 본문 — 정의된 값만 포함시킨다.
+    const body: Record<string, unknown> = { isTested: true };
+    if (grade !== undefined) body.grade = grade;
+    if (subject !== undefined) body.subject = subject;
+    if (selectedUnits !== undefined) body.selectedUnits = selectedUnits;
+
     const res = await apiClient.put<OnboardingStatusResponse>(
       `/users/${uid}/onboarding`,
-      { isTested: true },
+      body,
     );
 
     if (!res.success || !res.data?.isTested) {
       return false;
     }
 
+    // 응답에 포함된 grade/subject/selectedUnits 도 로컬 user 에 반영해 재로그인 휘발 방지.
+    const responseData = res.data;
     setUser((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, isTested: true };
+      const next: User = {
+        ...prev,
+        isTested: true,
+        grade: responseData.grade,
+        subject: responseData.subject,
+        selectedUnits: responseData.selectedUnits,
+      };
       tokenStorage.saveUser(next);
       return next;
     });
