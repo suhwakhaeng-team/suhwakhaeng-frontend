@@ -3,16 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import {
-  reviewPlaceholder,
   type CurriculumItem,
   type ReviewItem,
 } from '../../types/home';
 import { fetchCurriculum } from '../../lib/curriculumClient';
+import { fetchCurriculumOverview } from '../../lib/curriculumOverviewClient';
 import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
 import { fetchDailyStats } from '../../lib/dailyStatsClient';
+import { fetchReviewItems } from '../../lib/reviewClient';
 import { tokenStorage } from '../../lib/tokenStorage';
+import type { CurriculumMapItem } from '../../types/curriculumMap';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
+import CurriculumMapSection from '../../components/home/CurriculumMapSection';
 import ReviewListSection from '../../components/home/ReviewListSection';
 import ProgressGauge from '../../components/home/ProgressGauge';
 import DailyStatsCard from '../../components/home/DailyStatsCard';
@@ -28,13 +31,18 @@ export default function HomePage() {
   const [isCurriculumLoading, setIsCurriculumLoading] = useState(false);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
 
+  // 전체 커리큘럼 미니맵 (GET /users/{uid}/curriculum/overview)
+  // 실패 시 UI 에러 미표시, 빈 배열 유지 (상단 추천 흐름 보호).
+  const [curriculumMapItems, setCurriculumMapItems] = useState<CurriculumMapItem[]>([]);
+
   // 학습 진도 (GET /users/{uid}/masteries 평균 기반).
   // 로드 전/실패 시 0/"시작 단계" 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
   const [progressPercent, setProgressPercent] = useState(0);
   const [progressLabel, setProgressLabel] = useState('시작 단계');
 
-  // 복습은 BE 미구현 → placeholder 유지
-  const reviewItems = reviewPlaceholder;
+  // 복습 (GET /users/{uid}/review).
+  // 로드 전/실패 시 빈 배열 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
 
   // 오늘 통계 (GET /users/{uid}/daily-stats).
   // 로드 전/실패 시 0 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
@@ -64,6 +72,16 @@ export default function HomePage() {
         if (!cancelled) setIsCurriculumLoading(false);
       });
 
+    // 전체 커리큘럼 미니맵 조회. 실패는 조용히 무시 (iOS 와 동일 정책).
+    fetchCurriculumOverview(uid)
+      .then((items) => {
+        if (cancelled) return;
+        setCurriculumMapItems(items);
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
+      });
+
     // 숙련도 조회 (홈 반원 게이지용). 실패는 조용히 무시.
     fetchMasteries(uid)
       .then((masteries) => {
@@ -82,6 +100,16 @@ export default function HomePage() {
         if (cancelled) return;
         setTodaySolvedCount(stats.todaySolvedCount);
         setStreakDays(stats.streakDays);
+      })
+      .catch(() => {
+        // 의도적으로 에러 UI 표시하지 않음.
+      });
+
+    // 복습 항목 조회 (최근 오답 Tag 최대 5개). 실패는 조용히 무시.
+    fetchReviewItems(uid)
+      .then((items) => {
+        if (cancelled) return;
+        setReviewItems(items);
       })
       .catch(() => {
         // 의도적으로 에러 UI 표시하지 않음.
@@ -110,10 +138,10 @@ export default function HomePage() {
       .finally(() => setIsCurriculumLoading(false));
   };
   const handleReviewSeeAll = () => {
-    // TODO: 복습 전체보기 화면 라우팅
+    navigate('/main/review');
   };
-  const handleReviewItemClick = (_item: ReviewItem) => {
-    // TODO: 복습 상세 화면 라우팅
+  const handleReviewItemClick = (item: ReviewItem) => {
+    navigate(`/main/review/${item.id}`, { state: { tagName: item.topicName } });
   };
 
   return (
@@ -129,37 +157,47 @@ export default function HomePage() {
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+          display: 'flex',
+          flexDirection: 'column',
           gap: spacing.lg,
-          alignItems: 'start',
         }}
       >
-        {renderCurriculumSection({
-          isLoading: isCurriculumLoading,
-          error: curriculumError,
-          items: curriculumItems,
-          activeId: activeCurriculumId,
-          onSolveClick: handleSolveClick,
-          onRetry: handleRetry,
-        })}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+            gap: spacing.lg,
+            alignItems: 'start',
+          }}
+        >
+          {renderCurriculumSection({
+            isLoading: isCurriculumLoading,
+            error: curriculumError,
+            items: curriculumItems,
+            activeId: activeCurriculumId,
+            onSolveClick: handleSolveClick,
+            onRetry: handleRetry,
+          })}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-          <ReviewListSection
-            items={reviewItems}
-            onSeeAllClick={handleReviewSeeAll}
-            onItemClick={handleReviewItemClick}
-          />
-          <ProgressGauge
-            nickname={displayName}
-            percent={progressPercent}
-            label={progressLabel}
-          />
-          <DailyStatsCard
-            todaySolvedCount={todaySolvedCount}
-            streakDays={streakDays}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+            <ReviewListSection
+              items={reviewItems}
+              onSeeAllClick={handleReviewSeeAll}
+              onItemClick={handleReviewItemClick}
+            />
+            <ProgressGauge
+              nickname={displayName}
+              percent={progressPercent}
+              label={progressLabel}
+            />
+            <DailyStatsCard
+              todaySolvedCount={todaySolvedCount}
+              streakDays={streakDays}
+            />
+          </div>
         </div>
+
+        <CurriculumMapSection items={curriculumMapItems} />
       </div>
     </div>
   );
@@ -216,7 +254,7 @@ function CurriculumPlaceholderCard({ message }: { message: string }) {
       }}
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        커리큘럼
+        오늘의 추천
       </h3>
       <div
         style={{
@@ -248,7 +286,7 @@ function CurriculumErrorCard({ message, onRetry }: { message: string; onRetry: (
       }}
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        커리큘럼
+        오늘의 추천
       </h3>
       <div
         style={{

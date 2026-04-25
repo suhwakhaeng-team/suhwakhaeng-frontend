@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
 import type { AdaptiveQuestion, StudySubmitResponse } from '../../types/adaptive';
+import { saveProblem, unsaveProblem } from '../../lib/savedProblemClient';
+import { tokenStorage } from '../../lib/tokenStorage';
 
 interface ResultState {
   isCorrect: boolean;
@@ -41,6 +44,33 @@ export default function ProblemResultPage() {
   const { isCorrect, explanation, question, questions, currentIndex } = state;
   const hasNextQuestion = currentIndex + 1 < questions.length;
   const tagLabel = question.tags?.[0]?.tagName ?? '';
+
+  // "문제 저장하기" 토글. UI 즉시 반영(optimistic) 후 BE 동기화, 실패 시 롤백.
+  // iOS `ProblemResultReducer.saveProblemToggled` 와 동일 정책.
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaveInflight, setIsSaveInflight] = useState(false);
+
+  const handleSaveToggle = async () => {
+    if (isSaveInflight) return; // 중복 클릭 방어
+    const uid = tokenStorage.getUid();
+    if (!uid) return;
+    const willBeSaved = !isSaved;
+    setIsSaved(willBeSaved); // optimistic
+    setIsSaveInflight(true);
+    try {
+      if (willBeSaved) {
+        await saveProblem(uid, question.questionId);
+      } else {
+        await unsaveProblem(uid, question.questionId);
+      }
+    } catch (err) {
+      // 실패 시 롤백. 사용자에게는 별도 toast 미표시 (iOS 정책 일치).
+      console.warn('[ProblemResult] save toggle failed — 롤백', err);
+      setIsSaved(!willBeSaved);
+    } finally {
+      setIsSaveInflight(false);
+    }
+  };
 
   const handleNext = () => {
     if (hasNextQuestion) {
@@ -146,7 +176,45 @@ export default function ProblemResultPage() {
       )}
 
       {/* 버튼 */}
-      <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'center', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={handleSaveToggle}
+          disabled={isSaveInflight}
+          aria-pressed={isSaved}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+            padding: `${spacing.md}px ${spacing.lg}px`,
+            background: 'transparent',
+            border: 'none',
+            color: colors.gray700,
+            ...typography.bodyTextXLRegular,
+            cursor: isSaveInflight ? 'wait' : 'pointer',
+            opacity: isSaveInflight ? 0.6 : 1,
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 22,
+              height: 22,
+              borderRadius: 4,
+              border: `2px solid ${isSaved ? colors.brand500 : colors.gray400}`,
+              background: isSaved ? colors.brand500 : 'transparent',
+              color: colors.white,
+              fontSize: 14,
+              lineHeight: 1,
+              fontWeight: 700,
+            }}
+          >
+            {isSaved ? '✓' : ''}
+          </span>
+          문제 저장하기
+        </button>
         <button
           onClick={handleNext}
           style={{

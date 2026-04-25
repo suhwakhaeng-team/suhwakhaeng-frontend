@@ -17,6 +17,8 @@ import ProblemSolvingPage from './main/ProblemSolvingPage';
 import ProblemResultPage from './main/ProblemResultPage';
 import MyPagePage from './main/MyPagePage';
 import AIConceptPage from './main/AIConceptPage';
+import ReviewListPage from './main/ReviewListPage';
+import ReviewDetailPage from './main/ReviewDetailPage';
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +54,8 @@ export const router = createBrowserRouter([
       { path: 'problem-result', element: <ProblemResultPage /> },
       { path: 'mypage', element: <MyPagePage /> },
       { path: 'ai-concept', element: <AIConceptPage /> },
+      { path: 'review', element: <ReviewListPage /> },
+      { path: 'review/:tagId', element: <ReviewDetailPage /> },
     ],
   },
   {
