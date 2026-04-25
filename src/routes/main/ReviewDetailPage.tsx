@@ -124,7 +124,7 @@ export default function ReviewDetailPage() {
               <p style={{ ...typography.bodyTextLgMedium, color: colors.gray700, margin: 0 }}>
                 ⚙️ 개념 정리를 만들고 있어요
               </p>
-              <p style={{ ...typography.captionRegular, color: colors.gray500, marginTop: spacing.xs }}>
+              <p style={{ ...typography.captionMedium, color: colors.gray500, marginTop: spacing.xs }}>
                 처음 진입할 때는 잠시 시간이 걸려요
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function ReviewDetailPage() {
               <p style={{ ...typography.bodyTextLgMedium, color: colors.gray700, margin: 0 }}>
                 개념 정리를 불러오지 못했어요
               </p>
-              <p style={{ ...typography.captionRegular, color: colors.gray500, marginTop: spacing.xs }}>
+              <p style={{ ...typography.captionMedium, color: colors.gray500, marginTop: spacing.xs }}>
                 {conceptError}
               </p>
               <button
@@ -147,7 +147,7 @@ export default function ReviewDetailPage() {
                   color: colors.white,
                   border: 'none',
                   borderRadius: radius.sm,
-                  ...typography.bodyTextLgSemiBold,
+                  ...typography.bodyTextXLSemiBold,
                   cursor: 'pointer',
                 }}
               >
@@ -207,7 +207,7 @@ export default function ReviewDetailPage() {
                   color: colors.brand500,
                   border: 'none',
                   cursor: 'pointer',
-                  ...typography.bodyTextLgSemiBold,
+                  ...typography.bodyTextXLSemiBold,
                 }}
               >
                 다시 시도
