@@ -105,7 +105,7 @@ export default function ReviewListPage() {
               color: colors.white,
               border: 'none',
               borderRadius: radius.sm,
-              ...typography.bodyTextLgSemiBold,
+              ...typography.bodyTextXLSemiBold,
               cursor: 'pointer',
             }}
           >

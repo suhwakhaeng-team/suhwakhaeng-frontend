@@ -38,9 +38,9 @@ export default function SavedProblemCard({ problem }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ ...typography.captionMedium, color: colors.gray500 }}>정답</span>
-          <span style={{ ...typography.bodyTextLgSemiBold, color: colors.brand600 }}>{problem.answer}</span>
+          <span style={{ ...typography.bodyTextXLSemiBold, color: colors.brand600 }}>{problem.answer}</span>
         </div>
-        <span style={{ ...typography.captionRegular, color: colors.gray400 }}>저장 {savedDate}</span>
+        <span style={{ ...typography.captionMedium, color: colors.gray400 }}>저장 {savedDate}</span>
       </div>
 
       {hasExplanation && (
