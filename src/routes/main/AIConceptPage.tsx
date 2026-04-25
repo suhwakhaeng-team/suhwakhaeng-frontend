@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import { havrutaClient } from '../../lib/havrutaClient';
 import { tokenStorage } from '../../lib/tokenStorage';
+import { getDefaultSuggestedQuestions } from '../../lib/aiConceptTemplates';
 import {
   categoryLabel,
   displayTitle,
@@ -14,12 +15,19 @@ import {
 
 interface LocationState {
   questionId?: number;
+  // 복습 ReviewDetail → "이 단원으로 AI에게 물어보기" 진입 시 주입.
+  // 메인에서 직접 AI 챗 진입한 경우는 둘 다 undefined.
+  seedTagId?: number;
+  seedTagName?: string;
 }
 
 export default function AIConceptPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const questionId = (location.state as LocationState | null)?.questionId ?? null;
+  const locationState = location.state as LocationState | null;
+  const questionId = locationState?.questionId ?? null;
+  const seedTagId = locationState?.seedTagId ?? null;
+  const seedTagName = locationState?.seedTagName ?? null;
   const uid = tokenStorage.getUid();
 
   const [sessions, setSessions] = useState<HavrutaSessionResponse[]>([]);
@@ -33,6 +41,10 @@ export default function AIConceptPage() {
   const [menuOpenSessionId, setMenuOpenSessionId] = useState<number | null>(null);
   const [renameTargetId, setRenameTargetId] = useState<number | null>(null);
   const [renameText, setRenameText] = useState('');
+  // 복습 진입 직후 1회 표시되는 추천 질문 칩 (첫 메시지 전송 또는 새 채팅/세션 변경 시 영구 소거).
+  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>(() =>
+    getDefaultSuggestedQuestions(seedTagName),
+  );
 
   const messageEndRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +79,8 @@ export default function AIConceptPage() {
     setMessages([]);
     setInput('');
     setErrorMessage(null);
+    // 새 채팅 시작 시 복습 seed 칩은 복원하지 않는다 (정책: "복습 진입 직후 1회만 표시").
+    setSuggestedPrompts([]);
   };
 
   const handleSelectSession = async (sessionId: number) => {
@@ -76,6 +90,7 @@ export default function AIConceptPage() {
     setMessages([]);
     setInput('');
     setErrorMessage(null);
+    setSuggestedPrompts([]);
     setIsMessagesLoading(true);
     try {
       const list = await havrutaClient.fetchMessages(sessionId, uid);
@@ -87,8 +102,12 @@ export default function AIConceptPage() {
     }
   };
 
-  const handleSend = async () => {
-    const transcript = input.trim();
+  /**
+   * 메시지 전송. 일반 입력 경로(Enter/전송 버튼)는 인자 없이 호출되어 `input` 사용.
+   * 추천 칩 경로는 `override` 인자로 텍스트를 전달하며, 입력칸은 건드리지 않는다.
+   */
+  const handleSend = async (override?: string) => {
+    const transcript = (override ?? input).trim();
     if (!uid || !transcript || isProcessing) return;
 
     const tempId = -Date.now();
@@ -99,13 +118,13 @@ export default function AIConceptPage() {
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, optimistic]);
-    setInput('');
+    if (!override) setInput('');
     setIsProcessing(true);
     setErrorMessage(null);
 
     try {
       if (selectedSessionId === null) {
-        const res = await havrutaClient.startSession({ uid, questionId, transcript });
+        const res = await havrutaClient.startSession({ uid, questionId, tagId: seedTagId, transcript });
         setSelectedSessionId(res.session.sessionId);
         setSessions((prev) => [res.session, ...prev.filter((s) => s.sessionId !== res.session.sessionId)]);
         setMessages((prev) => [
@@ -117,6 +136,7 @@ export default function AIConceptPage() {
         const res = await havrutaClient.sendMessage(selectedSessionId, {
           uid,
           questionId,
+          tagId: seedTagId,
           transcript,
         });
         setMessages((prev) => [
@@ -162,6 +182,20 @@ export default function AIConceptPage() {
       setRenameText('');
     }
   };
+
+  // 추천 질문 칩 클릭: 칩 즉시 소거 + 그 텍스트를 override 경로로 전송 (input 은 건드리지 않음).
+  const handleSuggestedPromptClick = (text: string) => {
+    setSuggestedPrompts([]);
+    void handleSend(text);
+  };
+
+  // 빈 상태에서 칩이 보일 조건: 새 세션(아직 미선택) + 메시지 0개 + 처리/로딩 아님 + 칩 보유.
+  const showSuggestedChips =
+    selectedSessionId === null &&
+    messages.length === 0 &&
+    !isProcessing &&
+    !isMessagesLoading &&
+    suggestedPrompts.length > 0;
 
   const handleDelete = async (sessionId: number) => {
     if (!uid) return;
@@ -211,8 +245,10 @@ export default function AIConceptPage() {
         onDismissError={() => setErrorMessage(null)}
         input={input}
         onInputChange={setInput}
-        onSend={handleSend}
+        onSend={() => handleSend()}
         messageEndRef={messageEndRef}
+        suggestedPrompts={showSuggestedChips ? suggestedPrompts : []}
+        onSuggestedPromptClick={handleSuggestedPromptClick}
       />
 
       {renameTargetId !== null && (
@@ -500,6 +536,9 @@ interface ChatPanelProps {
   onInputChange: (v: string) => void;
   onSend: () => void;
   messageEndRef: React.RefObject<HTMLDivElement | null>;
+  // 빈 상태에서 노출되는 추천 질문 칩 (복습 진입 직후 1회). 빈 배열이면 미렌더.
+  suggestedPrompts: string[];
+  onSuggestedPromptClick: (text: string) => void;
 }
 
 function ChatPanel(props: ChatPanelProps) {
@@ -515,6 +554,8 @@ function ChatPanel(props: ChatPanelProps) {
     onInputChange,
     onSend,
     messageEndRef,
+    suggestedPrompts,
+    onSuggestedPromptClick,
   } = props;
 
   return (
@@ -570,16 +611,24 @@ function ChatPanel(props: ChatPanelProps) {
             메시지를 불러오는 중...
           </p>
         ) : messages.length === 0 && !isProcessing ? (
-          <p
-            style={{
-              textAlign: 'center',
-              color: colors.gray400,
-              marginTop: spacing.x3l,
-              ...typography.bodyTextXLRegular,
-            }}
-          >
-            궁금한 개념을 질문해보세요!
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <p
+              style={{
+                textAlign: 'center',
+                color: colors.gray400,
+                marginTop: spacing.x3l,
+                ...typography.bodyTextXLRegular,
+              }}
+            >
+              궁금한 개념을 질문해보세요!
+            </p>
+            {suggestedPrompts.length > 0 && (
+              <SuggestedPromptChips
+                prompts={suggestedPrompts}
+                onClick={onSuggestedPromptClick}
+              />
+            )}
+          </div>
         ) : (
           <>
             {messages.map((m) => (
@@ -631,6 +680,59 @@ function ChatPanel(props: ChatPanelProps) {
           전송
         </button>
       </div>
+    </div>
+  );
+}
+
+// 복습 진입 직후 빈 상태에 노출되는 추천 질문 칩 섹션.
+// 헤더 1줄 + 풀폭 칩 3개. 각 칩은 좌측 정렬, brand50 배경 + brand100 보더.
+function SuggestedPromptChips({
+  prompts,
+  onClick,
+}: {
+  prompts: string[];
+  onClick: (text: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        marginTop: spacing.lg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: spacing.sm,
+        width: '100%',
+        maxWidth: 480,
+      }}
+    >
+      <div
+        style={{
+          ...typography.captionSemiBold,
+          color: colors.gray600,
+          marginBottom: spacing.xs,
+        }}
+      >
+        💡 이런 걸 물어볼 수 있어요
+      </div>
+      {prompts.map((text) => (
+        <button
+          key={text}
+          type="button"
+          onClick={() => onClick(text)}
+          style={{
+            textAlign: 'left',
+            padding: `${spacing.md}px ${spacing.lg}px`,
+            background: colors.brand50,
+            border: `1px solid ${colors.brand100}`,
+            borderRadius: radius.md,
+            color: colors.gray800,
+            ...typography.bodyTextXLSemiBold,
+            cursor: 'pointer',
+            width: '100%',
+          }}
+        >
+          {text}
+        </button>
+      ))}
     </div>
   );
 }
