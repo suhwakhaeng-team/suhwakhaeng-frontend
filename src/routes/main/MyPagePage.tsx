@@ -10,6 +10,8 @@ export default function MyPagePage() {
 
   const handleItemClick = async (item: string) => {
     if (item === '로그아웃') {
+      const confirmed = window.confirm('로그아웃 하시겠어요?');
+      if (!confirmed) return;
       await logout();
       return;
     }
