@@ -1,5 +1,8 @@
 import { useAuth } from '../../contexts/AuthContext';
 
+const TERMS_URL = 'https://dazzling-card-d4f.notion.site/34d69b69e90380ee9eace2393373a6f5?source=copy_link';
+const SUPPORT_URL = 'https://dazzling-card-d4f.notion.site/Suhwakhaeng-34d69b69e9038039a02ec9a9bb50afce?source=copy_link';
+
 export default function MyPagePage() {
   const { user, logout, deleteAccount } = useAuth();
   const displayName = user?.nickname || user?.name || '닉네임';
@@ -18,7 +21,14 @@ export default function MyPagePage() {
       await deleteAccount();
       return;
     }
-    // 고객센터 / 이용약관: 추후 구현
+    if (item === '이용약관') {
+      window.open(TERMS_URL, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (item === '고객센터') {
+      window.open(SUPPORT_URL, '_blank', 'noopener,noreferrer');
+      return;
+    }
   };
 
   return (
