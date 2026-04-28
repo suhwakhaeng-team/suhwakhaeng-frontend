@@ -25,7 +25,7 @@ export default function ProgressGauge({ nickname, percent, label }: Props) {
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
         <span style={{ color: colors.brand600 }}>{nickname}</span>
-        <span>님의 학습 진행도</span>
+        <span>님의 학습 숙련도</span>
       </h3>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
