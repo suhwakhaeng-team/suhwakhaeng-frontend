@@ -4,9 +4,10 @@ import type { SavedProblem } from '../../types/savedProblem';
 
 interface Props {
   problem: SavedProblem;
+  onRetry?: () => void;
 }
 
-export default function SavedProblemCard({ problem }: Props) {
+export default function SavedProblemCard({ problem, onRetry }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasExplanation = !!problem.explanation && problem.explanation.trim().length > 0;
   const savedDate = problem.savedAt.slice(0, 10); // yyyy-MM-dd
@@ -43,6 +44,25 @@ export default function SavedProblemCard({ problem }: Props) {
         <span style={{ ...typography.captionMedium, color: colors.gray400 }}>저장 {savedDate}</span>
       </div>
 
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          style={{
+            alignSelf: 'flex-start',
+            background: colors.brand500,
+            border: 'none',
+            borderRadius: radius.full,
+            color: colors.white,
+            ...typography.bodyTextXLSemiBold,
+            cursor: 'pointer',
+            padding: `${spacing.sm}px ${spacing.lg}px`,
+          }}
+        >
+          다시 풀기
+        </button>
+      )}
+
       {hasExplanation && (
         <>
           <button
@@ -56,6 +76,7 @@ export default function SavedProblemCard({ problem }: Props) {
               ...typography.bodyTextLgMedium,
               cursor: 'pointer',
               padding: 0,
+              paddingLeft: spacing.lg,
             }}
           >
             {isExpanded ? '해설 닫기 ▴' : '해설 보기 ▾'}
