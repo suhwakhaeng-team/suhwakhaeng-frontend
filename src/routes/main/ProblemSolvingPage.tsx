@@ -144,7 +144,11 @@ export default function ProblemSolvingPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSubmit();
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void handleSubmit();
+    }
   };
 
   // --- 로딩 ---

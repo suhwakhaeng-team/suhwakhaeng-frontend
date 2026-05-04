@@ -13,7 +13,7 @@ export default function MainLayout() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ display: 'flex', gap: '16px', padding: '12px 24px', borderBottom: '1px solid #eee' }}>
-        <strong style={{ marginRight: 'auto' }}>수확행</strong>
+        <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => navigate('/main/home')}>수확행</strong>
         {navItems.map((item) => (
           <button
             key={item.path}
