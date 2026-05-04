@@ -6,6 +6,7 @@ import { fetchConcept } from '../../lib/conceptClient';
 import { fetchSavedProblems } from '../../lib/savedProblemClient';
 import type { ConceptNote } from '../../types/concept';
 import type { SavedProblem } from '../../types/savedProblem';
+import type { AdaptiveQuestion } from '../../types/adaptive';
 import ConceptMarkdown from '../../components/review/ConceptMarkdown';
 import SavedProblemCard from '../../components/review/SavedProblemCard';
 
@@ -61,6 +62,20 @@ export default function ReviewDetailPage() {
         setSavedError(msg);
       })
       .finally(() => setSavedLoading(false));
+  };
+
+  const handleRetry = (problem: SavedProblem) => {
+    const question: AdaptiveQuestion = {
+      questionId: problem.questionId,
+      content: problem.content,
+      answer: problem.answer,
+      explanation: problem.explanation,
+      difficulty: null,
+      tags: problem.tagId != null
+        ? [{ tagId: problem.tagId, chapterId: 0, chapterName: '', tagName: problem.tagName ?? '', baseColor: '' }]
+        : [],
+    };
+    navigate('/main/problem/start', { state: { questions: [question], currentIndex: 0 } });
   };
 
   useEffect(() => {
@@ -229,7 +244,11 @@ export default function ReviewDetailPage() {
             </div>
           )}
           {savedProblems.map((problem) => (
-            <SavedProblemCard key={problem.savedId} problem={problem} />
+            <SavedProblemCard
+              key={problem.savedId}
+              problem={problem}
+              onRetry={() => handleRetry(problem)}
+            />
           ))}
         </section>
       </div>
