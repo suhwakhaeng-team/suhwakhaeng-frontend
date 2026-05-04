@@ -77,6 +77,10 @@ export default function NicknameInputPage() {
           }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === 'Enter' && isButtonEnabled) void handleSubmit();
+          }}
           placeholder="닉네임 (2~7자)"
           autoComplete="off"
           disabled={isSubmitting}

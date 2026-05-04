@@ -253,6 +253,10 @@ export default function LevelTestPage() {
           type="text"
           value={currentAnswer}
           onChange={(e) => handleAnswerChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === 'Enter') handleNext();
+          }}
           placeholder="답을 입력하세요"
           disabled={isSubmitting}
           style={{
