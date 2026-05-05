@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import type { CurriculumMapItem } from '../../types/curriculumMap';
 import CurriculumMapCell from './CurriculumMapCell';
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export default function CurriculumMapSection({ items }: Props) {
+  const navigate = useNavigate();
+
   return (
     <section
       style={{
@@ -18,9 +21,24 @@ export default function CurriculumMapSection({ items }: Props) {
         gap: spacing.lg,
       }}
     >
-      <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-        전체 커리큘럼
-      </h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
+          전체 커리큘럼
+        </h3>
+        <button
+          onClick={() => navigate('/main/topology')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            ...typography.captionSemiBold,
+            color: colors.brand500,
+            padding: 0,
+          }}
+        >
+          개념 지도 보기 →
+        </button>
+      </div>
 
       {items.length === 0 ? (
         <div

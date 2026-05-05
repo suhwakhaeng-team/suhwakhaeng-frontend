@@ -19,6 +19,8 @@ import MyPagePage from './main/MyPagePage';
 import AIConceptPage from './main/AIConceptPage';
 import ReviewListPage from './main/ReviewListPage';
 import ReviewDetailPage from './main/ReviewDetailPage';
+import { lazy, Suspense } from 'react';
+const TopologyPage = lazy(() => import('./main/TopologyPage'));
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +58,7 @@ export const router = createBrowserRouter([
       { path: 'ai-concept', element: <AIConceptPage /> },
       { path: 'review', element: <ReviewListPage /> },
       { path: 'review/:tagId', element: <ReviewDetailPage /> },
+      { path: 'topology', element: <Suspense fallback={null}><TopologyPage /></Suspense> },
     ],
   },
   {
