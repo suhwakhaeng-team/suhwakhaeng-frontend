@@ -9,8 +9,12 @@ export default function SubjectSelectionPage() {
   const { setSubject } = useOnboarding();
 
   const handleSelect = (subject: string) => {
+    if (subject === '미적분' || subject === '기하') {
+      alert(`${subject}은(는) 아직 준비 중입니다.\n현재는 확률과 통계만 이용 가능합니다.`);
+      return;
+    }
     setSubject(subject);
-    navigate('/onboarding/unit');
+    navigate('/onboarding/nickname'); // 단원 선택 화면 비활성화 중 (UnitSelectionPage 주석처리 참고)
   };
 
   return (

@@ -1,9 +1,22 @@
+// 단원 선택 화면 — 현재 미사용으로 주석처리 (2026-05-05)
+// 확률과 통계 단일 과목만 지원하므로 단원 선택 단계 불필요.
+// 복원 시: SubjectSelectionPage navigate → '/onboarding/unit' 로 되돌리고 아래 원본 컴포넌트 주석 해제.
+
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+export default function UnitSelectionPage() {
+  const navigate = useNavigate();
+  useEffect(() => { navigate('/onboarding/nickname', { replace: true }); }, [navigate]);
+  return null;
+}
+
+/*
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 
-// iOS/BE 시드와 통일. 전체선택은 baseUnits 모두 토글하는 가상 옵션.
 const SELECT_ALL = '전체선택';
 const baseUnits = ['경우의 수', '확률', '통계'];
 const unitOptions = [SELECT_ALL, ...baseUnits];
@@ -13,9 +26,6 @@ export default function UnitSelectionPage() {
   const { setUnits } = useOnboarding();
   const [selected, setSelected] = useState<string[]>([]);
 
-  // iOS UnitSelectionReducer 의 토글 로직 포팅 (Reducer:42-60).
-  // - 전체선택 클릭: 모든 baseUnits 가 선택돼 있으면 전부 해제, 아니면 전부 선택.
-  // - 개별 단원 클릭: 토글 후 baseUnits 가 모두 선택되면 SELECT_ALL 자동 ON, 아니면 OFF.
   const toggle = (unit: string) => {
     setSelected((prev) => {
       if (unit === SELECT_ALL) {
@@ -33,13 +43,11 @@ export default function UnitSelectionPage() {
   };
 
   const handleNext = () => {
-    // 서버/컨텍스트에는 가상 옵션 SELECT_ALL 을 빼고 실제 단원만 저장.
     const actualUnits = selected.filter((u) => u !== SELECT_ALL);
     setUnits(actualUnits);
     navigate('/onboarding/nickname');
   };
 
-  // 실제 단원 1개 이상 선택돼야 진행 가능.
   const canProceed = selected.some((u) => u !== SELECT_ALL);
 
   return (
@@ -101,3 +109,4 @@ export default function UnitSelectionPage() {
     </div>
   );
 }
+*/
