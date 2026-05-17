@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { gradeLabel as formatGrade } from '../../types/home';
+import ProfileEditModal from './ProfileEditModal';
 
 const TERMS_URL = 'https://dazzling-card-d4f.notion.site/34d69b69e90380ee9eace2393373a6f5?source=copy_link';
 const SUPPORT_URL = 'https://dazzling-card-d4f.notion.site/Suhwakhaeng-34d69b69e9038039a02ec9a9bb50afce?source=copy_link';
 
 export default function MyPagePage() {
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateUser } = useAuth();
   const displayName = user?.nickname || user?.name || '닉네임';
   const gradeLabel = formatGrade(user?.grade) ?? '';
+  const [editOpen, setEditOpen] = useState(false);
 
   const handleItemClick = async (item: string) => {
     if (item === '로그아웃') {
@@ -38,14 +41,18 @@ export default function MyPagePage() {
     <div style={{ maxWidth: '480px', margin: '0 auto' }}>
       <h2>마이페이지</h2>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '24px', padding: '20px', background: '#f9f9f9', borderRadius: '12px' }}>
+      <div
+        onClick={() => setEditOpen(true)}
+        style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '24px', padding: '20px', background: '#f9f9f9', borderRadius: '12px', cursor: 'pointer' }}
+      >
         <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
           👤
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <p style={{ fontWeight: 'bold', fontSize: '18px' }}>{displayName}</p>
           <p style={{ color: '#888' }}>{gradeLabel}</p>
         </div>
+        <span style={{ fontSize: '18px', color: '#888' }} aria-label="프로필 수정">✏️</span>
       </div>
 
       <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
@@ -59,6 +66,19 @@ export default function MyPagePage() {
           </button>
         ))}
       </div>
+
+      {editOpen && (
+        <ProfileEditModal
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          currentNickname={user?.nickname || user?.name || ''}
+          currentGrade={user?.grade ?? null}
+          uid={user?.uid || ''}
+          onSaved={(nickname, grade) => {
+            updateUser({ nickname, grade });
+          }}
+        />
+      )}
     </div>
   );
 }
