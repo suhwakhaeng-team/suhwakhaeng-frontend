@@ -52,7 +52,7 @@ export default function MyPagePage() {
           <p style={{ fontWeight: 'bold', fontSize: '18px' }}>{displayName}</p>
           <p style={{ color: '#888' }}>{gradeLabel}</p>
         </div>
-        <span style={{ fontSize: '18px', color: '#888' }} aria-label="프로필 수정">✏️</span>
+        <span style={{ fontSize: '14px', color: '#6366f1', fontWeight: 600 }}>수정</span>
       </div>
 
       <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '1px' }}>
