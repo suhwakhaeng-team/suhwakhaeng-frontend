@@ -120,7 +120,8 @@ export default function LevelTestPage() {
     // 그때 재시도하게 두고, 여기서는 학습 진행을 막지 않는다.
     const gradeInt = gradeStringToInt(grade);
     const unitsCsv = units.length ? units.join(',') : undefined;
-    void markOnboardingCompleted(gradeInt, subject ?? undefined, unitsCsv).catch(() => {});
+    // user.grade 반영 후 navigate해야 MyPage 등에서 즉시 올바른 학년이 표시됨
+    await markOnboardingCompleted(gradeInt, subject ?? undefined, unitsCsv).catch(() => {});
     navigate('/onboarding/result');
   };
 

@@ -1,4 +1,5 @@
 import { useAuth } from '../../contexts/AuthContext';
+import { gradeLabel as formatGrade } from '../../types/home';
 
 const TERMS_URL = 'https://dazzling-card-d4f.notion.site/34d69b69e90380ee9eace2393373a6f5?source=copy_link';
 const SUPPORT_URL = 'https://dazzling-card-d4f.notion.site/Suhwakhaeng-34d69b69e9038039a02ec9a9bb50afce?source=copy_link';
@@ -6,7 +7,7 @@ const SUPPORT_URL = 'https://dazzling-card-d4f.notion.site/Suhwakhaeng-34d69b69e
 export default function MyPagePage() {
   const { user, logout, deleteAccount } = useAuth();
   const displayName = user?.nickname || user?.name || '닉네임';
-  const gradeLabel = user?.grade ? `고${user.grade}` : '';
+  const gradeLabel = formatGrade(user?.grade) ?? '';
 
   const handleItemClick = async (item: string) => {
     if (item === '로그아웃') {
