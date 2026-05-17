@@ -13,6 +13,17 @@ export interface User {
 
 // 온보딩 PUT/GET 응답 — `AuthContext.markOnboardingCompleted` 가 사용한다.
 // BE `OnboardingStatusResponse` 와 1:1 매핑.
+// BE `UserController` PATCH 엔드포인트 응답. `name` 컬럼을 닉네임 목적으로 재활용.
+export interface UserSummaryResponse {
+  userId: number;
+  uid: string;
+  email: string | null;
+  provider: string | null;
+  name: string;
+  grade: number | null;
+  isTested: boolean;
+}
+
 export interface OnboardingStatusResponse {
   uid: string;
   isTested: boolean;
