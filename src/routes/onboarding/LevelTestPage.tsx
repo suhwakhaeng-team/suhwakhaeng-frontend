@@ -55,7 +55,10 @@ export default function LevelTestPage() {
 
   const loadProblems = useCallback(async () => {
     setLoadState('loading');
-    const response = await apiClient.get<LearningProblemDTO[]>('/learning/problems');
+    // 학년이 정해졌으면 해당 학년 이하 단원 문제만 받는다 (BE 가 grade<= 필터 + 12문제 상한 적용).
+    const gradeInt = gradeStringToInt(grade);
+    const path = gradeInt != null ? `/learning/problems?grade=${gradeInt}` : '/learning/problems';
+    const response = await apiClient.get<LearningProblemDTO[]>(path);
     if (!mountedRef.current) return;
     if (!response.success || !response.data) {
       setLoadState('error');
@@ -70,7 +73,7 @@ export default function LevelTestPage() {
     setCurrentIndex(0);
     setAnswers({});
     setLoadState('ready');
-  }, []);
+  }, [grade]);
 
   useEffect(() => {
     void loadProblems();
