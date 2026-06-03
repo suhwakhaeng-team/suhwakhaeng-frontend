@@ -4,6 +4,7 @@ import { apiClient } from '../../lib/apiClient';
 import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
+import ProblemContent from '../../components/ProblemContent';
 import type {
   LearningProblem,
   LearningProblemDTO,
@@ -247,16 +248,15 @@ export default function LevelTestPage() {
         >
           {currentProblem?.title}
         </h3>
-        <p
+        <div
           style={{
             ...typography.bodyTextXLRegular,
             color: colors.gray700,
             margin: 0,
-            whiteSpace: 'pre-wrap',
           }}
         >
-          {currentProblem?.description}
-        </p>
+          <ProblemContent content={currentProblem?.description ?? ''} />
+        </div>
 
         <input
           type="text"

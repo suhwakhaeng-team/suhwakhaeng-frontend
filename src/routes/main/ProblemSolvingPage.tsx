@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
+import ProblemContent from '../../components/ProblemContent';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
 
 interface LocationState {
@@ -254,7 +255,7 @@ export default function ProblemSolvingPage() {
           lineHeight: 1.7,
         }}
       >
-        {currentQuestion.content}
+        <ProblemContent content={currentQuestion.content} />
       </div>
 
       {/* 오답 배지 */}
