@@ -48,11 +48,30 @@ export default function LevelTestPage() {
 
   const mountedRef = useRef(true);
   const submittingRef = useRef(false);
+  // 문항별 풀이시간(초) 누적: problemId → 초. enterAtRef = 현재 문항 진입 시각(ms).
+  const elapsedRef = useRef<Record<number, number>>({});
+  const enterAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
+
+  // 현재 문항 체류시간을 누적하고 타이머를 리셋한다 (다음/이전 이동·제출 직전 호출).
+  const accrue = useCallback(() => {
+    const p = problems[currentIndex];
+    const now = Date.now();
+    if (p) {
+      const sec = Math.round((now - enterAtRef.current) / 1000);
+      elapsedRef.current[p.id] = (elapsedRef.current[p.id] ?? 0) + Math.max(0, sec);
+    }
+    enterAtRef.current = now;
+  }, [problems, currentIndex]);
+
+  // 문항이 바뀌면 진입 시각 리셋(체류시간 측정 시작점).
+  useEffect(() => {
+    enterAtRef.current = Date.now();
+  }, [currentIndex]);
 
   const loadProblems = useCallback(async () => {
     setLoadState('loading');
@@ -78,6 +97,8 @@ export default function LevelTestPage() {
     setProblems(response.data);
     setCurrentIndex(0);
     setAnswers({});
+    elapsedRef.current = {};
+    enterAtRef.current = Date.now();
     setLoadState('ready');
   }, [grade, startNodeLevel]);
 
@@ -100,6 +121,7 @@ export default function LevelTestPage() {
     submittingRef.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
+    accrue(); // 마지막 문항 체류시간 마감
 
     const items: AnswerItem[] = problems.map((p) => {
       const userAnswer = answers[p.id] ?? '';
@@ -108,10 +130,11 @@ export default function LevelTestPage() {
         topic: p.topic,
         userAnswer,
         correct: normalize(p.answer) === normalize(userAnswer),
+        timeTakenSec: elapsedRef.current[p.id] ?? 0,
       };
     });
 
-    const body: AnswerSubmissionRequest = { answers: items };
+    const body: AnswerSubmissionRequest = { answers: items, nodeLevel: startNodeLevel };
     const response = await apiClient.post<LearningRouteResponse>('/learning/submit', body);
 
     submittingRef.current = false;
@@ -139,12 +162,16 @@ export default function LevelTestPage() {
     if (isLastProblem) {
       void submitAnswers();
     } else {
+      accrue();
       setCurrentIndex((i) => i + 1);
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+    if (currentIndex > 0) {
+      accrue();
+      setCurrentIndex((i) => i - 1);
+    }
   };
 
   if (loadState === 'loading') {
