@@ -35,7 +35,7 @@ function gradeStringToInt(g: Grade | null): number | undefined {
 
 export default function LevelTestPage() {
   const navigate = useNavigate();
-  const { grade, subject, units, setLevelTestResult } = useOnboarding();
+  const { grade, subject, units, startNodeLevel, setLevelTestResult } = useOnboarding();
   const { markOnboardingCompleted } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -56,8 +56,13 @@ export default function LevelTestPage() {
   const loadProblems = useCallback(async () => {
     setLoadState('loading');
     // 학년이 정해졌으면 해당 학년 이하 단원 문제만 받는다 (BE 가 grade<= 필터 + 12문제 상한 적용).
+    // nodeLevel(BN/AN/SAN): test-intro에서 고른 시작 계층 문제만 받는다.
     const gradeInt = gradeStringToInt(grade);
-    const path = gradeInt != null ? `/learning/problems?grade=${gradeInt}` : '/learning/problems';
+    const params = new URLSearchParams();
+    if (gradeInt != null) params.set('grade', String(gradeInt));
+    if (startNodeLevel) params.set('nodeLevel', startNodeLevel);
+    const qs = params.toString();
+    const path = qs ? `/learning/problems?${qs}` : '/learning/problems';
     const response = await apiClient.get<LearningProblemDTO[]>(path);
     if (!mountedRef.current) return;
     if (!response.success || !response.data) {
@@ -73,7 +78,7 @@ export default function LevelTestPage() {
     setCurrentIndex(0);
     setAnswers({});
     setLoadState('ready');
-  }, [grade]);
+  }, [grade, startNodeLevel]);
 
   useEffect(() => {
     void loadProblems();
