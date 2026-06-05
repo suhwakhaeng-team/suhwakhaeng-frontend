@@ -6,14 +6,19 @@ import type { LearningRouteResponse } from '../types/learning';
 
 export type Grade = 'middle1' | 'middle2' | 'middle3' | 'high1' | 'high2' | 'high3';
 
+// 레벨테스트 시작 계층(BN 복합 / AN 핵심 / SAN 기초). UT 에서 어느 계층부터 푸는 게 좋은지 비교용.
+export type StartNodeLevel = 'BN' | 'AN' | 'SAN';
+
 interface OnboardingContextValue {
   grade: Grade | null;
   subject: string | null;
   units: string[];
+  startNodeLevel: StartNodeLevel;
   levelTestResult: LearningRouteResponse | null;
   setGrade: (grade: Grade) => void;
   setSubject: (subject: string) => void;
   setUnits: (units: string[]) => void;
+  setStartNodeLevel: (level: StartNodeLevel) => void;
   setLevelTestResult: (result: LearningRouteResponse) => void;
   reset: () => void;
 }
@@ -24,22 +29,26 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [grade, setGradeState] = useState<Grade | null>(null);
   const [subject, setSubjectState] = useState<string | null>(null);
   const [units, setUnitsState] = useState<string[]>([]);
+  // 기본값 SAN: 가장 기초 계층부터 시작(가장 안전). 사용자가 test-intro에서 변경 가능.
+  const [startNodeLevel, setStartNodeLevelState] = useState<StartNodeLevel>('SAN');
   const [levelTestResult, setLevelTestResultState] = useState<LearningRouteResponse | null>(null);
 
   const setGrade = useCallback((g: Grade) => setGradeState(g), []);
   const setSubject = useCallback((s: string) => setSubjectState(s), []);
   const setUnits = useCallback((u: string[]) => setUnitsState(u), []);
+  const setStartNodeLevel = useCallback((l: StartNodeLevel) => setStartNodeLevelState(l), []);
   const setLevelTestResult = useCallback((r: LearningRouteResponse) => setLevelTestResultState(r), []);
   const reset = useCallback(() => {
     setGradeState(null);
     setSubjectState(null);
     setUnitsState([]);
+    setStartNodeLevelState('SAN');
     setLevelTestResultState(null);
   }, []);
 
   return (
     <OnboardingContext.Provider
-      value={{ grade, subject, units, levelTestResult, setGrade, setSubject, setUnits, setLevelTestResult, reset }}
+      value={{ grade, subject, units, startNodeLevel, levelTestResult, setGrade, setSubject, setUnits, setStartNodeLevel, setLevelTestResult, reset }}
     >
       {children}
     </OnboardingContext.Provider>

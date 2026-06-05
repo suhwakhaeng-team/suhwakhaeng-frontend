@@ -5,7 +5,6 @@ import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import ProblemContent from '../../components/ProblemContent';
-import BnLevelTest from './BnLevelTest';
 import type {
   LearningProblem,
   LearningProblemDTO,
@@ -15,13 +14,41 @@ import type {
 } from '../../types/learning';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
+// 현재 보여주는 문항의 단계: BN(복합) 본문제 / AN(하위 개념) drill-down.
+type Phase = 'bn' | 'an';
+
+// BN 출제 순서를 단원명으로 못박는다 (노션 Q1~Q10 = 확률 영역 → 통계 영역).
+// BN 은 고정된 10문제라 이 배열이 진실 원천. BE 가 어떤 순서로 주든 FE 가 이 순서로 재정렬하므로
+// BE 영역계산/적재순서/빌드 상태와 무관하게 항상 일정하다. 목록에 없는 단원은 뒤로(원래 순서 유지).
+const BN_CHAPTER_ORDER: string[] = [
+  '경우의 수 기초',
+  '여러 가지 순열 및 여사건 제한형',
+  '기하학적 나열 및 공간 제약형',
+  '중복조합 및 함수의 개수 고난도 킬러형',
+  '이항 구조 전개 및 대수적 확률 연산형',
+  '조건부확률 및 반복 독립시행 융합형',
+  '중등 기술 통계 및 산포도 복합형',
+  '이산확률변수 통계량 및 선형 변환형',
+  '연속확률밀도 및 정규분포 표준화 연계형',
+  '통계적 표본 추출 및 모평균 신뢰구간 추정형',
+];
+
+function bnOrderIndex(topic: string): number {
+  const i = BN_CHAPTER_ORDER.indexOf((topic ?? '').trim());
+  return i === -1 ? BN_CHAPTER_ORDER.length : i;
+}
+
+// 받은 BN 문제를 단원명 기준으로 고정 순서 정렬 (Array.sort 는 안정 정렬 → 동순위는 원래 순서 유지).
+function sortBnByChapter(problems: LearningProblem[]): LearningProblem[] {
+  return [...problems].sort((a, b) => bnOrderIndex(a.topic) - bnOrderIndex(b.topic));
+}
 
 // 답 비교는 공백과 대소문자를 무시한다.
 function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
-// 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6). plan 문서의 통일된 매핑.
+// 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6).
 function gradeStringToInt(g: Grade | null): number | undefined {
   if (!g) return undefined;
   const map: Record<Grade, number> = {
@@ -35,151 +62,156 @@ function gradeStringToInt(g: Grade | null): number | undefined {
   return map[g];
 }
 
-// 시작 계층에 따라 분기: BN(복합)은 drill-down 전용 컴포넌트, AN/SAN 은 기존 배치 흐름.
-export default function LevelTestPage() {
-  const { startNodeLevel } = useOnboarding();
-  return startNodeLevel === 'BN' ? <BnLevelTest /> : <BatchLevelTest />;
-}
-
-function BatchLevelTest() {
+/**
+ * BN(복합개념) drill-down 진단.
+ *
+ * 흐름: BN 문제를 1개씩(확률→통계, 노션순) 출제 →
+ *  - 맞으면 다음 BN
+ *  - 틀리면 그 BN의 하위 AN 문제 1개 출제(GET /learning/drilldown-an)
+ *      · AN 맞음(4.1) / AN 틀림(4.2) 모두 기록만 하고 다음 BN (상/중/하 판정은 BE S3)
+ *      · 해당 AN 이 없으면 그냥 다음 BN
+ * BN 전부 소진 시 누적 답안을 POST /learning/submit (nodeLevel=BN).
+ *
+ * AN/SAN 직접선택 모드는 기존 배치 흐름(LevelTestPage)을 그대로 사용한다 — 본 컴포넌트는 BN 전용.
+ */
+export default function BnLevelTest() {
   const navigate = useNavigate();
-  const { grade, subject, units, startNodeLevel, setLevelTestResult } = useOnboarding();
+  const { grade, subject, units, setLevelTestResult } = useOnboarding();
   const { markOnboardingCompleted } = useAuth();
 
   const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [problems, setProblems] = useState<LearningProblem[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [bnProblems, setBnProblems] = useState<LearningProblem[]>([]);
+  const [bnIndex, setBnIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('bn');
+  const [anProblem, setAnProblem] = useState<LearningProblem | null>(null);
+  const [currentAnswer, setCurrentAnswer] = useState('');
+  const [accumulated, setAccumulated] = useState<AnswerItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
-  const submittingRef = useRef(false);
-  // 문항별 풀이시간(초) 누적: problemId → 초. enterAtRef = 현재 문항 진입 시각(ms).
-  const elapsedRef = useRef<Record<number, number>>({});
-  const enterAtRef = useRef<number>(0);
+  const busyRef = useRef(false); // 다음 처리(채점·drill fetch·제출) 중복 방지
+  const enterAtRef = useRef<number>(0); // 현재 문항 진입 시각(ms). 로드/문항 변경 effect 에서 세팅.
 
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  // 현재 문항 체류시간을 누적하고 타이머를 리셋한다 (다음/이전 이동·제출 직전 호출).
-  const accrue = useCallback(() => {
-    const p = problems[currentIndex];
-    const now = Date.now();
-    if (p) {
-      const sec = Math.round((now - enterAtRef.current) / 1000);
-      elapsedRef.current[p.id] = (elapsedRef.current[p.id] ?? 0) + Math.max(0, sec);
-    }
-    enterAtRef.current = now;
-  }, [problems, currentIndex]);
+  // 현재 보여줄 문항.
+  const currentProblem = phase === 'an' ? anProblem : bnProblems[bnIndex];
 
-  // 문항이 바뀌면 진입 시각 리셋(체류시간 측정 시작점).
+  // 문항이 바뀌면 풀이시간 측정 시작점 리셋.
   useEffect(() => {
     enterAtRef.current = Date.now();
-  }, [currentIndex]);
+  }, [bnIndex, phase, anProblem]);
 
-  const loadProblems = useCallback(async () => {
+  const loadBnProblems = useCallback(async () => {
     setLoadState('loading');
-    // 학년이 정해졌으면 해당 학년 이하 단원 문제만 받는다 (BE 가 grade<= 필터 + 12문제 상한 적용).
-    // nodeLevel(BN/AN/SAN): test-intro에서 고른 시작 계층 문제만 받는다.
     const gradeInt = gradeStringToInt(grade);
     const params = new URLSearchParams();
     if (gradeInt != null) params.set('grade', String(gradeInt));
-    if (startNodeLevel) params.set('nodeLevel', startNodeLevel);
-    const qs = params.toString();
-    const path = qs ? `/learning/problems?${qs}` : '/learning/problems';
-    const response = await apiClient.get<LearningProblemDTO[]>(path);
+    params.set('nodeLevel', 'BN');
+    const response = await apiClient.get<LearningProblemDTO[]>(`/learning/problems?${params.toString()}`);
     if (!mountedRef.current) return;
     if (!response.success || !response.data) {
       setLoadState('error');
       return;
     }
     if (response.data.length === 0) {
-      setProblems([]);
+      setBnProblems([]);
       setLoadState('empty');
       return;
     }
-    setProblems(response.data);
-    setCurrentIndex(0);
-    setAnswers({});
-    elapsedRef.current = {};
+    // BE 응답 순서와 무관하게 단원명 기준 고정 순서로 출제 (확률 영역 → 통계 영역).
+    setBnProblems(sortBnByChapter(response.data));
+    setBnIndex(0);
+    setPhase('bn');
+    setAnProblem(null);
+    setCurrentAnswer('');
+    setAccumulated([]);
     enterAtRef.current = Date.now();
     setLoadState('ready');
-  }, [grade, startNodeLevel]);
+  }, [grade]);
 
   useEffect(() => {
-    void loadProblems();
-  }, [loadProblems]);
+    void loadBnProblems();
+  }, [loadBnProblems]);
 
-  const currentProblem = problems[currentIndex];
-  const currentAnswer = currentProblem ? answers[currentProblem.id] ?? '' : '';
-  const canProceed = currentAnswer.trim().length > 0;
-  const isLastProblem = currentIndex === problems.length - 1;
-
-  const handleAnswerChange = (value: string) => {
-    if (!currentProblem) return;
-    setAnswers((prev) => ({ ...prev, [currentProblem.id]: value }));
-  };
-
-  const submitAnswers = async () => {
-    if (submittingRef.current) return;
-    submittingRef.current = true;
+  const submitAll = useCallback(async (answers: AnswerItem[]) => {
     setIsSubmitting(true);
     setSubmitError(null);
-    accrue(); // 마지막 문항 체류시간 마감
-
-    const items: AnswerItem[] = problems.map((p) => {
-      const userAnswer = answers[p.id] ?? '';
-      return {
-        problemId: p.id,
-        topic: p.topic,
-        userAnswer,
-        correct: normalize(p.answer) === normalize(userAnswer),
-        timeTakenSec: elapsedRef.current[p.id] ?? 0,
-      };
-    });
-
-    const body: AnswerSubmissionRequest = { answers: items, nodeLevel: startNodeLevel };
+    const body: AnswerSubmissionRequest = { answers, nodeLevel: 'BN' };
     const response = await apiClient.post<LearningRouteResponse>('/learning/submit', body);
-
-    submittingRef.current = false;
     if (!mountedRef.current) return;
-    setIsSubmitting(false);
-
     if (!response.success || !response.data) {
+      setIsSubmitting(false);
       setSubmitError(response.error || '결과 제출에 실패했습니다. 다시 시도해주세요.');
       return;
     }
-
     setLevelTestResult(response.data);
-    // 서버에 온보딩 완료(isTested=true) + 학년/과목/단원 일괄 기록.
-    // 이 호출이 실패하면 재로그인/재시작 시 다시 온보딩으로 빠지므로
-    // 그때 재시도하게 두고, 여기서는 학습 진행을 막지 않는다.
     const gradeInt = gradeStringToInt(grade);
     const unitsCsv = units.length ? units.join(',') : undefined;
-    // user.grade 반영 후 navigate해야 MyPage 등에서 즉시 올바른 학년이 표시됨
     await markOnboardingCompleted(gradeInt, subject ?? undefined, unitsCsv).catch(() => {});
     navigate('/onboarding/result');
-  };
+  }, [grade, subject, units, setLevelTestResult, markOnboardingCompleted, navigate]);
 
-  const handleNext = () => {
-    if (!canProceed) return;
-    if (isLastProblem) {
-      void submitAnswers();
+  // BN 다음 문제로 진행(없으면 제출). drill 상태를 초기화한다.
+  const advanceToNextBn = useCallback((answers: AnswerItem[]) => {
+    setAnProblem(null);
+    setPhase('bn');
+    if (bnIndex + 1 >= bnProblems.length) {
+      void submitAll(answers);
     } else {
-      accrue();
-      setCurrentIndex((i) => i + 1);
+      setBnIndex((i) => i + 1);
+      setCurrentAnswer('');
     }
-  };
+  }, [bnIndex, bnProblems.length, submitAll]);
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      accrue();
-      setCurrentIndex((i) => i - 1);
+  const handleNext = useCallback(async () => {
+    const problem = currentProblem;
+    if (!problem || busyRef.current || isSubmitting) return;
+    if (currentAnswer.trim().length === 0) return;
+    busyRef.current = true;
+
+    const timeTakenSec = Math.max(0, Math.round((Date.now() - enterAtRef.current) / 1000));
+    const correct = normalize(problem.answer) === normalize(currentAnswer);
+    const item: AnswerItem = {
+      problemId: problem.id,
+      topic: problem.topic,
+      userAnswer: currentAnswer,
+      correct,
+      timeTakenSec,
+    };
+    const nextAccumulated = [...accumulated, item];
+    setAccumulated(nextAccumulated);
+
+    // AN(하위 개념) 단계면 결과만 기록하고 다음 BN으로.
+    if (phase === 'an') {
+      busyRef.current = false;
+      advanceToNextBn(nextAccumulated);
+      return;
     }
-  };
+
+    // BN 본문제: 맞으면 다음 BN, 틀리면 drill-down AN 요청.
+    if (correct) {
+      busyRef.current = false;
+      advanceToNextBn(nextAccumulated);
+      return;
+    }
+
+    const drill = await apiClient.get<LearningProblemDTO>(`/learning/drilldown-an?questionId=${problem.id}`);
+    busyRef.current = false;
+    if (!mountedRef.current) return;
+    if (drill.success && drill.data) {
+      setAnProblem(drill.data);
+      setPhase('an');
+      setCurrentAnswer('');
+    } else {
+      // 해당 AN 문제가 없으면 그냥 다음 BN.
+      advanceToNextBn(nextAccumulated);
+    }
+  }, [currentProblem, currentAnswer, accumulated, phase, isSubmitting, advanceToNextBn]);
 
   if (loadState === 'loading') {
     return (
@@ -200,7 +232,7 @@ function BatchLevelTest() {
           문제를 불러올 수 없습니다.
         </p>
         <button
-          onClick={() => void loadProblems()}
+          onClick={() => void loadBnProblems()}
           style={{
             marginTop: spacing.lg,
             padding: `${spacing.md}px ${spacing.xl}px`,
@@ -222,13 +254,15 @@ function BatchLevelTest() {
     return (
       <div style={{ textAlign: 'center', padding: spacing.x3l }}>
         <p style={{ ...typography.bodyTextXLRegular, color: colors.gray500 }}>
-          출제된 문제가 없습니다.
+          출제된 복합개념 문제가 없습니다.
         </p>
       </div>
     );
   }
 
-  const progressPercent = ((currentIndex + 1) / problems.length) * 100;
+  // 진행률: BN 기준(하위 AN 풀이는 같은 BN 칸 안에서 진행).
+  const progressPercent = ((bnIndex + (phase === 'an' ? 0.5 : 0)) / bnProblems.length) * 100;
+  const canProceed = currentAnswer.trim().length > 0;
 
   return (
     <div style={{ position: 'relative', paddingBottom: 120 }}>
@@ -265,12 +299,14 @@ function BatchLevelTest() {
         <p
           style={{
             ...typography.captionSemiBold,
-            color: colors.brand500,
+            color: phase === 'an' ? colors.gray500 : colors.brand500,
             margin: 0,
             marginBottom: spacing.sm,
           }}
         >
-          문제 {currentIndex + 1} / {problems.length}
+          {phase === 'an'
+            ? '↳ 기초 개념 확인'
+            : `복합개념 ${bnIndex + 1} / ${bnProblems.length}`}
         </p>
         <h3
           style={{
@@ -295,10 +331,10 @@ function BatchLevelTest() {
         <input
           type="text"
           value={currentAnswer}
-          onChange={(e) => handleAnswerChange(e.target.value)}
+          onChange={(e) => setCurrentAnswer(e.target.value)}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
-            if (e.key === 'Enter') handleNext();
+            if (e.key === 'Enter') void handleNext();
           }}
           placeholder="답을 입력하세요"
           disabled={isSubmitting}
@@ -330,28 +366,10 @@ function BatchLevelTest() {
         </p>
       )}
 
-      {/* 네비게이션 버튼 */}
+      {/* 다음/제출 버튼 (drill-down 은 뒤로가기 없음 — 전진형) */}
       <div style={{ display: 'flex', gap: spacing.md, marginTop: spacing.xl }}>
-        {currentIndex > 0 && (
-          <button
-            onClick={handlePrev}
-            disabled={isSubmitting}
-            style={{
-              flex: 1,
-              padding: `${spacing.lg}px 0`,
-              background: colors.gray100,
-              color: colors.gray700,
-              border: 'none',
-              borderRadius: radius.md,
-              ...typography.headingMdBold,
-              cursor: isSubmitting ? 'default' : 'pointer',
-            }}
-          >
-            이전
-          </button>
-        )}
         <button
-          onClick={handleNext}
+          onClick={() => void handleNext()}
           disabled={!canProceed || isSubmitting}
           style={{
             flex: 1,
@@ -364,7 +382,7 @@ function BatchLevelTest() {
             cursor: canProceed && !isSubmitting ? 'pointer' : 'default',
           }}
         >
-          {isSubmitting ? '제출 중...' : isLastProblem ? '제출' : '다음'}
+          {isSubmitting ? '제출 중...' : '다음'}
         </button>
       </div>
 
