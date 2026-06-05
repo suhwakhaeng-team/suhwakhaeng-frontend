@@ -17,6 +17,32 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'error';
 // 현재 보여주는 문항의 단계: BN(복합) 본문제 / AN(하위 개념) drill-down.
 type Phase = 'bn' | 'an';
 
+// BN 출제 순서를 단원명으로 못박는다 (노션 Q1~Q10 = 확률 영역 → 통계 영역).
+// BN 은 고정된 10문제라 이 배열이 진실 원천. BE 가 어떤 순서로 주든 FE 가 이 순서로 재정렬하므로
+// BE 영역계산/적재순서/빌드 상태와 무관하게 항상 일정하다. 목록에 없는 단원은 뒤로(원래 순서 유지).
+const BN_CHAPTER_ORDER: string[] = [
+  '경우의 수 기초',
+  '여러 가지 순열 및 여사건 제한형',
+  '기하학적 나열 및 공간 제약형',
+  '중복조합 및 함수의 개수 고난도 킬러형',
+  '이항 구조 전개 및 대수적 확률 연산형',
+  '조건부확률 및 반복 독립시행 융합형',
+  '중등 기술 통계 및 산포도 복합형',
+  '이산확률변수 통계량 및 선형 변환형',
+  '연속확률밀도 및 정규분포 표준화 연계형',
+  '통계적 표본 추출 및 모평균 신뢰구간 추정형',
+];
+
+function bnOrderIndex(topic: string): number {
+  const i = BN_CHAPTER_ORDER.indexOf((topic ?? '').trim());
+  return i === -1 ? BN_CHAPTER_ORDER.length : i;
+}
+
+// 받은 BN 문제를 단원명 기준으로 고정 순서 정렬 (Array.sort 는 안정 정렬 → 동순위는 원래 순서 유지).
+function sortBnByChapter(problems: LearningProblem[]): LearningProblem[] {
+  return [...problems].sort((a, b) => bnOrderIndex(a.topic) - bnOrderIndex(b.topic));
+}
+
 // 답 비교는 공백과 대소문자를 무시한다.
 function normalize(s: string): string {
   return s.trim().toLowerCase();
@@ -97,7 +123,8 @@ export default function BnLevelTest() {
       setLoadState('empty');
       return;
     }
-    setBnProblems(response.data);
+    // BE 응답 순서와 무관하게 단원명 기준 고정 순서로 출제 (확률 영역 → 통계 영역).
+    setBnProblems(sortBnByChapter(response.data));
     setBnIndex(0);
     setPhase('bn');
     setAnProblem(null);
