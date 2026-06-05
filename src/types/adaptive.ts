@@ -22,6 +22,7 @@ export interface StudySubmitRequest {
   questionId: number;
   isCorrect: boolean;
   timeTakenSec: number;
+  userAnswer?: string; // 사용자가 쓴 답(오답 기록용)
 }
 
 export interface UpdatedMastery {

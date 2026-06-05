@@ -7,8 +7,8 @@ import {
   type ReviewItem,
 } from '../../types/home';
 import { fetchCurriculum } from '../../lib/curriculumClient';
-import { fetchCurriculumOverview } from '../../lib/curriculumOverviewClient';
-import { fetchMasteries, averageProgress, progressLabelFor } from '../../lib/masteryClient';
+import { fetchCurriculumOverview, overallProgress } from '../../lib/curriculumOverviewClient';
+import { progressLabelFor } from '../../lib/masteryClient';
 import { fetchDailyStats } from '../../lib/dailyStatsClient';
 import { fetchReviewItems } from '../../lib/reviewClient';
 import { tokenStorage } from '../../lib/tokenStorage';
@@ -73,20 +73,12 @@ export default function HomePage() {
       });
 
     // 전체 커리큘럼 미니맵 조회. 실패는 조용히 무시 (iOS 와 동일 정책).
+    // 전체 커리큘럼(모든 개념 태그) — 미니맵 + 홈 게이지("전체 개념 대비 이해도") 동시 산출.
     fetchCurriculumOverview(uid)
       .then((items) => {
         if (cancelled) return;
         setCurriculumMapItems(items);
-      })
-      .catch(() => {
-        // 의도적으로 에러 UI 표시하지 않음.
-      });
-
-    // 숙련도 조회 (홈 반원 게이지용). 실패는 조용히 무시.
-    fetchMasteries(uid)
-      .then((masteries) => {
-        if (cancelled) return;
-        const percent = averageProgress(masteries);
+        const percent = overallProgress(items);
         setProgressPercent(percent);
         setProgressLabel(progressLabelFor(percent));
       })

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
+import ProblemContent from '../../components/ProblemContent';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
 
 interface LocationState {
@@ -72,11 +73,16 @@ export default function ProblemSolvingPage() {
     }
   }, [location.key, fetchQuestions]);
 
-  const submitToServer = async (questionId: number, isCorrect: boolean, timeTakenSec: number) => {
+  const submitToServer = async (
+    questionId: number,
+    isCorrect: boolean,
+    timeTakenSec: number,
+    userAnswer: string,
+  ) => {
     const uid = tokenStorage.getUid();
     if (!uid) return null;
 
-    const body: StudySubmitRequest = { uid, questionId, isCorrect, timeTakenSec };
+    const body: StudySubmitRequest = { uid, questionId, isCorrect, timeTakenSec, userAnswer };
     const res = await apiClient.post<StudySubmitResponse>('/adaptive/submit', body);
     return res.success ? res.data : null;
   };
@@ -96,7 +102,7 @@ export default function ProblemSolvingPage() {
     if (isCorrect) {
       submittingRef.current = true;
       setIsSubmitting(true);
-      const submitResponse = await submitToServer(currentQuestion.questionId, true, elapsed);
+      const submitResponse = await submitToServer(currentQuestion.questionId, true, elapsed, answer);
       submittingRef.current = false;
       setIsSubmitting(false);
 
@@ -126,7 +132,7 @@ export default function ProblemSolvingPage() {
     if (newAttemptCount === 2) {
       submittingRef.current = true;
       setIsSubmitting(true);
-      const submitResponse = await submitToServer(currentQuestion.questionId, false, elapsed);
+      const submitResponse = await submitToServer(currentQuestion.questionId, false, elapsed, answer);
       submittingRef.current = false;
       setIsSubmitting(false);
 
@@ -254,7 +260,7 @@ export default function ProblemSolvingPage() {
           lineHeight: 1.7,
         }}
       >
-        {currentQuestion.content}
+        <ProblemContent content={currentQuestion.content} />
       </div>
 
       {/* 오답 배지 */}

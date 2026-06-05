@@ -16,10 +16,12 @@ export interface AnswerItem {
   topic: string;
   userAnswer: string;
   correct: boolean;
+  timeTakenSec?: number; // 문항 풀이시간(초). 레벨 비교 분석용.
 }
 
 export interface AnswerSubmissionRequest {
   answers: AnswerItem[];
+  nodeLevel?: string; // 시작 계층 BN/AN/SAN (레벨 비교 수집용).
 }
 
 export interface LearningRouteResponse {
