@@ -4,7 +4,8 @@ import { apiClient } from '../../lib/apiClient';
 import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
-import ProblemContent from '../../components/ProblemContent';
+import QuestionPrompt from '../../components/QuestionPrompt';
+import { parseQuestionChoices } from '../../lib/questionChoices';
 import BnLevelTest from './BnLevelTest';
 import type {
   LearningProblem,
@@ -289,10 +290,10 @@ function BatchLevelTest() {
             margin: 0,
           }}
         >
-          <ProblemContent content={currentProblem?.description ?? ''} />
+          <QuestionPrompt content={currentProblem?.description ?? ''} value={currentAnswer} onChange={handleAnswerChange} disabled={isSubmitting} />
         </div>
 
-        <input
+        {!parseQuestionChoices(currentProblem?.description ?? '') && <input
           type="text"
           value={currentAnswer}
           onChange={(e) => handleAnswerChange(e.target.value)}
@@ -314,7 +315,7 @@ function BatchLevelTest() {
             outline: 'none',
             boxSizing: 'border-box',
           }}
-        />
+        />}
       </div>
 
       {submitError && (

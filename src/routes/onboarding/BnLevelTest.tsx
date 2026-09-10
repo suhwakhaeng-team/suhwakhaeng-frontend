@@ -4,7 +4,8 @@ import { apiClient } from '../../lib/apiClient';
 import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
-import ProblemContent from '../../components/ProblemContent';
+import QuestionPrompt from '../../components/QuestionPrompt';
+import { parseQuestionChoices } from '../../lib/questionChoices';
 import type {
   LearningProblem,
   LearningProblemDTO,
@@ -325,10 +326,10 @@ export default function BnLevelTest() {
             margin: 0,
           }}
         >
-          <ProblemContent content={currentProblem?.description ?? ''} />
+          <QuestionPrompt content={currentProblem?.description ?? ''} value={currentAnswer} onChange={setCurrentAnswer} disabled={isSubmitting} />
         </div>
 
-        <input
+        {!parseQuestionChoices(currentProblem?.description ?? '') && <input
           type="text"
           value={currentAnswer}
           onChange={(e) => setCurrentAnswer(e.target.value)}
@@ -350,7 +351,7 @@ export default function BnLevelTest() {
             outline: 'none',
             boxSizing: 'border-box',
           }}
-        />
+        />}
       </div>
 
       {submitError && (

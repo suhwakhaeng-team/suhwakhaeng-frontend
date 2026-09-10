@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import type { SavedProblem } from '../../types/savedProblem';
+import ProblemContent from '../ProblemContent';
 
 interface Props {
   problem: SavedProblem;
@@ -24,7 +25,7 @@ export default function SavedProblemCard({ problem, onRetry }: Props) {
         gap: spacing.sm,
       }}
     >
-      <p
+      <div
         style={{
           ...typography.bodyTextLgMedium,
           color: colors.gray900,
@@ -33,13 +34,13 @@ export default function SavedProblemCard({ problem, onRetry }: Props) {
           lineHeight: 1.5,
         }}
       >
-        {problem.content}
-      </p>
+        <ProblemContent content={problem.content} />
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ ...typography.captionMedium, color: colors.gray500 }}>정답</span>
-          <span style={{ ...typography.bodyTextXLSemiBold, color: colors.brand600 }}>{problem.answer}</span>
+          <span style={{ ...typography.bodyTextXLSemiBold, color: colors.brand600 }}><ProblemContent content={problem.answer} /></span>
         </div>
         <span style={{ ...typography.captionMedium, color: colors.gray400 }}>저장 {savedDate}</span>
       </div>
@@ -92,7 +93,7 @@ export default function SavedProblemCard({ problem, onRetry }: Props) {
                 lineHeight: 1.7,
               }}
             >
-              {problem.explanation}
+              <ProblemContent content={problem.explanation!} />
             </div>
           )}
         </>

@@ -3,12 +3,15 @@ import type { User, OnboardingStatusResponse } from '../types/auth';
 import { tokenStorage } from '../lib/tokenStorage';
 import { loginWithGoogle } from '../lib/googleAuth';
 import { apiClient, resetAuthState } from '../lib/apiClient';
+import { localTestMode } from '../lib/localMode';
+import type { TokenResponse } from '../types/auth';
 
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credential: string) => Promise<User>;
+  loginLocal: (createNew?: boolean) => Promise<User>;
   logout: () => Promise<void>;
   updateUser: (partial: Partial<User>) => void;
   // 온보딩 완료 PUT — 학년/과목/단원 모두 optional. 미전달 필드는 BE 가 partial update 로 무시.
@@ -56,6 +59,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenStorage.clear();
     setUser(null);
     window.location.href = '/onboarding/login';
+  }, []);
+
+  const loginLocal = useCallback(async (createNew = false): Promise<User> => {
+    if (!localTestMode) throw new Error('로컬 테스트 전용 기능입니다.');
+    resetAuthState();
+    const uid = createNew
+      ? `local-web-${crypto.randomUUID()}`
+      : localStorage.getItem('local_last_test_uid') ?? 'local-web-tester';
+    const res = await apiClient.post<TokenResponse>('/auth/login', {
+      uid, provider: 'local', name: '로컬 테스트', deviceInfo: 'local-web',
+    });
+    if (!res.success || !res.data) throw new Error(res.error ?? '로컬 로그인 실패');
+    const { accessToken, refreshToken, user: localUser } = res.data;
+    tokenStorage.save(accessToken, refreshToken, uid, localUser);
+    localStorage.setItem('local_last_test_uid', uid);
+    setUser(localUser);
+    return localUser;
   }, []);
 
   // 닉네임 등 부분 필드 갱신용. user가 null이면 아무 일도 하지 않는다.
@@ -135,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginLocal,
         logout,
         updateUser,
         markOnboardingCompleted,

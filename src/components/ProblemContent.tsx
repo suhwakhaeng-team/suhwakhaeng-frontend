@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import MathText from './MathText';
 import { colors, radius, spacing, typography } from '../lib/designTokens';
 
 /**
@@ -67,8 +68,9 @@ export default function ProblemContent({ content }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
       {blocks.map((block, idx) => (
         <Fragment key={idx}>
-          {block.kind === 'text' && <div style={{ whiteSpace: 'pre-wrap' }}>{block.text}</div>}
+          {block.kind === 'text' && <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><MathText text={block.text} /></div>}
           {block.kind === 'table' && (
+            <div style={{ maxWidth: '100%', overflowX: 'auto' }}>
             <table
               style={{
                 borderCollapse: 'collapse',
@@ -96,7 +98,7 @@ export default function ProblemContent({ content }: Props) {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {cell}
+                      <MathText text={cell} />
                     </th>
                   ))}
                 </tr>
@@ -114,13 +116,14 @@ export default function ProblemContent({ content }: Props) {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {cell}
+                        <MathText text={cell} />
                       </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Fragment>
       ))}

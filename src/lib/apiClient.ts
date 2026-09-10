@@ -40,6 +40,12 @@ export async function refreshTokens(): Promise<boolean> {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  const liveReadOnly = import.meta.env.DEV && import.meta.env.VITE_LIVE_READONLY === 'true';
+  const method = (options.method ?? 'GET').toUpperCase();
+  const authAction = method === 'POST' && ['/auth/login', '/auth/refresh', '/auth/logout'].includes(path);
+  if (liveReadOnly && !['GET', 'HEAD'].includes(method) && !authAction) {
+    return { success: false, data: null, error: '운영 문제 조회 모드: 답 제출·수정·삭제는 차단되어 있습니다.' };
+  }
   const headers = new Headers(options.headers);
   headers.set('Content-Type', 'application/json');
 
