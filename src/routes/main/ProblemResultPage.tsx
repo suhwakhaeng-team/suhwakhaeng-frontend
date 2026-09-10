@@ -4,6 +4,7 @@ import { colors, spacing, radius, typography } from '../../lib/designTokens';
 import type { AdaptiveQuestion, StudySubmitResponse } from '../../types/adaptive';
 import { saveProblem, unsaveProblem } from '../../lib/savedProblemClient';
 import { tokenStorage } from '../../lib/tokenStorage';
+import ProblemContent from '../../components/ProblemContent';
 
 interface ResultState {
   isCorrect: boolean;
@@ -138,7 +139,7 @@ export default function ProblemResultPage() {
           marginBottom: spacing.lg,
         }}
       >
-        {question.content}
+        <ProblemContent content={question.content} />
       </div>
 
       {/* 정답 표시 */}
@@ -154,7 +155,9 @@ export default function ProblemResultPage() {
         }}
       >
         <span style={{ ...typography.bodyTextXLSemiBold, color: colors.green500 }}>정답:</span>
-        <span style={{ ...typography.bodyTextXLSemiBold, color: colors.gray800 }}>{question.answer}</span>
+        <div style={{ ...typography.bodyTextXLSemiBold, color: colors.gray800, minWidth: 0 }}>
+          <ProblemContent content={question.answer} />
+        </div>
       </div>
 
       {/* 해설 */}
@@ -169,9 +172,9 @@ export default function ProblemResultPage() {
           }}
         >
           <h3 style={{ ...typography.headingMdBold, color: colors.gray800, marginBottom: spacing.md }}>해설</h3>
-          <p style={{ ...typography.bodyTextXLRegular, color: colors.gray700, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
-            {explanation}
-          </p>
+          <div style={{ ...typography.bodyTextXLRegular, color: colors.gray700, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+            <ProblemContent content={explanation} />
+          </div>
         </div>
       )}
 

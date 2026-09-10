@@ -1,10 +1,11 @@
 import type { User } from '../types/auth';
 
+const prefix = import.meta.env.DEV && import.meta.env.VITE_LIVE_READONLY === 'true' ? 'live_' : '';
 const KEYS = {
-  ACCESS_TOKEN: 'auth_access_token',
-  REFRESH_TOKEN: 'auth_refresh_token',
-  UID: 'auth_uid',
-  USER: 'auth_user',
+  ACCESS_TOKEN: `${prefix}auth_access_token`,
+  REFRESH_TOKEN: `${prefix}auth_refresh_token`,
+  UID: `${prefix}auth_uid`,
+  USER: `${prefix}auth_user`,
 } as const;
 
 export const tokenStorage = {

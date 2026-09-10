@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
-import ProblemContent from '../../components/ProblemContent';
+import QuestionPrompt from '../../components/QuestionPrompt';
+import { parseQuestionChoices } from '../../lib/questionChoices';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
 
 interface LocationState {
@@ -260,7 +261,7 @@ export default function ProblemSolvingPage() {
           lineHeight: 1.7,
         }}
       >
-        <ProblemContent content={currentQuestion.content} />
+        <QuestionPrompt content={currentQuestion.content} value={answer} onChange={setAnswer} disabled={isSubmitting} />
       </div>
 
       {/* 오답 배지 */}
@@ -283,7 +284,7 @@ export default function ProblemSolvingPage() {
 
       {/* 답 입력 */}
       <div style={{ display: 'flex', gap: spacing.md, marginTop: spacing.xl, alignItems: 'center' }}>
-        <input
+        {!parseQuestionChoices(currentQuestion.content) && <input
           ref={inputRef}
           type="text"
           value={answer}
@@ -300,7 +301,7 @@ export default function ProblemSolvingPage() {
             fontSize: 16,
             outline: 'none',
           }}
-        />
+        />}
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !answer.trim()}
