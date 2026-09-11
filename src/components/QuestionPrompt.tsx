@@ -1,10 +1,18 @@
 import { useId } from 'react';
 import ProblemContent from './ProblemContent';
 import { parseQuestionChoices } from '../lib/questionChoices';
-import type { LearningProblem } from '../types/learning';
+
+interface PromptProblem {
+  description: string;
+  answerType?: 'NUMBER' | 'MULTIPLE_CHOICE' | null;
+  choiceA?: string | null;
+  choiceB?: string | null;
+  choiceC?: string | null;
+  choiceD?: string | null;
+}
 
 interface Props {
-  problem?: LearningProblem;
+  problem?: PromptProblem;
   content?: string;
   value: string;
   onChange: (value: string) => void;

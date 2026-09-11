@@ -5,6 +5,7 @@ import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import { parseQuestionChoices } from '../../lib/questionChoices';
+import { hasStructuredChoices, isProblemAnswerCorrect } from '../../lib/answerEvaluation';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
 
 interface LocationState {
@@ -26,10 +27,17 @@ export default function ProblemSolvingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const submittingRef = useRef(false);
-  const questionStartedAt = useRef(Date.now());
+  const questionStartedAt = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentQuestion = questions[currentIndex] ?? null;
+
+  const resetQuestionState = useCallback(() => {
+    setAttemptCount(0);
+    setShowWrongBadge(false);
+    setAnswer('');
+    questionStartedAt.current = Date.now();
+  }, []);
 
   const fetchQuestions = useCallback(async () => {
     const uid = tokenStorage.getUid();
@@ -51,19 +59,14 @@ export default function ProblemSolvingPage() {
       setError(res.error ?? '문제를 불러올 수 없습니다.');
     }
     setIsLoading(false);
-  }, []);
-
-  const resetQuestionState = () => {
-    setAttemptCount(0);
-    setShowWrongBadge(false);
-    setAnswer('');
-    questionStartedAt.current = Date.now();
-  };
+  }, [resetQuestionState]);
 
   // location.key 변경 감지로 navigate마다 상태 동기화
   useEffect(() => {
     const state = location.state as LocationState | null;
     if (state?.questions && state.questions.length > 0) {
+      // 라우터가 전달한 다음 문제 세트를 화면 상태와 한 번에 동기화한다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuestions(state.questions);
       setCurrentIndex(state.currentIndex ?? 0);
       resetQuestionState();
@@ -72,7 +75,7 @@ export default function ProblemSolvingPage() {
     } else {
       fetchQuestions();
     }
-  }, [location.key, fetchQuestions]);
+  }, [location.key, location.state, fetchQuestions, resetQuestionState]);
 
   const submitToServer = async (
     questionId: number,
@@ -91,12 +94,9 @@ export default function ProblemSolvingPage() {
   const handleSubmit = async () => {
     if (!currentQuestion || submittingRef.current) return;
 
-    const normalizedUser = answer.trim().toLowerCase();
-    const normalizedCorrect = currentQuestion.answer.trim().toLowerCase();
+    if (!answer.trim()) return;
 
-    if (!normalizedUser) return;
-
-    const isCorrect = normalizedUser === normalizedCorrect;
+    const isCorrect = isProblemAnswerCorrect(currentQuestion, answer);
     const elapsed = Math.max(0, Math.round((Date.now() - questionStartedAt.current) / 1000));
     const newAttemptCount = attemptCount + 1;
 
@@ -261,7 +261,19 @@ export default function ProblemSolvingPage() {
           lineHeight: 1.7,
         }}
       >
-        <QuestionPrompt content={currentQuestion.content} value={answer} onChange={setAnswer} disabled={isSubmitting} />
+        <QuestionPrompt
+          problem={{
+            description: currentQuestion.content,
+            answerType: currentQuestion.answerType,
+            choiceA: currentQuestion.choiceA,
+            choiceB: currentQuestion.choiceB,
+            choiceC: currentQuestion.choiceC,
+            choiceD: currentQuestion.choiceD,
+          }}
+          value={answer}
+          onChange={setAnswer}
+          disabled={isSubmitting}
+        />
       </div>
 
       {/* 오답 배지 */}
@@ -284,13 +296,15 @@ export default function ProblemSolvingPage() {
 
       {/* 답 입력 */}
       <div style={{ display: 'flex', gap: spacing.md, marginTop: spacing.xl, alignItems: 'center' }}>
-        {!parseQuestionChoices(currentQuestion.content) && <input
+        {!hasStructuredChoices(currentQuestion) && !parseQuestionChoices(currentQuestion.content) && <input
           ref={inputRef}
-          type="text"
+          type={currentQuestion.answerType === 'NUMBER' ? 'number' : 'text'}
+          inputMode={currentQuestion.answerType === 'NUMBER' ? 'decimal' : undefined}
+          step={currentQuestion.answerType === 'NUMBER' ? 'any' : undefined}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="답 입력"
+          placeholder={currentQuestion.answerType === 'NUMBER' ? '숫자만 입력하세요' : '답 입력'}
           disabled={isSubmitting}
           style={{
             flex: 1,
