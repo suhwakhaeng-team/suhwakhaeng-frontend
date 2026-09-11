@@ -12,6 +12,12 @@ export interface AdaptiveQuestion {
   questionId: number;
   content: string;
   answer: string;
+  answerType?: 'NUMBER' | 'MULTIPLE_CHOICE' | null;
+  choiceA?: string | null;
+  choiceB?: string | null;
+  choiceC?: string | null;
+  choiceD?: string | null;
+  numericTolerance?: number | null;
   explanation: string | null;
   difficulty: number | null;
   tags: AdaptiveQuestionTag[];

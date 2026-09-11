@@ -5,6 +5,7 @@ import type { AdaptiveQuestion, StudySubmitResponse } from '../../types/adaptive
 import { saveProblem, unsaveProblem } from '../../lib/savedProblemClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import ProblemContent from '../../components/ProblemContent';
+import QuestionPrompt from '../../components/QuestionPrompt';
 
 interface ResultState {
   isCorrect: boolean;
@@ -19,6 +20,8 @@ export default function ProblemResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as ResultState | null;
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaveInflight, setIsSaveInflight] = useState(false);
 
   if (!state) {
     return (
@@ -45,12 +48,12 @@ export default function ProblemResultPage() {
   const { isCorrect, explanation, question, questions, currentIndex } = state;
   const hasNextQuestion = currentIndex + 1 < questions.length;
   const tagLabel = question.tags?.[0]?.tagName ?? '';
+  const correctChoice = question.answerType === 'MULTIPLE_CHOICE'
+    ? ({ A: question.choiceA, B: question.choiceB, C: question.choiceC, D: question.choiceD } as const)[question.answer as 'A' | 'B' | 'C' | 'D']
+    : null;
 
   // "문제 저장하기" 토글. UI 즉시 반영(optimistic) 후 BE 동기화, 실패 시 롤백.
   // iOS `ProblemResultReducer.saveProblemToggled` 와 동일 정책.
-  const [isSaved, setIsSaved] = useState(false);
-  const [isSaveInflight, setIsSaveInflight] = useState(false);
-
   const handleSaveToggle = async () => {
     if (isSaveInflight) return; // 중복 클릭 방어
     const uid = tokenStorage.getUid();
@@ -139,7 +142,19 @@ export default function ProblemResultPage() {
           marginBottom: spacing.lg,
         }}
       >
-        <ProblemContent content={question.content} />
+        <QuestionPrompt
+          problem={{
+            description: question.content,
+            answerType: question.answerType,
+            choiceA: question.choiceA,
+            choiceB: question.choiceB,
+            choiceC: question.choiceC,
+            choiceD: question.choiceD,
+          }}
+          value={question.answer}
+          onChange={() => undefined}
+          disabled
+        />
       </div>
 
       {/* 정답 표시 */}
@@ -156,7 +171,7 @@ export default function ProblemResultPage() {
       >
         <span style={{ ...typography.bodyTextXLSemiBold, color: colors.green500 }}>정답:</span>
         <div style={{ ...typography.bodyTextXLSemiBold, color: colors.gray800, minWidth: 0 }}>
-          <ProblemContent content={question.answer} />
+          <ProblemContent content={correctChoice ? `${question.answer}. ${correctChoice}` : question.answer} />
         </div>
       </div>
 
