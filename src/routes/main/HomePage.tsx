@@ -19,6 +19,7 @@ import CurriculumMapSection from '../../components/home/CurriculumMapSection';
 import ReviewListSection from '../../components/home/ReviewListSection';
 import ProgressGauge from '../../components/home/ProgressGauge';
 import DailyStatsCard from '../../components/home/DailyStatsCard';
+import FeedbackCard from '../../components/home/FeedbackCard';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -113,6 +114,7 @@ export default function HomePage() {
   }, []);
 
   const handleSolveClick = () => navigate('/main/problem/start');
+  const handleFeedbackClick = () => navigate('/main/feedback');
   const handleRetry = () => {
     const uid = tokenStorage.getUid();
     if (!uid) return;
@@ -162,14 +164,17 @@ export default function HomePage() {
             alignItems: 'start',
           }}
         >
-          {renderCurriculumSection({
-            isLoading: isCurriculumLoading,
-            error: curriculumError,
-            items: curriculumItems,
-            activeId: activeCurriculumId,
-            onSolveClick: handleSolveClick,
-            onRetry: handleRetry,
-          })}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
+            {renderCurriculumSection({
+              isLoading: isCurriculumLoading,
+              error: curriculumError,
+              items: curriculumItems,
+              activeId: activeCurriculumId,
+              onSolveClick: handleSolveClick,
+              onRetry: handleRetry,
+            })}
+            <FeedbackCard onClick={handleFeedbackClick} />
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
             <ReviewListSection
