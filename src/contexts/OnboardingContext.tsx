@@ -29,8 +29,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [grade, setGradeState] = useState<Grade | null>(null);
   const [subject, setSubjectState] = useState<string | null>(null);
   const [units, setUnitsState] = useState<string[]>([]);
-  // 기본값 SAN: 가장 기초 계층부터 시작(가장 안전). 사용자가 test-intro에서 변경 가능.
-  const [startNodeLevel, setStartNodeLevelState] = useState<StartNodeLevel>('SAN');
+  // 레벨 테스트는 복합개념(BN)에서만 시작한다.
+  const [startNodeLevel, setStartNodeLevelState] = useState<StartNodeLevel>('BN');
   const [levelTestResult, setLevelTestResultState] = useState<LearningRouteResponse | null>(null);
 
   const setGrade = useCallback((g: Grade) => setGradeState(g), []);
@@ -42,7 +42,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setGradeState(null);
     setSubjectState(null);
     setUnitsState([]);
-    setStartNodeLevelState('SAN');
+    setStartNodeLevelState('BN');
     setLevelTestResultState(null);
   }, []);
 

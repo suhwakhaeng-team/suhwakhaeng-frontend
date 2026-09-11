@@ -1,31 +1,42 @@
 import { useId } from 'react';
 import ProblemContent from './ProblemContent';
 import { parseQuestionChoices } from '../lib/questionChoices';
+import type { LearningProblem } from '../types/learning';
 
 interface Props {
-  content: string;
+  problem?: LearningProblem;
+  content?: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
 }
 
-export default function QuestionPrompt({ content, value, onChange, disabled = false }: Props) {
+export default function QuestionPrompt({ problem, content, value, onChange, disabled = false }: Props) {
   const name = useId();
-  const question = parseQuestionChoices(content);
-  if (!question) return <ProblemContent content={content} />;
+  const description = problem?.description ?? content ?? '';
+  const structuredChoices = problem?.answerType === 'MULTIPLE_CHOICE'
+    ? [problem.choiceA, problem.choiceB, problem.choiceC, problem.choiceD]
+      .map((content, index) => ({ value: String.fromCharCode(65 + index), label: String.fromCharCode(65 + index), content: content?.trim() ?? '' }))
+      .filter((choice) => choice.content.length > 0)
+    : [];
+  const legacyQuestion = structuredChoices.length === 4 ? null : parseQuestionChoices(description);
+  const choices = structuredChoices.length === 4 ? structuredChoices : legacyQuestion?.choices;
+  const stem = structuredChoices.length === 4 ? description : legacyQuestion?.stem;
+
+  if (!choices || !stem) return <ProblemContent content={description} />;
   return <>
-    <ProblemContent content={question.stem} />
+    <ProblemContent content={stem} />
     <fieldset disabled={disabled} style={{ border: 0, padding: 0, margin: '20px 0 0', minWidth: 0 }}>
       <legend style={{ fontSize: 14, marginBottom: 10 }}>정답을 하나 선택하세요</legend>
       <div style={{ display: 'grid', gap: 10 }}>
-        {question.choices.map(choice => <label key={choice.value} style={{
+        {choices.map(choice => <label key={choice.value} style={{
           display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
           border: `2px solid ${value === choice.value ? '#2563eb' : '#e5e7eb'}`,
           borderRadius: 12, background: value === choice.value ? '#eff6ff' : '#fff',
           cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.65 : 1,
         }}>
           <input type="radio" name={name} value={choice.value} checked={value === choice.value}
-            onChange={() => onChange(choice.value)} aria-label={`${choice.value}번`} style={{ accentColor: '#2563eb', flexShrink: 0 }} />
+            onChange={() => onChange(choice.value)} aria-label={`${choice.label} 선택지`} style={{ accentColor: '#2563eb', flexShrink: 0 }} />
           <span aria-hidden="true">{choice.label}</span>
           <div style={{ minWidth: 0, flex: 1 }}><ProblemContent content={choice.content} /></div>
         </label>)}
