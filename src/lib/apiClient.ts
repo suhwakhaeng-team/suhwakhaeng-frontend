@@ -1,7 +1,11 @@
 import type { ApiResponse, TokenResponse, TokenRefreshRequest } from '../types/auth';
 import { tokenStorage } from './tokenStorage';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const CONFIGURED_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// 운영 브라우저에서는 Vercel의 same-origin 프록시를 사용한다.
+// API 서브도메인을 광고 차단 확장 프로그램이 막아도 요청이 끊기지 않는다.
+const BASE_URL = import.meta.env.PROD ? '/api/v1' : CONFIGURED_BASE_URL;
 if (!BASE_URL) throw new Error('VITE_API_BASE_URL 환경변수가 설정되지 않았습니다.');
 
 let refreshPromise: Promise<boolean> | null = null;
