@@ -183,10 +183,24 @@ export default function FeedbackPage() {
         <header className="feedback-hero">
           <p className="feedback-eyebrow">FEEDBACK</p>
           <h1>수확행 사용 경험을 들려주세요</h1>
-          <p>
-            레벨테스트와 맞춤형 커리큘럼을 더 나은 방향으로 개선하기 위한 설문입니다.
-            별표가 있는 문항은 필수이며, 연락처는 이벤트 리워드 전달에만 사용합니다.
-          </p>
+          <div className="feedback-intro">
+            <p className="feedback-intro-greeting">안녕하세요 🙂</p>
+            <p>
+              이번 테스트는 여러분이 실제로 <strong>수확행 수학 공부앱</strong>을 사용하면서
+              어떤 점이 편했는지, 아쉬웠는지를 확인하기 위해 진행됩니다.
+            </p>
+            <p className="feedback-intro-notice">
+              ❗ 정답을 맞추는 것보다 사용하면서 느낀 경험을 솔직하게 작성해주시는 것이 가장 중요합니다.
+            </p>
+            <p>
+              여러분의 의견은 앞으로 수확행을 더 쉽고 편하게 사용할 수 있도록 개선하는 데 활용될 예정입니다 🙌
+            </p>
+            <p className="feedback-intro-reward">
+              또한, 열심히 참여해주신 분들 중 <strong>열 분을 선정하여 올리브영 10,000원 상품권 또는
+              배달의민족 10,000원 상품권</strong>을 드립니다 ❤
+            </p>
+            <p className="feedback-intro-required"><span>*</span> 표시는 필수 질문입니다.</p>
+          </div>
         </header>
 
         <form className="feedback-form" onSubmit={handleSubmit}>
