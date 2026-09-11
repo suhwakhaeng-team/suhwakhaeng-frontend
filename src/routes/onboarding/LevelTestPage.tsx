@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import { parseQuestionChoices } from '../../lib/questionChoices';
+import { hasStructuredChoices, isProblemAnswerCorrect } from '../../lib/answerEvaluation';
 import BnLevelTest from './BnLevelTest';
 import type {
   LearningProblem,
@@ -16,11 +17,6 @@ import type {
 } from '../../types/learning';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
-
-// 답 비교는 공백과 대소문자를 무시한다.
-function normalize(s: string): string {
-  return s.trim().toLowerCase();
-}
 
 // 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6). plan 문서의 통일된 매핑.
 function gradeStringToInt(g: Grade | null): number | undefined {
@@ -137,7 +133,7 @@ function BatchLevelTest() {
         problemId: p.id,
         topic: p.topic,
         userAnswer,
-        correct: normalize(p.answer) === normalize(userAnswer),
+        correct: isProblemAnswerCorrect(p, userAnswer),
         timeTakenSec: elapsedRef.current[p.id] ?? 0,
       };
     });
@@ -290,18 +286,20 @@ function BatchLevelTest() {
             margin: 0,
           }}
         >
-          <QuestionPrompt content={currentProblem?.description ?? ''} value={currentAnswer} onChange={handleAnswerChange} disabled={isSubmitting} />
+          {currentProblem && <QuestionPrompt problem={currentProblem} value={currentAnswer} onChange={handleAnswerChange} disabled={isSubmitting} />}
         </div>
 
-        {!parseQuestionChoices(currentProblem?.description ?? '') && <input
-          type="text"
+        {!hasStructuredChoices(currentProblem) && !parseQuestionChoices(currentProblem?.description ?? '') && <input
+          type={currentProblem?.answerType === 'NUMBER' ? 'number' : 'text'}
+          inputMode={currentProblem?.answerType === 'NUMBER' ? 'decimal' : undefined}
+          step={currentProblem?.answerType === 'NUMBER' ? 'any' : undefined}
           value={currentAnswer}
           onChange={(e) => handleAnswerChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
             if (e.key === 'Enter') handleNext();
           }}
-          placeholder="답을 입력하세요"
+          placeholder={currentProblem?.answerType === 'NUMBER' ? '숫자만 입력하세요' : '답을 입력하세요'}
           disabled={isSubmitting}
           style={{
             width: '100%',

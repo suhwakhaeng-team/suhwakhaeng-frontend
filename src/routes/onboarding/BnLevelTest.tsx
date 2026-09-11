@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import { parseQuestionChoices } from '../../lib/questionChoices';
+import { hasStructuredChoices, isProblemAnswerCorrect } from '../../lib/answerEvaluation';
 import type {
   LearningProblem,
   LearningProblemDTO,
@@ -42,11 +43,6 @@ function bnOrderIndex(topic: string): number {
 // 받은 BN 문제를 단원명 기준으로 고정 순서 정렬 (Array.sort 는 안정 정렬 → 동순위는 원래 순서 유지).
 function sortBnByChapter(problems: LearningProblem[]): LearningProblem[] {
   return [...problems].sort((a, b) => bnOrderIndex(a.topic) - bnOrderIndex(b.topic));
-}
-
-// 답 비교는 공백과 대소문자를 무시한다.
-function normalize(s: string): string {
-  return s.trim().toLowerCase();
 }
 
 // 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6).
@@ -176,7 +172,7 @@ export default function BnLevelTest() {
     busyRef.current = true;
 
     const timeTakenSec = Math.max(0, Math.round((Date.now() - enterAtRef.current) / 1000));
-    const correct = normalize(problem.answer) === normalize(currentAnswer);
+    const correct = isProblemAnswerCorrect(problem, currentAnswer);
     const item: AnswerItem = {
       problemId: problem.id,
       topic: problem.topic,
@@ -326,18 +322,20 @@ export default function BnLevelTest() {
             margin: 0,
           }}
         >
-          <QuestionPrompt content={currentProblem?.description ?? ''} value={currentAnswer} onChange={setCurrentAnswer} disabled={isSubmitting} />
+          {currentProblem && <QuestionPrompt problem={currentProblem} value={currentAnswer} onChange={setCurrentAnswer} disabled={isSubmitting} />}
         </div>
 
-        {!parseQuestionChoices(currentProblem?.description ?? '') && <input
-          type="text"
+        {!hasStructuredChoices(currentProblem) && !parseQuestionChoices(currentProblem?.description ?? '') && <input
+          type={currentProblem?.answerType === 'NUMBER' ? 'number' : 'text'}
+          inputMode={currentProblem?.answerType === 'NUMBER' ? 'decimal' : undefined}
+          step={currentProblem?.answerType === 'NUMBER' ? 'any' : undefined}
           value={currentAnswer}
           onChange={(e) => setCurrentAnswer(e.target.value)}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
             if (e.key === 'Enter') void handleNext();
           }}
-          placeholder="답을 입력하세요"
+          placeholder={currentProblem?.answerType === 'NUMBER' ? '숫자만 입력하세요' : '답을 입력하세요'}
           disabled={isSubmitting}
           style={{
             width: '100%',

@@ -7,6 +7,12 @@ export interface LearningProblemDTO {
   title: string;
   description: string;
   answer: string;
+  answerType?: 'NUMBER' | 'MULTIPLE_CHOICE' | null;
+  choiceA?: string | null;
+  choiceB?: string | null;
+  choiceC?: string | null;
+  choiceD?: string | null;
+  numericTolerance?: number | null;
 }
 
 export type LearningProblem = LearningProblemDTO;
