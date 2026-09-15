@@ -53,6 +53,25 @@ test('lays out units deterministically and expanded concepts in a stable orbit',
   assert(concepts.get('c').x < concepts.get('d').x);
 });
 
+test('places a short prerequisite branch beside the unit where it merges', () => {
+  const data = {
+    id: 'merge-layout',
+    subject: { id: 'subject', name: 'Any subject' },
+    units: [
+      { id: 'a', subjectId: 'subject', name: 'A', prerequisites: [] },
+      { id: 'b', subjectId: 'subject', name: 'B', prerequisites: ['a'] },
+      { id: 'c', subjectId: 'subject', name: 'C', prerequisites: ['b'] },
+      { id: 'short', subjectId: 'subject', name: 'Short branch', prerequisites: [] },
+      { id: 'merge', subjectId: 'subject', name: 'Merge', prerequisites: ['c', 'short'] },
+    ],
+    concepts: [],
+  };
+  const units = layoutUnits(createGraphIndex(data));
+  assert.equal(units.get('short').x, units.get('c').x);
+  assert.equal(units.get('merge').x - units.get('short').x, 225);
+  assert.notEqual(units.get('short').y, units.get('c').y);
+});
+
 test('concept positions stay stable when a prerequisite path is revealed', () => {
   const index = createGraphIndex(probabilityExample);
   const units = layoutUnits(index);

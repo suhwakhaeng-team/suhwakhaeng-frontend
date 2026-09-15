@@ -10,7 +10,7 @@ export const conceptEdgeKey = (source: string, target: string) => `${source}:${t
 
 type PrerequisiteMap = ReadonlyMap<string, readonly string[]>;
 
-function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number) {
+function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number, alignShortBranchesToMerge = false) {
   const idSet = new Set(ids);
   const inputOrder = new Map(ids.map((id, index) => [id, index]));
   const degree = new Map(ids.map(id => [id, 0]));
@@ -44,6 +44,17 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
   const cyclic = ids.filter(id => !ordered.includes(id));
   const finalLevel = Math.max(0, ...level.values()) + (ordered.length ? 1 : 0);
   cyclic.forEach(id => level.set(id, finalLevel));
+
+  // A short secondary route into a late merge reads more clearly beside the
+  // merge than at the far-left origin. Move it to the latest valid rank while
+  // preserving every prerequisite direction (for example, 자료의 정리 → 통계적 추정).
+  if (alignShortBranchesToMerge) {
+    for (const id of [...ordered].reverse()) {
+      const next = successors.get(id) ?? [];
+      if (!next.length) continue;
+      level.set(id, Math.min(...next.map(target => level.get(target)! - 1)));
+    }
+  }
 
   const layers = new Map<number, string[]>();
   for (const id of [...ordered, ...cyclic]) {
@@ -101,7 +112,7 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
 export function layoutUnits(index: GraphIndex) {
   const prerequisites = new Map(index.data.units.map(unit => [unit.id, [] as string[]]));
   index.unitEdges.forEach(edge => prerequisites.get(edge.target)!.push(edge.source));
-  return layeredLayout(index.data.units.map(unit => unit.id), prerequisites, 225, 132);
+  return layeredLayout(index.data.units.map(unit => unit.id), prerequisites, 225, 132, true);
 }
 
 export function layoutConcepts(ids: string[], center: Point, prerequisites: PrerequisiteMap = new Map()) {
