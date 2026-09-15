@@ -146,7 +146,7 @@ export default function BnLevelTest() {
       setSubmitError(response.error || '결과 제출에 실패했습니다. 다시 시도해주세요.');
       return;
     }
-    setLevelTestResult(response.data);
+    setLevelTestResult({ ...response.data, diagnosticAnswers: answers });
     const gradeInt = gradeStringToInt(grade);
     const unitsCsv = units.length ? units.join(',') : undefined;
     await markOnboardingCompleted(gradeInt, subject ?? undefined, unitsCsv).catch(() => {});
@@ -179,6 +179,8 @@ export default function BnLevelTest() {
       userAnswer: currentAnswer,
       correct,
       timeTakenSec,
+      concepts: problem.concepts,
+      diagnosticRole: phase === 'bn' ? 'main' : 'drilldown',
     };
     const nextAccumulated = [...accumulated, item];
     setAccumulated(nextAccumulated);
