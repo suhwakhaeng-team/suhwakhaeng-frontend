@@ -44,6 +44,7 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
   const cyclic = ids.filter(id => !ordered.includes(id));
   const finalLevel = Math.max(0, ...level.values()) + (ordered.length ? 1 : 0);
   cyclic.forEach(id => level.set(id, finalLevel));
+  const naturalLevel = new Map(level);
 
   // A short secondary route into a late merge reads more clearly beside the
   // merge than at the far-left origin. Move it to the latest valid rank while
@@ -101,6 +102,20 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
   const points = new Map<string, Point>();
   for (const [rank, layer] of layers) {
     const gap = Math.max(76, verticalGap);
+    const mainline = layer.filter(id => naturalLevel.get(id) === rank);
+    const lateBranches = layer.filter(id => naturalLevel.get(id) !== rank);
+    if (alignShortBranchesToMerge && mainline.length && lateBranches.length) {
+      mainline.forEach((id, index) => points.set(id, {
+        x: rank * horizontalGap,
+        y: (index - (mainline.length - 1) / 2) * gap,
+      }));
+      const mainlineTop = -(mainline.length - 1) / 2 * gap;
+      lateBranches.forEach((id, index) => points.set(id, {
+        x: rank * horizontalGap,
+        y: mainlineTop - 220 - (lateBranches.length - 1 - index) * gap,
+      }));
+      continue;
+    }
     layer.forEach((id, index) => points.set(id, {
       x: rank * horizontalGap,
       y: (index - (layer.length - 1) / 2) * gap,
