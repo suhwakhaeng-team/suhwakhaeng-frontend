@@ -135,6 +135,8 @@ function BatchLevelTest() {
         userAnswer,
         correct: isProblemAnswerCorrect(p, userAnswer),
         timeTakenSec: elapsedRef.current[p.id] ?? 0,
+        concepts: p.concepts,
+        diagnosticRole: 'main',
       };
     });
 
@@ -150,7 +152,7 @@ function BatchLevelTest() {
       return;
     }
 
-    setLevelTestResult(response.data);
+    setLevelTestResult({ ...response.data, diagnosticAnswers: items });
     // 서버에 온보딩 완료(isTested=true) + 학년/과목/단원 일괄 기록.
     // 이 호출이 실패하면 재로그인/재시작 시 다시 온보딩으로 빠지므로
     // 그때 재시도하게 두고, 여기서는 학습 진행을 막지 않는다.
