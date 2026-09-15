@@ -184,6 +184,32 @@ test('topology adapter connects duplicate names safely by tag ID and exposes gra
   assert.doesNotThrow(() => createGraphIndex(result.data));
 });
 
+test('topology adapter normalizes production math concepts into a readable course route', () => {
+  const dto = (id, tagName, categoryPath, grade = 5) => ({ id, tagName, categoryPath, status: 'UNDIAGNOSED', colorDepth: 1, grade });
+  const result = adaptTopology({ nodes: [
+    dto('1', '곱의 법칙', '경우의 수 기초', 2),
+    dto('2', '팩토리얼', '순열과 조합', 4),
+    dto('3', '순열', '경우의 수', 4),
+    dto('4', '조합', '경우의 수', 4),
+    dto('5', '이항정리', '경우의 수', 5),
+    dto('6', '표본공간과 사건', '확률의 기초', 2),
+    dto('7', '수학적 확률', '경우의 수 기초', 2),
+  ], edges: [
+    { source: '곱의 법칙', target: '팩토리얼', sourceTagId: '1', targetTagId: '2' },
+    { source: '팩토리얼', target: '순열', sourceTagId: '2', targetTagId: '3' },
+    { source: '순열', target: '조합', sourceTagId: '3', targetTagId: '4' },
+    { source: '조합', target: '이항정리', sourceTagId: '4', targetTagId: '5' },
+    { source: '표본공간과 사건', target: '수학적 확률', sourceTagId: '6', targetTagId: '7' },
+  ] });
+  const index = createGraphIndex(result.data);
+  assert.deepEqual(result.data.units.map(unit => unit.name), ['경우의 수', '순열과 조합', '확률의 기초']);
+  assert.equal(index.concepts.get('1').unitId, 'course:counting');
+  assert.equal(index.concepts.get('2').unitId, 'course:counting');
+  assert.equal(index.concepts.get('3').unitId, 'course:permutation');
+  assert.equal(index.concepts.get('6').unitId, 'course:probability');
+  assert.deepEqual([...layoutUnits(index).values()].map(point => point.y), [0, 0, 0]);
+});
+
 test('invalid graphs fail with context rather than render incorrect relationships', () => {
   assert.throws(() => graph({ a: ['missing'] }), /missing/);
   const data = { ...algorithmsExample, concepts: [...algorithmsExample.concepts, algorithmsExample.concepts[0]] };
