@@ -26,7 +26,7 @@ export default function CurriculumMapSection({ items }: Props) {
           전체 커리큘럼
         </h3>
         <button
-          onClick={() => navigate('/main/topology')}
+          onClick={() => navigate('/main/knowledge-graph')}
           style={{
             background: 'none',
             border: 'none',

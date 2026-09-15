@@ -135,9 +135,14 @@ interface ComputedLayout {
 
 function computeLayout(nodes: TopologyNode[], apiEdges: TopologyEdge[]): ComputedLayout {
   const nameSet = new Set(nodes.map(n => n.tagName));
+  const nameById = new Map(nodes.map(n => [String(n.id), n.tagName]));
+  const normalizedApiEdges = apiEdges.map(edge => ({
+    source: nameById.get(String(edge.source)) ?? edge.source,
+    target: nameById.get(String(edge.target)) ?? edge.target,
+  }));
 
   const edges: TopologyEdge[] = [
-    ...apiEdges,
+    ...normalizedApiEdges,
     ...EXTRA_EDGES.filter(e => nameSet.has(e.source) && nameSet.has(e.target)),
   ];
 

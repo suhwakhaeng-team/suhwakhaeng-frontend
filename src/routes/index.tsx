@@ -20,10 +20,13 @@ import AIConceptPage from './main/AIConceptPage';
 import ReviewListPage from './main/ReviewListPage';
 import ReviewDetailPage from './main/ReviewDetailPage';
 import FeedbackPage from './main/FeedbackPage';
-import { lazy, Suspense } from 'react';
-const TopologyPage = lazy(() => import('./main/TopologyPage'));
+import { KnowledgeGraphRoute, TopologyRoute } from './GraphRoutes';
 
 export const router = createBrowserRouter([
+  ...(import.meta.env.DEV ? [{
+    path: '/dev/knowledge-graph',
+    element: <KnowledgeGraphRoute preview />,
+  }] : []),
   {
     path: '/',
     element: <SplashPage />,
@@ -60,7 +63,8 @@ export const router = createBrowserRouter([
       { path: 'review', element: <ReviewListPage /> },
       { path: 'review/:tagId', element: <ReviewDetailPage /> },
       { path: 'feedback', element: <FeedbackPage /> },
-      { path: 'topology', element: <Suspense fallback={null}><TopologyPage /></Suspense> },
+      { path: 'topology', element: <TopologyRoute /> },
+      { path: 'knowledge-graph', element: <KnowledgeGraphRoute /> },
     ],
   },
   {

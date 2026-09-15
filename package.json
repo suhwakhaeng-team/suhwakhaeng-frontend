@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:live": "vite --mode live --host localhost --port 18084 --strictPort",
+    "dev:graph": "vite --mode graph --host localhost --port 18085 --strictPort",
+    "test:graph": "node --test tests/learningGraph.test.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
