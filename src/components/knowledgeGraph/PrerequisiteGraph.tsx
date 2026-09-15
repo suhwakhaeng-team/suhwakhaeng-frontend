@@ -1,52 +1,94 @@
 import { useMemo } from 'react';
 import type { GraphIndex, ProgressMap } from '../../types/learningGraph';
-import { getRelatedConcepts, statusOf } from '../../services/learningGraph';
-import { curvedEdge } from '../../services/learningGraphLayout';
-import GraphIcon from './GraphIcon';
+import { getPrerequisiteStages, statusOf } from '../../services/learningGraph';
 
-export default function PrerequisiteGraph({ index, selected, progress, onSelect, onBack, canBack }: {
-  index: GraphIndex; selected: string; progress: ProgressMap; onSelect: (id: string) => void; onBack: () => void; canBack: boolean;
-}) {
-  const graph = useMemo(() => {
-    const queue = [selected], depths = new Map([[selected, 0]]);
-    // Bounded rendering only; diagnosis still traverses the entire dataset.
-    for (let i = 0; i < queue.length && queue.length < 16; i++) {
-      for (const id of index.concepts.get(queue[i])!.prerequisites) {
-        if (!depths.has(id) && queue.length < 16) { depths.set(id, depths.get(queue[i])! + 1); queue.push(id); }
+type Point = { x: number; y: number };
+type Edge = { source: string; target: string };
+
+function reduceEdges(edges: Edge[]) {
+  const outgoing = new Map<string, string[]>();
+  for (const edge of edges) outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]);
+  return edges.filter(edge => {
+    const queue = (outgoing.get(edge.source) ?? []).filter(id => id !== edge.target);
+    const visited = new Set(queue);
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const current = queue[cursor];
+      if (current === edge.target) return false;
+      for (const next of outgoing.get(current) ?? []) {
+        if (!visited.has(next)) { visited.add(next); queue.push(next); }
       }
     }
-    const rows = new Map<number, string[]>();
-    queue.forEach(id => rows.set(depths.get(id)!, [...(rows.get(depths.get(id)!) ?? []), id]));
-    const positions = new Map<string, { x: number; y: number }>();
-    let y = 32;
-    // Keep the selected concept and its direct prerequisites visible before scrolling.
-    [...rows.entries()].sort((a, b) => a[0] - b[0]).forEach(([, ids]) => {
-      for (let start = 0; start < ids.length; start += 3) {
-        const group = ids.slice(start, start + 3);
-        group.forEach((id, i) => positions.set(id, { x: 304 / (group.length + 1) * (i + 1), y }));
-        y += 69;
-      }
-    });
-    return { ids: queue, positions, height: y + 3, total: getRelatedConcepts(index, selected, 'ancestors').size + 1 };
-  }, [index, selected]);
-  const direct = new Set(index.concepts.get(selected)!.prerequisites);
-  return <section className="kg-prereq" aria-label="선수개념 미니 그래프">
-    <header><div><span className="kg-eyebrow">PREREQUISITES</span><h3>이해의 뿌리</h3></div><button className="kg-icon-button" title="이전에 본 개념" aria-label="이전에 본 개념" disabled={!canBack} onClick={onBack}><GraphIcon name="back" /></button></header>
-    <p>연결된 개념을 눌러 더 이전으로 탐색해요.</p>
-    <div className="kg-prereq-scroll">
-      <svg viewBox={`0 0 304 ${graph.height}`} aria-label={`${index.concepts.get(selected)!.name}의 선수개념 관계`}>
-        <defs><marker id="kg-mini-arrow" viewBox="0 0 10 10" refX="17" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#62798e" /></marker></defs>
-        {graph.ids.flatMap(id => index.concepts.get(id)!.prerequisites.filter(p => graph.positions.has(p)).map(p => <path key={`${p}:${id}`} d={curvedEdge(graph.positions.get(p)!, graph.positions.get(id)!)} className={`kg-mini-edge ${id === selected ? 'is-direct' : ''}`} markerEnd="url(#kg-mini-arrow)" />))}
-        {graph.ids.map(id => {
-          const p = graph.positions.get(id)!, c = index.concepts.get(id)!;
-          return <g key={id} transform={`translate(${p.x},${p.y})`} className={`kg-mini-node status-${statusOf(progress, id)} ${id === selected ? 'is-current' : ''} ${!direct.has(id) && id !== selected ? 'is-indirect' : ''}`} role="button" tabIndex={0} aria-label={`선수 그래프: ${c.name}${id === selected ? ', 현재 개념' : ''}`} onClick={() => onSelect(id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(id); } }}>
-            <title>{c.name} · {id === selected ? '현재' : direct.has(id) ? '직접 선수개념' : '간접 선수개념'}</title><circle className="kg-hit" r="22" /><circle className="kg-mini-ring" r="12" /><circle r="5" /><text textAnchor="middle" y="29">{c.name.length > 10 ? `${c.name.slice(0, 9)}…` : c.name}</text>
+    return true;
+  });
+}
+
+function buildLayout(index: GraphIndex, selected: string) {
+  const stages = getPrerequisiteStages(index, selected);
+  const included = new Set(stages.flat());
+  const edges = reduceEdges(stages.flatMap(stage => stage.flatMap(target =>
+    index.concepts.get(target)!.prerequisites
+      .filter(source => included.has(source) && source !== target)
+      .map(source => ({ source, target })),
+  )));
+  const maxStageSize = Math.max(1, ...stages.map(stage => stage.length));
+  const width = Math.max(272, 56 + maxStageSize * 76);
+  const height = Math.max(96, 48 + (stages.length - 1) * 72);
+  const points = new Map<string, Point>();
+  for (const [stageIndex, stage] of stages.entries()) {
+    const gap = width / (stage.length + 1);
+    stage.forEach((id, indexInStage) => points.set(id, { x: gap * (indexInStage + 1), y: 22 + stageIndex * 72 }));
+  }
+  return { stages, edges, points, width, height };
+}
+
+function edgePath(source: Point, target: Point) {
+  const midY = (source.y + target.y) / 2;
+  return `M ${source.x} ${source.y + 9} V ${midY} H ${target.x} V ${target.y - 10}`;
+}
+
+export default function PrerequisiteGraph({ index, selected, progress, onSelect }: {
+  index: GraphIndex;
+  selected: string;
+  progress: ProgressMap;
+  onSelect: (id: string) => void;
+}) {
+  const layout = useMemo(() => buildLayout(index, selected), [index, selected]);
+  const current = index.concepts.get(selected)!;
+  return <section className="kg-prereq" aria-label="선수개념 경로">
+    <header><strong>선수개념 그래프</strong></header>
+    <div className="kg-prereq-graph">
+      <svg viewBox={`0 0 ${layout.width} ${layout.height}`} style={{ minWidth: layout.width, height: layout.height }} role="img" aria-label={`${current.name}까지의 선수개념 관계`}>
+        <defs>
+          <marker id="kg-mini-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M 0 0 L 8 4 L 0 8 z" />
+          </marker>
+        </defs>
+        <g aria-hidden="true">{layout.edges.map(edge => <path
+          key={`${edge.source}-${edge.target}`}
+          className="kg-mini-edge"
+          d={edgePath(layout.points.get(edge.source)!, layout.points.get(edge.target)!)}
+          markerEnd="url(#kg-mini-arrow)"
+        />)}</g>
+        {layout.stages.flatMap(stage => stage.map(id => {
+          const concept = index.concepts.get(id)!;
+          const assessed = concept.metadata?.assessmentStatus?.toLowerCase();
+          const point = layout.points.get(id)!;
+          return <g key={id}
+            className={`kg-mini-node status-${statusOf(progress, id)} ${assessed ? `assessment-${assessed}` : ''} ${id === selected ? 'is-current' : ''}`}
+            transform={`translate(${point.x} ${point.y})`}
+            role="button" tabIndex={0} aria-label={concept.name} aria-current={id === selected ? 'step' : undefined}
+            onClick={() => onSelect(id)}
+            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(id); } }}>
+            <title>{concept.name}</title>
+            <circle className="kg-hit" r="22" />
+            <circle className="kg-mini-halo" r={id === selected ? 10 : 8} />
+            <circle className="kg-mini-core" r="3.5" />
+            <text y="22" textAnchor="middle">{concept.name.length > 8 ? `${concept.name.slice(0, 8)}…` : concept.name}</text>
+            <text className="kg-mini-grade" y="34" textAnchor="middle">{concept.metadata?.grade ?? '학년 미정'}</text>
           </g>;
-        })}
+        }))}
       </svg>
     </div>
-    <footer><span><i /> 직접 선수</span><span><i /> 간접 선수</span><span>◎ 현재</span></footer>
-    {graph.total > graph.ids.length && <small>가까운 {graph.ids.length - 1}개 / 전체 {graph.total - 1}개 선수개념 표시. 노드를 눌러 이어서 탐색하세요.</small>}
-    {graph.ids.length === 1 && <small>선수개념이 없는 시작 개념이에요.</small>}
+    {layout.stages.length === 1 && <small>바로 시작할 수 있는 개념</small>}
   </section>;
 }

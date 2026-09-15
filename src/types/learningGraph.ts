@@ -21,7 +21,14 @@ export interface Concept {
   name: string;
   description: string;
   prerequisites: string[];
-  metadata?: { grade?: string; semester?: string; difficulty?: number; category?: string };
+  metadata?: {
+    grade?: string;
+    semester?: string;
+    difficulty?: number;
+    category?: string;
+    /** Assessment state supplied by the existing curriculum topology API. */
+    assessmentStatus?: 'MASTERED' | 'IN_PROGRESS' | 'WEAK' | 'UNDIAGNOSED';
+  };
 }
 
 export interface LearningGraphData {

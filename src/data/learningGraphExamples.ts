@@ -3,11 +3,30 @@ import type { Concept, ConceptStatus, LearningGraphData, Unit } from '../types/l
 type UnitRow = [id: string, name: string, description: string, prerequisites: string[]];
 type ConceptRow = [id: string, unitId: string, name: string, description: string, prerequisites: string[], status?: ConceptStatus];
 
+// Earliest formal introduction used by this demo. Production data should
+// supply its own grade per topology node instead of inheriting this fixture.
+const probabilityGrade: Record<string, string> = {
+  sum: '중2', product: '중2', 'sample-space': '중2', classical: '중2', complement: '중2',
+  factorial: '고1', permutations: '고1', combinations: '고1',
+  'repeat-permutation': '고2', 'repeat-combination': '고2', 'binomial-theorem': '고2',
+  addition: '고2', 'conditional-prob': '고2', multiplication: '고2', independence: '고2',
+  'independent-trials': '고2', 'random-variable': '고2', discrete: '고2', expectation: '고2',
+  variance: '고2', binomial: '고2', density: '고2', 'normal-dist': '고2', standardization: '고2',
+  'normal-approx': '고2', sampling: '고2', 'sample-mean': '고2', 'sample-proportion': '고2', confidence: '고2',
+};
+
 function example(id: string, name: string, description: string, units: UnitRow[], concepts: ConceptRow[]): LearningGraphData {
   return {
     id, subject: { id, name, description },
     units: units.map(([key, title, detail, prerequisites]): Unit => ({ id: key, subjectId: id, name: title, description: detail, prerequisites })),
-    concepts: concepts.map(([key, unitId, title, detail, prerequisites]): Concept => ({ id: key, unitId, name: title, description: detail, prerequisites })),
+    concepts: concepts.map(([key, unitId, title, detail, prerequisites]): Concept => ({
+      id: key,
+      unitId,
+      name: title,
+      description: detail,
+      prerequisites,
+      metadata: { grade: id === 'demo-probability-v1' ? probabilityGrade[key] ?? null : '공통' },
+    })),
     initialProgress: Object.fromEntries(concepts.map(([key, , , , , status]) => [key, status ?? 'unset'])),
   };
 }

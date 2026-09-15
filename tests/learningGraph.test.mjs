@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGraphIndex, getRelatedConcepts, getMissingPrerequisites, getRootLearningGaps, getUnitProgress, getGapPath } from '../src/services/learningGraph.ts';
-import { layoutUnits, layoutConcepts, CONCEPT_PAGE_SIZE } from '../src/services/learningGraphLayout.ts';
+import { createGraphIndex, getRelatedConcepts, getRelatedUnits, getPrerequisiteStages, getMissingPrerequisites, getRootLearningGaps, getUnitProgress, getGapPath } from '../src/services/learningGraph.ts';
+import { layoutUnits, layoutConcepts, layoutAllConcepts, layoutFocusedConcepts, layoutFocusedGraph, routedConceptEdge, CONCEPT_PAGE_SIZE } from '../src/services/learningGraphLayout.ts';
 import { createLocalProgressRepository } from '../src/repositories/conceptProgress.ts';
 import { adaptTopology } from '../src/services/topologyGraphAdapter.ts';
-import { learningGraphExamples, algorithmsExample } from '../src/data/learningGraphExamples.ts';
+import { learningGraphExamples, probabilityExample, algorithmsExample } from '../src/data/learningGraphExamples.ts';
 
 const graph = (relations) => createGraphIndex({
   id: 'test', subject: { id: 'subject', name: 'Any subject' },
@@ -20,9 +20,67 @@ test('both subject datasets have valid ID references and stable unit layout', ()
   for (const data of learningGraphExamples) {
     const index = createGraphIndex(data);
     assert.equal(index.concepts.size, data.concepts.length);
-    assert.deepEqual(layoutUnits(index, null), layoutUnits(index, null));
-    assert.equal(layoutUnits(index, data.units[0].id).size, data.units.length);
+    assert.deepEqual(layoutUnits(index), layoutUnits(index));
+    assert.equal(layoutUnits(index).size, data.units.length);
   }
+  const probabilityUnits = layoutUnits(createGraphIndex(probabilityExample));
+  assert.equal(new Set([...probabilityUnits.values()].map(point => point.y)).size, 1);
+  const grades = new Map(probabilityExample.concepts.map(concept => [concept.id, concept.metadata.grade]));
+  assert.equal(grades.get('sum'), '중2');
+  assert.equal(grades.get('factorial'), '고1');
+  assert.equal(grades.get('normal-approx'), '고2');
+});
+
+test('lays out units deterministically and expanded concepts in a stable orbit', () => {
+  for (const data of learningGraphExamples) {
+    const index = createGraphIndex(data);
+    const units = layoutUnits(index);
+    assert.deepEqual(units, layoutUnits(index));
+    assert.equal(new Set([...units.values()].map(point => `${point.x}:${point.y}`)).size, data.units.length);
+  }
+
+  const prerequisites = new Map([
+    ['a', []],
+    ['b', ['a']],
+    ['c', ['a']],
+    ['d', ['b', 'c']],
+  ]);
+  const concepts = layoutConcepts([...prerequisites.keys()], { x: 0, y: 0 }, prerequisites);
+  assert.deepEqual(concepts, layoutConcepts([...prerequisites.keys()], { x: 0, y: 0 }, prerequisites));
+  assert.equal(new Set([...concepts.values()].map(point => `${point.x}:${point.y}`)).size, prerequisites.size);
+  assert(concepts.get('a').x < concepts.get('b').x);
+  assert(concepts.get('b').x < concepts.get('d').x);
+  assert(concepts.get('c').x < concepts.get('d').x);
+});
+
+test('concept positions stay stable when a prerequisite path is revealed', () => {
+  const index = createGraphIndex(probabilityExample);
+  const units = layoutUnits(index);
+  const all = layoutAllConcepts(index, units);
+  assert.deepEqual(all, layoutAllConcepts(index, units));
+  assert.equal(all.size, probabilityExample.concepts.length);
+  assert(all.get('sum').y > units.get('counting').y);
+  assert(all.get('sample-space').y > units.get('probability').y);
+});
+
+test('focused prerequisite routes are spacious and flow left-to-right', () => {
+  const index = createGraphIndex(probabilityExample);
+  const ids = new Set(['product', 'factorial', 'permutations', 'combinations', 'binomial-theorem']);
+  const points = layoutFocusedConcepts(index, ids);
+  const route = [...ids].map(id => points.get(id));
+  assert.equal(points.size, ids.size);
+  for (let i = 1; i < route.length; i++) assert(route[i].x - route[i - 1].x >= 230);
+  assert.equal(new Set(route.map(point => point.y)).size, 1);
+});
+
+test('long focused relationships get independent waypoints through every skipped rank', () => {
+  const index = createGraphIndex(probabilityExample);
+  const ids = new Set(['normal-approx', ...getRelatedConcepts(index, 'normal-approx', 'ancestors')]);
+  const layout = layoutFocusedGraph(index, ids);
+  const route = layout.routes.get('combinations:binomial');
+  assert(route.length > 2);
+  for (let i = 1; i < route.length; i++) assert.equal(route[i].x - route[i - 1].x, 230);
+  assert.match(routedConceptEdge(route), /^M.* C/);
 });
 
 test('separates direct/indirect dependencies and traverses both directions', () => {
@@ -30,6 +88,20 @@ test('separates direct/indirect dependencies and traverses both directions', () 
   assert.deepEqual([...getRelatedConcepts(index, 'c', 'ancestors')], ['b', 'a']);
   assert.deepEqual(new Set(getRelatedConcepts(index, 'a', 'descendants')), new Set(['b', 'c', 'd']));
   assert.deepEqual(getMissingPrerequisites(index, 'c', { b: 'unknown' }).map(m => [m.concept.id, m.direct, m.status]), [['b', true, 'unknown'], ['a', false, 'unset']]);
+});
+
+test('unit focus includes every direct and indirect prerequisite unit only', () => {
+  const index = createGraphIndex(probabilityExample);
+  assert.deepEqual(getRelatedUnits(index, 'conditional', 'ancestors'), new Set(['probability', 'permutation', 'counting']));
+  assert(!getRelatedUnits(index, 'conditional', 'ancestors').has('distribution'));
+  assert.deepEqual(getRelatedUnits(index, 'permutation', 'ancestors'), new Set(['counting']));
+});
+
+test('prerequisite stages flatten a branching graph into foundation-to-target order', () => {
+  const index = createGraphIndex(probabilityExample);
+  assert.deepEqual(getPrerequisiteStages(index, 'binomial-theorem'), [
+    ['product'], ['factorial'], ['permutations'], ['combinations'], ['binomial-theorem'],
+  ]);
 });
 
 test('root-gap diagnosis stops at known concepts and gives a traceable recommendation', () => {
@@ -50,7 +122,7 @@ test('cycles cannot loop forever and are not mislabeled as a learnable root', ()
   const gaps = getRootLearningGaps(index, 'target', {});
   assert.equal(gaps.roots.length, 0);
   assert.deepEqual(new Set(gaps.cycleBlocked), new Set(['a', 'b', 'c']));
-  assert.equal(layoutUnits(index, null).size, 1);
+  assert.equal(layoutUnits(index).size, 1);
 });
 
 test('self cycles and cycles with an acyclic branch produce explicit warnings', () => {
@@ -96,12 +168,19 @@ test('storage drops invalid status values and removed concept IDs', () => {
   assert.deepEqual(repository.load(), { a: 'known' });
 });
 
-test('legacy adapter resolves names to IDs and refuses ambiguous name-based edges', () => {
-  const dto = (id, tagName, categoryPath) => ({ id, tagName, categoryPath, status: 'MASTERED', colorDepth: 1 });
-  const result = adaptTopology({ nodes: [dto('1', 'Shared', 'First'), dto('2', 'Shared', 'Second'), dto('3', 'Unique', 'Second'), dto('4', 'Next', 'Third')], edges: [{ source: 'Shared', target: 'Unique' }, { source: 'Unique', target: 'Next' }] });
+test('topology adapter connects duplicate names safely by tag ID and exposes grade', () => {
+  const dto = (id, tagName, categoryPath, grade = 5) => ({ id, tagName, categoryPath, status: 'MASTERED', colorDepth: 1, grade });
+  const result = adaptTopology({ nodes: [dto('1', 'Shared', 'First'), dto('2', 'Shared', 'Second'), dto('3', 'Unique', 'Second'), dto('4', 'Next', 'Third')], edges: [
+    { source: 'Shared', target: 'Unique', sourceTagId: '1', targetTagId: '3' },
+    { source: 'Unique', target: 'Next', sourceTagId: '3', targetTagId: '4' },
+    { source: 'Missing', target: 'Next', sourceTagId: '999', targetTagId: '4' },
+  ] });
   assert.equal(result.warnings.length, 1);
+  assert.deepEqual(result.data.concepts.find(c => c.id === '3').prerequisites, ['1']);
   assert.deepEqual(result.data.concepts.find(c => c.id === '4').prerequisites, ['3']);
-  assert.equal(result.data.initialProgress, undefined);
+  assert.equal(result.data.initialProgress['4'], 'known');
+  assert.equal(result.data.concepts.find(c => c.id === '4').metadata.assessmentStatus, 'MASTERED');
+  assert.equal(result.data.concepts.find(c => c.id === '4').metadata.grade, '고2');
   assert.doesNotThrow(() => createGraphIndex(result.data));
 });
 

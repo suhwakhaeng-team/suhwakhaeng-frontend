@@ -50,6 +50,61 @@ export function getRelatedConcepts(index: GraphIndex, id: string, direction: 'an
   return result;
 }
 
+/** Traverse prerequisite relationships between units without assuming a tree. */
+export function getRelatedUnits(index: GraphIndex, id: string, direction: 'ancestors' | 'descendants') {
+  const adjacent = new Map<string, string[]>(index.data.units.map(unit => [unit.id, []]));
+  for (const edge of index.unitEdges) {
+    const source = direction === 'ancestors' ? edge.target : edge.source;
+    const target = direction === 'ancestors' ? edge.source : edge.target;
+    adjacent.get(source)?.push(target);
+  }
+  const visited = new Set<string>([id]);
+  const result = new Set<string>();
+  const queue = [id];
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    for (const next of adjacent.get(queue[cursor]) ?? []) {
+      if (!visited.has(next)) { visited.add(next); result.add(next); queue.push(next); }
+    }
+  }
+  return result;
+}
+
+/** Group every prerequisite into a readable foundation-to-target learning order. */
+export function getPrerequisiteStages(index: GraphIndex, id: string) {
+  if (!index.concepts.has(id)) return [];
+  const included = new Set([id, ...getRelatedConcepts(index, id, 'ancestors')]);
+  const inputOrder = new Map(index.data.concepts.map((concept, order) => [concept.id, order]));
+  const degree = new Map([...included].map(key => [key, 0]));
+  const successors = new Map([...included].map(key => [key, [] as string[]]));
+  const rank = new Map([...included].map(key => [key, 0]));
+  for (const target of included) {
+    for (const source of index.concepts.get(target)!.prerequisites) {
+      if (!included.has(source) || source === target) continue;
+      degree.set(target, degree.get(target)! + 1);
+      successors.get(source)!.push(target);
+    }
+  }
+  const queue = [...included].filter(key => degree.get(key) === 0)
+    .sort((a, b) => inputOrder.get(a)! - inputOrder.get(b)!);
+  const emitted = new Set<string>();
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    const source = queue[cursor];
+    emitted.add(source);
+    for (const target of successors.get(source) ?? []) {
+      rank.set(target, Math.max(rank.get(target)!, rank.get(source)! + 1));
+      degree.set(target, degree.get(target)! - 1);
+      if (degree.get(target) === 0) queue.push(target);
+    }
+  }
+  const lastRank = Math.max(0, ...rank.values()) + 1;
+  for (const key of included) if (!emitted.has(key)) rank.set(key, lastRank);
+  const stages = new Map<number, string[]>();
+  for (const key of included) stages.set(rank.get(key)!, [...(stages.get(rank.get(key)!) ?? []), key]);
+  return [...stages.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([, keys]) => keys.sort((a, b) => inputOrder.get(a)! - inputOrder.get(b)!));
+}
+
 export function getMissingPrerequisites(index: GraphIndex, id: string, progress: ProgressMap) {
   const direct = new Set(index.concepts.get(id)?.prerequisites ?? []);
   return [...getRelatedConcepts(index, id, 'ancestors')]

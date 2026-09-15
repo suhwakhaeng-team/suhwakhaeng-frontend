@@ -6,11 +6,15 @@ export interface TopologyNode {
   categoryPath: string;
   status: MasteryStatus;
   colorDepth: number | null;
+  /** Optional until the topology API exposes the chapter grade. */
+  grade?: number | string | null;
 }
 
 export interface TopologyEdge {
-  source: string;   // tagName (선수)
-  target: string;   // tagName (후수)
+  source: string;   // tagName (선수, 기존 API 호환)
+  target: string;   // tagName (후수, 기존 API 호환)
+  sourceTagId?: string;
+  targetTagId?: string;
 }
 
 export interface TopologyResponse {

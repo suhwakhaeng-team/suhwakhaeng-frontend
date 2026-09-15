@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
-import type { ConceptStatus, GraphIndex, ProgressMap } from '../../types/learningGraph';
-import { getRelatedConcepts, getUnitProgress, statusOf } from '../../services/learningGraph';
-import { CONCEPT_PAGE_SIZE, curvedEdge, layoutConcepts, layoutUnits, type Point } from '../../services/learningGraphLayout';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import type { Concept, ConceptStatus, GraphIndex, ProgressMap } from '../../types/learningGraph';
+import { getRelatedConcepts, getRelatedUnits, getUnitProgress, statusOf } from '../../services/learningGraph';
+import { conceptEdgeKey, CONCEPT_PAGE_SIZE, directedEdge, layoutAllConcepts, layoutFocusedGraph, layoutUnits, routedConceptEdge, type Point } from '../../services/learningGraphLayout';
 import GraphIcon from './GraphIcon';
 
 export interface FocusRequest { id: string; kind: 'unit' | 'concept' | 'all'; tick: number }
@@ -18,36 +18,91 @@ interface Props {
   onSelect: (id: string) => void;
   onPage: (page: number) => void;
 }
-const palette = { unset: '#60a5fa', known: '#4ade80', unknown: '#fb7185' };
-const clampZoom = (k: number) => Math.min(2.6, Math.max(.15, k));
+
+const palette = { unset: '#6D7280', known: '#22C55E', unknown: '#EF4444' };
+const assessmentPalette = { MASTERED: '#22C55E', IN_PROGRESS: '#EAB308', WEAK: '#EF4444', UNDIAGNOSED: '#6D7280' };
+const assessmentLabel = { MASTERED: '통과', IN_PROGRESS: '진행 중', WEAK: '약점', UNDIAGNOSED: '미진단' };
+const clampZoom = (k: number) => Math.min(2.7, Math.max(.48, k));
+const shortUnitName = (name: string) => name.split('>').at(-1)?.trim() || name;
+const conceptColor = (concept: Concept, progress: ProgressMap) => concept.metadata?.assessmentStatus
+  ? assessmentPalette[concept.metadata.assessmentStatus]
+  : palette[statusOf(progress, concept.id)];
+const conceptState = (concept: Concept, progress: ProgressMap) => concept.metadata?.assessmentStatus
+  ? assessmentLabel[concept.metadata.assessmentStatus]
+  : ({ known: '앎', unknown: '모름', unset: '미정' })[statusOf(progress, concept.id)];
+
+function reduceEdges(edges: GraphIndex['unitEdges']) {
+  const outgoing = new Map<string, string[]>();
+  edges.forEach(edge => outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]));
+  return edges.filter(edge => {
+    const queue = (outgoing.get(edge.source) ?? []).filter(target => target !== edge.target);
+    const visited = new Set(queue);
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const current = queue[cursor];
+      if (current === edge.target) return false;
+      for (const next of outgoing.get(current) ?? []) if (!visited.has(next)) { visited.add(next); queue.push(next); }
+    }
+    return true;
+  });
+}
 
 export default function KnowledgeGraph({ index, progress, expanded, selected, page, filter, gapPath, focus, onExpand, onSelect, onPage }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ width: 1000, height: 650 });
   const [camera, setCamera] = useState({ x: 0, y: 0, k: 1 });
   const [dragging, setDragging] = useState(false);
+  const [hoveredConcept, setHoveredConcept] = useState<string | null>(null);
+  const layoutSelected = useDeferredValue(selected);
   const cameraRef = useRef(camera);
   const pointers = useRef(new Map<number, Point>());
   const moved = useRef(false);
-  const units = useMemo(() => layoutUnits(index, expanded), [index, expanded]);
-  const unitConcepts = expanded ? index.unitConcepts.get(expanded) ?? [] : [];
-  const visibleConcepts = unitConcepts.slice(page * CONCEPT_PAGE_SIZE, (page + 1) * CONCEPT_PAGE_SIZE);
-  const points = layoutConcepts(visibleConcepts.map(c => c.id), expanded ? units.get(expanded)! : { x: 0, y: 0 });
-  const ancestors = useMemo(() => selected ? getRelatedConcepts(index, selected, 'ancestors') : new Set<string>(), [index, selected]);
-  const descendants = useMemo(() => selected ? getRelatedConcepts(index, selected, 'descendants') : new Set<string>(), [index, selected]);
-  const relatedUnits = new Set([...ancestors, ...descendants, ...(selected ? [selected] : [])].map(id => index.concepts.get(id)!.unitId));
-  const activePoint = expanded ? units.get(expanded) : null;
-  const visibleMatches = visibleConcepts.filter(c => (filter === 'all' || statusOf(progress, c.id) === filter) && (!gapPath || gapPath.has(c.id))).length;
+  const units = useMemo(() => layoutUnits(index), [index]);
+  const allConceptPoints = useMemo(() => layoutAllConcepts(index, units), [index, units]);
+  const unitEdges = useMemo(() => reduceEdges(index.unitEdges), [index]);
+  const unitConcepts = useMemo(() => expanded ? index.unitConcepts.get(expanded) ?? [] : [], [index, expanded]);
+  const visibleConcepts = useMemo(() => unitConcepts.slice(page * CONCEPT_PAGE_SIZE, (page + 1) * CONCEPT_PAGE_SIZE), [unitConcepts, page]);
+  const activePoint = expanded ? units.get(expanded) : undefined;
+  const focusedState = useMemo(() => {
+    if (!layoutSelected) return null;
+    const ancestors = getRelatedConcepts(index, layoutSelected, 'ancestors');
+    const concepts = new Set([layoutSelected, ...ancestors]);
+    return { concepts, graph: layoutFocusedGraph(index, concepts) };
+  }, [index, layoutSelected]);
+  const prerequisiteConcepts = focusedState?.concepts ?? null;
+  const displayedConcepts = useMemo(() => prerequisiteConcepts
+    ? index.data.concepts.filter(concept => prerequisiteConcepts.has(concept.id))
+    : visibleConcepts, [index, prerequisiteConcepts, visibleConcepts]);
+  const focusedGraph = focusedState?.graph ?? null;
+  const points = useMemo(() => focusedGraph?.points
+    ?? new Map(displayedConcepts.map(concept => [concept.id, allConceptPoints.get(concept.id)!])),
+  [allConceptPoints, displayedConcepts, focusedGraph]);
+  const activeHoveredConcept = hoveredConcept && points.has(hoveredConcept) ? hoveredConcept : null;
+  const hoverPath = useMemo(() => {
+    if (!activeHoveredConcept) return null;
+    const ancestors = getRelatedConcepts(index, activeHoveredConcept, 'ancestors');
+    return new Set([activeHoveredConcept, ...ancestors]);
+  }, [activeHoveredConcept, index]);
+  const prerequisiteUnits = useMemo(() => {
+    if (!expanded) return null;
+    if (prerequisiteConcepts) {
+      return new Set([...prerequisiteConcepts].map(id => index.concepts.get(id)?.unitId).filter((id): id is string => Boolean(id)));
+    }
+    return new Set([expanded, ...getRelatedUnits(index, expanded, 'ancestors')]);
+  }, [expanded, index, prerequisiteConcepts]);
 
-  const applyCamera = (next: typeof camera) => { cameraRef.current = next; setCamera(next); };
-  const fit = () => {
-    const all = [...units.values(), ...points.values()];
-    if (!all.length) return;
-    const minX = Math.min(...all.map(p => p.x)) - 100, maxX = Math.max(...all.map(p => p.x)) + 100;
-    const minY = Math.min(...all.map(p => p.y)) - 90, maxY = Math.max(...all.map(p => p.y)) + 100;
-    const k = Math.min(1.25, (size.width - 90) / (maxX - minX), (size.height - 140) / (maxY - minY));
-    applyCamera({ x: size.width / 2 - (minX + maxX) / 2 * k, y: size.height / 2 - (minY + maxY) / 2 * k, k: clampZoom(k) });
-  };
+  const applyCamera = useCallback((next: typeof camera) => { cameraRef.current = next; setCamera(next); }, []);
+  const framePoints = useCallback((targets: Point[], maxZoom = 1.2, horizontalPadding = 90) => {
+    if (!targets.length) return;
+    const reservedRight = selected && size.width >= 900 ? 310 : 0;
+    const usableWidth = size.width - reservedRight;
+    const minX = Math.min(...targets.map(p => p.x)) - horizontalPadding;
+    const maxX = Math.max(...targets.map(p => p.x)) + horizontalPadding;
+    const minY = Math.min(...targets.map(p => p.y)) - 85;
+    const maxY = Math.max(...targets.map(p => p.y)) + 85;
+    const k = clampZoom(Math.min(maxZoom, (usableWidth - 80) / (maxX - minX), (size.height - 105) / (maxY - minY)));
+    applyCamera({ x: usableWidth / 2 - (minX + maxX) / 2 * k, y: size.height / 2 - (minY + maxY) / 2 * k, k });
+  }, [applyCamera, selected, size]);
+  const fit = useCallback(() => framePoints([...units.values()], 1.15), [framePoints, units]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -62,7 +117,6 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
       const rect = svg.getBoundingClientRect();
       const x = event.clientX - rect.left, y = event.clientY - rect.top;
       const current = cameraRef.current, k = clampZoom(current.k * Math.exp(-event.deltaY * .0015));
-      setDragging(false);
       const next = { x: x - (x - current.x) * k / current.k, y: y - (y - current.y) * k / current.k, k };
       cameraRef.current = next; setCamera(next);
     };
@@ -71,115 +125,109 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
   }, []);
 
   useEffect(() => {
+    // 선택 테두리는 즉시 보여주고, 무거운 선수 그래프 배치가 준비된 뒤 한 번만 이동한다.
+    if (focus.kind === 'concept' && focus.id !== layoutSelected) return;
     const frame = requestAnimationFrame(() => {
-      const all = [...units.values()];
-      if (!all.length) return;
-      let next: typeof camera;
-      if (focus.kind === 'all') {
-        const minX = Math.min(...all.map(p => p.x)) - 110, maxX = Math.max(...all.map(p => p.x)) + 110;
-        const minY = Math.min(...all.map(p => p.y)) - 110, maxY = Math.max(...all.map(p => p.y)) + 110;
-        const k = clampZoom(Math.min(1.25, (size.width - 80) / (maxX - minX), (size.height - 160) / (maxY - minY)));
-        next = { x: size.width / 2 - (minX + maxX) / 2 * k, y: size.height / 2 - (minY + maxY) / 2 * k, k };
-      } else {
-        const unitId = focus.kind === 'concept' ? index.concepts.get(focus.id)?.unitId : focus.id;
-        const p = unitId ? units.get(unitId) : undefined;
-        if (!p) return;
-        const k = clampZoom(Math.min(1.2, size.height / 590, size.width / (size.width > 800 && selected ? 850 : 620)));
-        next = { x: size.width * (size.width > 800 && selected ? .65 : .5) - p.x * k, y: size.height * (size.width <= 700 && selected ? .7 : .52) - p.y * k, k };
-      }
-      cameraRef.current = next; setCamera(next);
+      if (focus.kind === 'all' || !expanded || !activePoint) framePoints([...units.values()], 1.15);
+      else if (focus.kind === 'concept' && layoutSelected && points.has(layoutSelected)) {
+        framePoints([points.get(layoutSelected)!], 1.35, 110);
+      } else framePoints([activePoint, ...points.values()], 1.28, 90);
     });
     return () => cancelAnimationFrame(frame);
-  }, [focus, size, units, index, selected]);
+  }, [focus, expanded, activePoint, points, units, prerequisiteConcepts, framePoints, layoutSelected]);
 
   const pointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!pointers.current.has(event.pointerId)) return;
-    const before = [...pointers.current.values()];
     const previous = pointers.current.get(event.pointerId)!;
     const dx = event.clientX - previous.x, dy = event.clientY - previous.y;
     if (Math.abs(dx) + Math.abs(dy) > 2) moved.current = true;
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    const current = cameraRef.current;
-    if (before.length === 2) {
-      const after = [...pointers.current.values()];
-      const rect = svgRef.current!.getBoundingClientRect();
-      const distance = (p: Point[]) => Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-      const oldMid = { x: (before[0].x + before[1].x) / 2 - rect.left, y: (before[0].y + before[1].y) / 2 - rect.top };
-      const newMid = { x: (after[0].x + after[1].x) / 2 - rect.left, y: (after[0].y + after[1].y) / 2 - rect.top };
-      const k = clampZoom(current.k * distance(after) / (distance(before) || 1));
-      applyCamera({ x: newMid.x - (oldMid.x - current.x) * k / current.k, y: newMid.y - (oldMid.y - current.y) * k / current.k, k });
-      moved.current = true;
-    } else applyCamera({ ...current, x: current.x + dx, y: current.y + dy });
+    applyCamera({ ...cameraRef.current, x: cameraRef.current.x + dx, y: cameraRef.current.y + dy });
   };
   const endPointer = (event: PointerEvent<SVGSVGElement>) => { pointers.current.delete(event.pointerId); if (!pointers.current.size) setDragging(false); };
   const activate = (action: () => void) => { if (!moved.current) action(); };
   const zoom = (factor: number) => {
-    const k = clampZoom(camera.k * factor);
-    applyCamera({ x: size.width / 2 - (size.width / 2 - camera.x) * k / camera.k, y: size.height / 2 - (size.height / 2 - camera.y) * k / camera.k, k });
+    const current = cameraRef.current, k = clampZoom(current.k * factor);
+    applyCamera({ x: size.width / 2 - (size.width / 2 - current.x) * k / current.k, y: size.height / 2 - (size.height / 2 - current.y) * k / current.k, k });
   };
   const keyActivate = (event: React.KeyboardEvent, action: () => void) => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); action(); }
   };
-  const isDim = (id: string) => gapPath ? !gapPath.has(id) : filter !== 'all' ? statusOf(progress, id) !== filter : !!(selected && id !== selected && !ancestors.has(id) && !descendants.has(id));
 
   return <>
-    <svg ref={svgRef} className={`kg-canvas ${dragging ? 'is-dragging' : ''}`} aria-label="학습 개념 그래프. 방향키로 이동, 더하기·빼기로 확대 축소, 0으로 전체 보기" tabIndex={0}
+    <svg ref={svgRef} className={`kg-canvas ${dragging ? 'is-dragging' : ''}`} aria-label="학습 개념 지도" tabIndex={0}
       onPointerDown={event => {
         if (event.button !== 0) return;
-        if (!pointers.current.size) moved.current = false;
+        moved.current = false;
         pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        // Retain node clicks; capture background drags only.
         if (!(event.target as Element).closest('[data-node]')) event.currentTarget.setPointerCapture(event.pointerId);
         setDragging(true);
       }} onPointerMove={pointerMove} onPointerUp={endPointer} onPointerCancel={endPointer}
-      onPointerLeave={event => { if (!event.currentTarget.hasPointerCapture(event.pointerId)) endPointer(event); }}
       onKeyDown={event => {
         if ((event.target as Element).closest('[data-node]')) return;
         if (event.key === '+' || event.key === '=') zoom(1.2);
         else if (event.key === '-') zoom(1 / 1.2);
         else if (event.key === '0') fit();
-        else if (event.key.startsWith('Arrow')) { event.preventDefault(); applyCamera({ ...camera, x: camera.x + (event.key === 'ArrowLeft' ? 50 : event.key === 'ArrowRight' ? -50 : 0), y: camera.y + (event.key === 'ArrowUp' ? 50 : event.key === 'ArrowDown' ? -50 : 0) }); }
       }}>
-      <defs><marker id="kg-arrow" viewBox="0 0 10 10" refX="38" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#708391" /></marker></defs>
+      <defs>
+        <marker id="kg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 10 5 0 10Z" /></marker>
+        <marker id="kg-concept-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 10 5 0 10Z" /></marker>
+        <marker id="kg-concept-arrow-active" className="kg-marker-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 10 5 0 10Z" /></marker>
+      </defs>
       <g className="kg-camera" style={{ transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.k})`, transition: dragging ? 'none' : undefined }}>
-        {index.unitEdges.map(edge => <path key={`${edge.source}:${edge.target}`} className={`kg-unit-edge ${selected && (!relatedUnits.has(edge.source) || !relatedUnits.has(edge.target)) ? 'is-dim' : ''}`} d={curvedEdge(units.get(edge.source)!, units.get(edge.target)!)} markerEnd="url(#kg-arrow)" />)}
-        {activePoint && visibleConcepts.map(c => <path key={`spoke-${c.id}`} className="kg-spoke" d={curvedEdge(activePoint, points.get(c.id)!)} />)}
-        {visibleConcepts.flatMap(c => c.prerequisites.map(id => {
-          const source = points.get(id) ?? units.get(index.concepts.get(id)!.unitId);
-          return source && <path key={`${id}:${c.id}`} d={curvedEdge(source, points.get(c.id)!)} className={`kg-concept-edge ${selected === c.id ? 'is-direct' : ''} ${isDim(c.id) ? 'is-dim' : ''}`} />;
-        }))}
-        {index.data.units.map((unit, i) => {
+        {unitEdges.map(edge => {
+          const relevant = !prerequisiteUnits || (prerequisiteUnits.has(edge.source) && prerequisiteUnits.has(edge.target));
+          return <path key={`${edge.source}:${edge.target}`} className={`kg-unit-edge ${relevant && prerequisiteUnits ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''}`} d={directedEdge(units.get(edge.source)!, units.get(edge.target)!, 18, 18)} markerEnd="url(#kg-arrow)" />;
+        })}
+        {displayedConcepts.flatMap(target => target.prerequisites
+          .filter(source => points.has(source))
+          .map(source => {
+            const relevant = !prerequisiteConcepts || (prerequisiteConcepts.has(source) && prerequisiteConcepts.has(target.id));
+            const hoverRelevant = !hoverPath || (hoverPath.has(source) && hoverPath.has(target.id));
+            const route = focusedGraph?.routes.get(conceptEdgeKey(source, target.id));
+            const path = route ? routedConceptEdge(route) : directedEdge(points.get(source)!, points.get(target.id)!, 10, 10);
+            const highlighted = !!hoverPath && hoverRelevant;
+            return <path key={`concept:${source}:${target.id}`} className={`kg-concept-edge ${relevant && prerequisiteConcepts ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''} ${!hoverRelevant ? 'is-hover-dim' : ''} ${highlighted ? 'is-hover-active' : ''}`} d={path} markerMid={route && route.length > 2 && highlighted ? 'url(#kg-concept-arrow-active)' : undefined} markerEnd={highlighted ? 'url(#kg-concept-arrow-active)' : 'url(#kg-concept-arrow)'} />;
+          }))}
+        {index.data.units.map(unit => {
           const p = units.get(unit.id)!;
+          const concepts = index.unitConcepts.get(unit.id) ?? [];
+          const serverStates = concepts.map(concept => concept.metadata?.assessmentStatus).filter(Boolean);
           const stat = getUnitProgress(index, unit.id, progress);
-          const matches = index.unitConcepts.get(unit.id)!.filter(c => (filter === 'all' || statusOf(progress, c.id) === filter) && (!gapPath || gapPath.has(c.id))).length;
-          const dim = filter !== 'all' || gapPath ? !matches : selected && !relatedUnits.has(unit.id);
-          return <g key={unit.id} className={`kg-unit ${expanded === unit.id ? 'is-expanded' : ''} ${dim ? 'is-dim' : ''}`} style={{ transform: `translate(${p.x}px, ${p.y}px)` }} data-node="unit" role="button" tabIndex={0} aria-label={`${unit.name}, ${stat.total}개 개념, ${stat.known}개 앎, ${expanded === unit.id ? '접기' : '펼치기'}`} aria-expanded={expanded === unit.id} onClick={() => activate(() => onExpand(unit.id))} onKeyDown={e => keyActivate(e, () => onExpand(unit.id))}>
-            <title>{unit.description} · {stat.known}/{stat.total}개 앎</title>
-            <circle className="kg-hit" r="45" /><circle className="kg-unit-halo" r="39" />
-            <circle className="kg-unit-track" r="29" />
-            <circle className="kg-unit-progress" r="29" strokeDasharray={`${stat.ratio * 182.21} 182.21`} transform="rotate(-90)" />
-            <circle className="kg-unit-core" r="21" /><text className="kg-unit-number" textAnchor="middle" y="5">{String(i + 1).padStart(2, '0')}</text>
-            <text className="kg-unit-name" textAnchor="middle" y="61">{unit.name}</text>
-            <text className="kg-unit-count" textAnchor="middle" y="82">{filter !== 'all' || gapPath ? `${matches}개 일치 · ` : ''}{stat.known} / {stat.total} 이해</text>
-            {expanded === unit.id && <text className="kg-unit-collapse" textAnchor="middle" y="-46">− 접기</text>}
+          const color = serverStates.length
+            ? serverStates.every(state => state === 'MASTERED') ? assessmentPalette.MASTERED
+              : serverStates.includes('WEAK') ? assessmentPalette.WEAK
+                : serverStates.includes('IN_PROGRESS') ? assessmentPalette.IN_PROGRESS : assessmentPalette.UNDIAGNOSED
+            : stat.ratio === 1 ? palette.known : palette.unset;
+          const matches = concepts.some(concept => (filter === 'all' || statusOf(progress, concept.id) === filter) && (!gapPath || gapPath.has(concept.id)));
+          const dim = (!!prerequisiteUnits && !prerequisiteUnits.has(unit.id)) || (!matches && (filter !== 'all' || !!gapPath));
+          return <g key={unit.id} transform={`translate(${p.x},${p.y})`} className={`kg-unit ${expanded === unit.id ? 'is-expanded' : ''} ${dim ? 'is-dim' : ''}`} style={{ '--node-color': color } as CSSProperties} data-node="unit" role="button" tabIndex={0} aria-label={`${shortUnitName(unit.name)}, ${concepts.length}개 개념`} aria-expanded={expanded === unit.id} onClick={() => activate(() => onExpand(unit.id))} onKeyDown={event => keyActivate(event, () => onExpand(unit.id))}>
+            <title>{shortUnitName(unit.name)} · {concepts.length}개 개념</title>
+            <circle className="kg-hit" r="30" />
+            <circle className="kg-node-glow" r="18" />
+            <circle className="kg-node-ring" r="11" />
+            <circle className="kg-node-core" r="5" />
+            <text className="kg-unit-name" textAnchor="middle" y="-25">{shortUnitName(unit.name)}</text>
+            <text className="kg-unit-count" textAnchor="middle" y="32">{concepts.length}개</text>
           </g>;
         })}
-        {visibleConcepts.map(c => {
-          const p = points.get(c.id)!, status = statusOf(progress, c.id);
-          const relationship = selected === c.id ? '선택한 개념' : ancestors.has(c.id) ? '선수개념' : descendants.has(c.id) ? '후속개념' : '';
-          return <g key={c.id} transform={`translate(${p.x},${p.y})`}>
-            <g className={`kg-concept ${selected === c.id ? 'is-selected' : ''} ${isDim(c.id) ? 'is-dim' : ''} ${descendants.has(c.id) ? 'is-descendant' : ''}`} style={{ '--node-color': palette[status], '--from-x': `${(activePoint?.x ?? p.x) - p.x}px`, '--from-y': `${(activePoint?.y ?? p.y) - p.y}px` } as CSSProperties} data-node="concept" role="button" tabIndex={0} aria-label={`${c.name}, ${status === 'known' ? '앎' : status === 'unknown' ? '모름' : '미정'}${relationship ? `, ${relationship}` : ''}`} onClick={() => activate(() => onSelect(c.id))} onKeyDown={e => keyActivate(e, () => onSelect(c.id))}>
-              <title>{c.name} · {relationship || '개념'} · 클릭해서 학습 상태 확인</title>
-              <circle className="kg-hit" r="24" /><circle className="kg-concept-aura" r="22" /><circle className="kg-concept-outline" r="15" /><circle className="kg-concept-dot" r="7" />
-              <text className="kg-concept-label" textAnchor="middle" y="34">{c.name.length > 16 ? `${c.name.slice(0, 15)}…` : c.name}</text>
-              {selected === c.id && <text className="kg-concept-current" textAnchor="middle" y="-28">지금 보고 있어요</text>}
-            </g>
+        {displayedConcepts.map(concept => {
+          const p = points.get(concept.id)!;
+          const baseDim = (!!prerequisiteConcepts && !prerequisiteConcepts.has(concept.id)) || (filter !== 'all' && statusOf(progress, concept.id) !== filter) || (!!gapPath && !gapPath.has(concept.id));
+          const hoverDim = !!hoverPath && !hoverPath.has(concept.id);
+          return <g key={concept.id} transform={`translate(${p.x},${p.y})`} className={`kg-concept ${selected === concept.id ? 'is-selected' : ''} ${baseDim ? 'is-dim' : ''} ${hoverDim ? 'is-hover-dim-node' : ''} ${activeHoveredConcept === concept.id ? 'is-hover-route' : ''}`} style={{ '--node-color': conceptColor(concept, progress) } as CSSProperties} data-node="concept" role="button" tabIndex={0} aria-label={`${concept.name}, ${conceptState(concept, progress)}`} onPointerEnter={() => setHoveredConcept(current => current === concept.id ? current : concept.id)} onPointerLeave={() => setHoveredConcept(current => current === concept.id ? null : current)} onFocus={() => setHoveredConcept(current => current === concept.id ? current : concept.id)} onBlur={() => setHoveredConcept(current => current === concept.id ? null : current)} onClick={() => activate(() => onSelect(concept.id))} onKeyDown={event => keyActivate(event, () => onSelect(concept.id))}>
+            <title>{concept.name} · {conceptState(concept, progress)}</title>
+            <circle className="kg-hit" r="24" />
+            <circle className="kg-node-glow" r="12" />
+            <circle className="kg-node-ring" r="7" />
+            <circle className="kg-node-core" r="3.5" />
+            <text className="kg-concept-label" textAnchor="middle" y="-16">{concept.name.length > 11 ? `${concept.name.slice(0, 10)}…` : concept.name}</text>
+            <text className="kg-concept-grade" textAnchor="middle" y="19">{concept.metadata?.grade ?? '학년 미정'}</text>
           </g>;
         })}
       </g>
     </svg>
-    <div className="kg-stage-caption"><span className="kg-live-dot" /> {expanded ? `${index.units.get(expanded)?.name} · 개념 ${visibleConcepts.length}개 펼침` : '단원을 눌러 개념의 연결을 살펴보세요'}{expanded && (filter !== 'all' || gapPath) && <small>현재 펼친 개념 중 {visibleMatches}개 일치 · 나머지는 흐리게 표시</small>}</div>
-    {unitConcepts.length > CONCEPT_PAGE_SIZE && <div className="kg-pagination"><button disabled={page === 0} onClick={() => onPage(page - 1)}>이전 개념</button><span>{page + 1} / {Math.ceil(unitConcepts.length / CONCEPT_PAGE_SIZE)}</span><button disabled={(page + 1) * CONCEPT_PAGE_SIZE >= unitConcepts.length} onClick={() => onPage(page + 1)}>다음 개념</button></div>}
-    <div className="kg-zoom"><button aria-label="축소" onClick={() => zoom(1 / 1.2)}>−</button><span>{Math.round(camera.k * 100)}%</span><button aria-label="확대" onClick={() => zoom(1.2)}>+</button><i /><button aria-label="전체 그래프 보기" title="전체 보기 (0)" onClick={fit}><GraphIcon name="focus" /></button></div>
+    {!selected && unitConcepts.length > CONCEPT_PAGE_SIZE && <div className="kg-pagination"><button disabled={page === 0} onClick={() => onPage(page - 1)}>이전</button><span>{page + 1}/{Math.ceil(unitConcepts.length / CONCEPT_PAGE_SIZE)}</span><button disabled={(page + 1) * CONCEPT_PAGE_SIZE >= unitConcepts.length} onClick={() => onPage(page + 1)}>다음</button></div>}
+    <div className="kg-zoom"><button aria-label="축소" onClick={() => zoom(1 / 1.2)}>−</button><span>{Math.round(camera.k * 100)}%</span><button aria-label="확대" onClick={() => zoom(1.2)}>+</button><i /><button aria-label="전체 보기" onClick={fit}><GraphIcon name="focus" /></button></div>
   </>;
 }
