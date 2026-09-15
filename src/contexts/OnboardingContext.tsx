@@ -24,6 +24,16 @@ interface OnboardingContextValue {
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
+const RESULT_STORAGE_KEY = 'suhwakhaeng.latestLevelTestResult';
+
+function loadStoredResult(): LearningRouteResponse | null {
+  try {
+    const raw = sessionStorage.getItem(RESULT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as LearningRouteResponse : null;
+  } catch {
+    return null;
+  }
+}
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [grade, setGradeState] = useState<Grade | null>(null);
@@ -31,19 +41,31 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [units, setUnitsState] = useState<string[]>([]);
   // 레벨 테스트는 복합개념(BN)에서만 시작한다.
   const [startNodeLevel, setStartNodeLevelState] = useState<StartNodeLevel>('BN');
-  const [levelTestResult, setLevelTestResultState] = useState<LearningRouteResponse | null>(null);
+  const [levelTestResult, setLevelTestResultState] = useState<LearningRouteResponse | null>(loadStoredResult);
 
   const setGrade = useCallback((g: Grade) => setGradeState(g), []);
   const setSubject = useCallback((s: string) => setSubjectState(s), []);
   const setUnits = useCallback((u: string[]) => setUnitsState(u), []);
   const setStartNodeLevel = useCallback((l: StartNodeLevel) => setStartNodeLevelState(l), []);
-  const setLevelTestResult = useCallback((r: LearningRouteResponse) => setLevelTestResultState(r), []);
+  const setLevelTestResult = useCallback((r: LearningRouteResponse) => {
+    setLevelTestResultState(r);
+    try {
+      sessionStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(r));
+    } catch {
+      // 저장 공간을 사용할 수 없어도 현재 화면의 결과 표시는 계속한다.
+    }
+  }, []);
   const reset = useCallback(() => {
     setGradeState(null);
     setSubjectState(null);
     setUnitsState([]);
     setStartNodeLevelState('BN');
     setLevelTestResultState(null);
+    try {
+      sessionStorage.removeItem(RESULT_STORAGE_KEY);
+    } catch {
+      // 저장 공간을 사용할 수 없는 환경에서는 메모리 상태만 초기화한다.
+    }
   }, []);
 
   return (

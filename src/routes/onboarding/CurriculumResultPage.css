@@ -1,0 +1,468 @@
+.diagnostic-report-page {
+  min-width: 0;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+
+.diagnostic-report-hero {
+  padding: 32px;
+}
+
+.diagnostic-report-title {
+  font-size: 32px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.diagnostic-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.diagnostic-summary-card {
+  min-width: 0;
+}
+
+.report-section {
+  position: relative;
+  margin-top: 32px;
+  padding: 26px;
+  border: 1px solid #e7ebf1;
+  border-radius: 20px;
+}
+
+.report-summary-section {
+  background: #f8fafc;
+}
+
+.report-concept-section {
+  border-color: #dfe5f2;
+  background: linear-gradient(145deg, #f8faff 0%, #f2f5fc 58%, #f7f5fc 100%);
+  box-shadow: 0 14px 36px rgba(55, 65, 120, 0.065);
+}
+
+.report-learning-section {
+  border-color: #dfe5f2;
+  background: linear-gradient(145deg, #f8faff 0%, #f2f5fc 58%, #f7f5fc 100%);
+  box-shadow: 0 14px 36px rgba(55, 65, 120, 0.065);
+}
+
+.report-section-title {
+  position: relative;
+  margin: 0 0 18px;
+  padding-left: 14px;
+  color: #111827;
+}
+
+.report-section-title::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 4px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+.diagnostic-area-list {
+  display: grid;
+  gap: 12px;
+}
+
+.diagnostic-priority-list {
+  display: grid;
+  gap: 20px;
+}
+
+.diagnostic-priority-group {
+  padding: 16px;
+  border: 1px solid #fee2e2;
+  border-radius: 17px;
+  background: #fffafa;
+}
+
+.diagnostic-priority-group.is-unstable {
+  border-color: #f5e8bd;
+  background: #fffdf7;
+}
+
+.diagnostic-priority-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 3px 12px;
+}
+
+.diagnostic-priority-heading strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+}
+
+.diagnostic-priority-heading strong i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.diagnostic-priority-heading > span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.diagnostic-priority-areas {
+  display: grid;
+  gap: 10px;
+}
+
+.diagnostic-priority-group .diagnostic-concept-card {
+  justify-content: flex-start;
+}
+
+.diagnostic-concept-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.diagnostic-area-card {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.diagnostic-area-card:hover,
+.diagnostic-area-card.is-open {
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.diagnostic-area-trigger {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.diagnostic-area-trigger:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.24);
+  outline-offset: -3px;
+}
+
+.diagnostic-area-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.diagnostic-area-count {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.diagnostic-area-summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.diagnostic-summary-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.diagnostic-summary-item i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.diagnostic-summary-item.is-unstable {
+  color: #a16207;
+}
+
+.diagnostic-summary-item.is-review {
+  color: #dc2626;
+}
+
+.diagnostic-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 7px 11px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.06);
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.diagnostic-area-trigger:hover .diagnostic-toggle-label {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.13);
+  transform: translateY(-1px);
+}
+
+.diagnostic-area-card.is-open .diagnostic-toggle-label {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.2);
+}
+
+.diagnostic-area-trigger:active .diagnostic-toggle-label {
+  transform: translateY(0) scale(0.97);
+}
+
+.diagnostic-area-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 180ms cubic-bezier(0.4, 0, 0.2, 1), opacity 120ms ease;
+}
+
+.diagnostic-area-card.is-open .diagnostic-area-collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.diagnostic-area-collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.diagnostic-concept-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 22px 20px;
+  padding-top: 18px;
+  border-top: 1px solid #eef2f7;
+}
+
+.diagnostic-concept-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid #edf0f5;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.diagnostic-concept-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagnostic-concept-card > span {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.learning-plan-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.learning-plan-title-row .report-section-title {
+  margin-bottom: 0;
+}
+
+.learning-area-card {
+  border: 1px solid rgba(199, 210, 254, 0.72);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 5px 18px rgba(49, 46, 129, 0.045);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.learning-plan-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 11px;
+  border: 1px solid #e8edf4;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.learning-plan-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.learning-plan-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.learning-plan-legend .is-unstable {
+  color: #a16207;
+}
+
+.learning-plan-legend .is-review {
+  color: #dc2626;
+}
+
+@media (max-width: 720px) {
+  .diagnostic-report-page {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .diagnostic-report-hero {
+    padding: 24px 20px;
+    border-radius: 18px !important;
+  }
+
+  .diagnostic-report-title {
+    font-size: 26px;
+  }
+
+  .diagnostic-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .diagnostic-summary-card {
+    padding: 16px 10px !important;
+  }
+
+  .report-section {
+    margin-top: 22px;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .diagnostic-area-trigger {
+    grid-template-columns: 1fr auto;
+    gap: 10px 14px;
+    padding: 18px;
+  }
+
+  .diagnostic-priority-group {
+    padding: 12px;
+  }
+
+  .diagnostic-area-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .diagnostic-toggle-label {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .diagnostic-concept-grid {
+    grid-template-columns: 1fr;
+    margin: 0 18px 18px;
+  }
+
+  .diagnostic-concept-card {
+    align-items: flex-start;
+  }
+
+  .diagnostic-concept-card strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .learning-plan-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .learning-plan-legend {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .diagnostic-report-hero {
+    padding: 22px 18px;
+  }
+
+  .diagnostic-report-title {
+    font-size: 23px;
+  }
+
+  .report-section {
+    padding: 18px 12px;
+  }
+
+  .diagnostic-area-trigger {
+    padding: 16px 14px;
+  }
+
+  .diagnostic-area-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .diagnostic-concept-grid {
+    margin: 0 14px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diagnostic-area-card,
+  .diagnostic-area-collapse {
+    transition: none;
+  }
+
+}
