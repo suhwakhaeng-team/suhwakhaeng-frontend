@@ -268,6 +268,29 @@ test('connects data organization before counting on a straight unit route', () =
   assert(details.get('2').y > data.y);
 });
 
+test('lowers only the six data organization details without moving unit headings', () => {
+  const names = ['평균', '최빈값', '도수분포표', '히스토그램', '도수분포다각형', '산점도', '곱의 법칙'];
+  const result = adaptTopology({ nodes: names.map((tagName, id) => ({
+    id: String(id), tagName, categoryPath: '확률과 통계', status: 'UNDIAGNOSED', colorDepth: 1, grade: 4,
+  })), edges: [] });
+  const index = createGraphIndex(result.data);
+  const units = layoutUnits(index);
+  const originalUnits = new Map([...units].map(([id, point]) => [id, { ...point }]));
+  const details = layoutAllConcepts(index, units);
+  assert.equal(index.unitConcepts.get('course:data-basics').length, 6);
+  for (const unit of index.data.units) {
+    const concepts = index.unitConcepts.get(unit.id);
+    const baseline = layoutConcepts(concepts.map(concept => concept.id), units.get(unit.id),
+      new Map(concepts.map(concept => [concept.id, concept.prerequisites])));
+    for (const concept of concepts) {
+      assert.equal(details.get(concept.id).x, baseline.get(concept.id).x);
+      assert.equal(details.get(concept.id).y - baseline.get(concept.id).y,
+        unit.id === 'course:data-basics' ? 40 : 0);
+    }
+  }
+  assert.deepEqual(units, originalUnits);
+});
+
 test('invalid graphs fail with context rather than render incorrect relationships', () => {
   assert.throws(() => graph({ a: ['missing'] }), /missing/);
   const data = { ...algorithmsExample, concepts: [...algorithmsExample.concepts, algorithmsExample.concepts[0]] };

@@ -13,6 +13,7 @@ type PrerequisiteMap = ReadonlyMap<string, readonly string[]>;
 const LATE_BRANCH_LANE_OFFSET = 220;
 const LATE_BRANCH_CONCEPT_LIFT = 200;
 const UNIT_HORIZONTAL_GAP = 225;
+const DATA_BASICS_DETAIL_OFFSET = 40;
 
 function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number, alignShortBranchesToMerge = false, lateBranchIds?: Set<string>) {
   const idSet = new Set(ids);
@@ -303,7 +304,10 @@ export function layoutAllConcepts(index: GraphIndex, unitPoints: ReadonlyMap<str
       ? { ...unitPoint, y: unitPoint.y - LATE_BRANCH_CONCEPT_LIFT }
       : unitPoint;
     for (const [id, point] of layoutConcepts(concepts.map(concept => concept.id), conceptCenter, prerequisites)) {
-      result.set(id, point);
+      // Only lower this unit's details; keep its heading and other clusters fixed.
+      result.set(id, unit.id === 'course:data-basics'
+        ? { ...point, y: point.y + DATA_BASICS_DETAIL_OFFSET }
+        : point);
     }
   }
   return result;
