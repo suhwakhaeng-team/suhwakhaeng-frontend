@@ -70,7 +70,7 @@ test('places a short prerequisite branch beside the unit where it merges', () =>
   assert.equal(units.get('short').x, units.get('c').x);
   assert.equal(units.get('merge').x - units.get('short').x, 225);
   assert.equal(units.get('c').y, 0);
-  assert(units.get('short').y <= units.get('c').y - 200);
+  assert(units.get('short').y <= units.get('c').y - 400);
 });
 
 test('concept positions stay stable when a prerequisite path is revealed', () => {
