@@ -238,7 +238,7 @@ test('topology adapter normalizes production math concepts into a readable cours
   assert.deepEqual([...layoutUnits(index).values()].map(point => point.y), [0, 0, 0]);
 });
 
-test('places data organization after counting without inventing prerequisite edges', () => {
+test('connects data organization before counting on a straight unit route', () => {
   const dto = (id, tagName) => ({ id, tagName, categoryPath: '확률과 통계', status: 'UNDIAGNOSED', colorDepth: 1, grade: 4 });
   const result = adaptTopology({ nodes: [
     dto('1', '곱의 법칙'),
@@ -255,11 +255,17 @@ test('places data organization after counting without inventing prerequisite edg
   const counting = units.get('course:counting');
   const data = units.get('course:data-basics');
   const permutation = units.get('course:permutation');
-  assert.equal(data.x - counting.x, 225);
-  assert.equal(permutation.x - data.x, 225);
+  assert.equal(counting.x - data.x, 225);
+  assert.equal(permutation.x - counting.x, 225);
   assert.equal(data.y, counting.y);
+  assert.equal(new Set([...units.values()].map(point => point.y)).size, 1);
+  assert(index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:counting'));
   assert(!index.unitEdges.some(edge => edge.source === 'course:counting' && edge.target === 'course:data-basics'));
   assert(index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:inference'));
+  const ancestors = getRelatedUnits(index, 'course:counting', 'ancestors');
+  assert.deepEqual(ancestors, new Set(['course:data-basics']));
+  const details = layoutAllConcepts(index, units);
+  assert(details.get('2').y > data.y);
 });
 
 test('invalid graphs fail with context rather than render incorrect relationships', () => {
