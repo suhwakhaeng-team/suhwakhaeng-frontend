@@ -64,13 +64,21 @@ test('places a short prerequisite branch beside the unit where it merges', () =>
       { id: 'short', subjectId: 'subject', name: 'Short branch', prerequisites: [] },
       { id: 'merge', subjectId: 'subject', name: 'Merge', prerequisites: ['c', 'short'] },
     ],
-    concepts: [],
+    concepts: Array.from({ length: 6 }, (_, index) => ({
+      id: `short-${index}`,
+      name: `Short detail ${index}`,
+      unitId: 'short',
+      description: '',
+      prerequisites: index ? [`short-${index - 1}`] : [],
+    })),
   };
   const units = layoutUnits(createGraphIndex(data));
   assert.equal(units.get('short').x, units.get('c').x);
   assert.equal(units.get('merge').x - units.get('short').x, 225);
   assert.equal(units.get('c').y, 0);
-  assert(units.get('short').y <= units.get('c').y - 400);
+  assert.equal(units.get('short').y, units.get('c').y - 220);
+  const detailPoints = layoutAllConcepts(createGraphIndex(data), units);
+  assert([...detailPoints.values()].every(point => point.y < units.get('short').y));
 });
 
 test('concept positions stay stable when a prerequisite path is revealed', () => {
