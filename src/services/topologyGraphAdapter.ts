@@ -6,11 +6,12 @@ interface CourseUnitDefinition {
   name: string;
   prerequisites: readonly string[];
   concepts: readonly string[];
+  layoutAfter?: string;
 }
 
 const COURSE_UNITS: readonly CourseUnitDefinition[] = [
-  { id: 'course:data-basics', name: '자료의 정리', prerequisites: [] as string[], concepts: ['평균', '최빈값', '도수분포표', '히스토그램', '도수분포다각형', '산점도'] },
   { id: 'course:counting', name: '경우의 수', prerequisites: [] as string[], concepts: ['합의 법칙', '곱의 법칙', '팩토리얼'] },
+  { id: 'course:data-basics', name: '자료의 정리', prerequisites: [] as string[], concepts: ['평균', '최빈값', '도수분포표', '히스토그램', '도수분포다각형', '산점도'], layoutAfter: 'course:counting' },
   { id: 'course:permutation', name: '순열과 조합', prerequisites: ['course:counting'], concepts: ['순열', '조합', '중복조합', '중복조합의 활용', '이항정리', '이항계수의 활용'] },
   { id: 'course:probability', name: '확률의 기초', prerequisites: ['course:permutation'], concepts: ['표본공간과 사건', '수학적 확률', '배반사건', '확률의 덧셈 정리'] },
   { id: 'course:conditional', name: '조건부확률', prerequisites: ['course:probability'], concepts: ['확률의 곱셈정리', '사건의 독립', '독립사건', '독립시행의 확률'] },
@@ -63,6 +64,7 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
     subjectId: subject.id,
     name: unit.name,
     prerequisites: unit.prerequisites.filter(id => usedUnitIds.has(id)),
+    layoutAfter: unit.layoutAfter && usedUnitIds.has(unit.layoutAfter) ? unit.layoutAfter : undefined,
   }));
   const canonicalUnitIds = new Set(canonicalUnits.map(unit => unit.id));
   const fallbackCategories = [...new Set(topology.nodes

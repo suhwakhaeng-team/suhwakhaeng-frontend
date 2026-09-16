@@ -12,6 +12,7 @@ type PrerequisiteMap = ReadonlyMap<string, readonly string[]>;
 
 const LATE_BRANCH_LANE_OFFSET = 220;
 const LATE_BRANCH_CONCEPT_LIFT = 200;
+const UNIT_HORIZONTAL_GAP = 225;
 
 function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number, alignShortBranchesToMerge = false, lateBranchIds?: Set<string>) {
   const idSet = new Set(ids);
@@ -132,7 +133,16 @@ function layoutUnitGraph(index: GraphIndex) {
   const prerequisites = new Map(index.data.units.map(unit => [unit.id, [] as string[]]));
   index.unitEdges.forEach(edge => prerequisites.get(edge.target)!.push(edge.source));
   const lateBranchIds = new Set<string>();
-  const points = layeredLayout(index.data.units.map(unit => unit.id), prerequisites, 225, 132, true, lateBranchIds);
+  const points = layeredLayout(index.data.units.map(unit => unit.id), prerequisites, UNIT_HORIZONTAL_GAP, 132, true, lateBranchIds);
+  for (const unit of index.data.units.filter(candidate => candidate.layoutAfter)) {
+    const anchor = points.get(unit.layoutAfter!);
+    if (!anchor || !points.has(unit.id)) continue;
+    for (const [id, point] of points) {
+      if (id !== unit.id && point.x > anchor.x) points.set(id, { ...point, x: point.x + UNIT_HORIZONTAL_GAP });
+    }
+    points.set(unit.id, { x: anchor.x + UNIT_HORIZONTAL_GAP, y: anchor.y });
+    lateBranchIds.delete(unit.id);
+  }
   return { points, lateBranchIds };
 }
 

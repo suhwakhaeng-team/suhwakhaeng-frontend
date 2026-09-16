@@ -13,6 +13,8 @@ export interface Unit {
   name: string;
   description?: string;
   prerequisites: string[];
+  /** Optional visual ordering that does not create a prerequisite relation. */
+  layoutAfter?: string;
 }
 
 export interface Concept {

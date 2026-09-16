@@ -238,6 +238,30 @@ test('topology adapter normalizes production math concepts into a readable cours
   assert.deepEqual([...layoutUnits(index).values()].map(point => point.y), [0, 0, 0]);
 });
 
+test('places data organization after counting without inventing prerequisite edges', () => {
+  const dto = (id, tagName) => ({ id, tagName, categoryPath: '확률과 통계', status: 'UNDIAGNOSED', colorDepth: 1, grade: 4 });
+  const result = adaptTopology({ nodes: [
+    dto('1', '곱의 법칙'),
+    dto('2', '평균'),
+    dto('3', '순열'),
+    dto('4', '표본공간과 사건'),
+    dto('5', '확률의 곱셈정리'),
+    dto('6', '확률분포'),
+    dto('7', '정규분포'),
+    dto('8', '모집단'),
+  ], edges: [] });
+  const index = createGraphIndex(result.data);
+  const units = layoutUnits(index);
+  const counting = units.get('course:counting');
+  const data = units.get('course:data-basics');
+  const permutation = units.get('course:permutation');
+  assert.equal(data.x - counting.x, 225);
+  assert.equal(permutation.x - data.x, 225);
+  assert.equal(data.y, counting.y);
+  assert(!index.unitEdges.some(edge => edge.source === 'course:counting' && edge.target === 'course:data-basics'));
+  assert(index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:inference'));
+});
+
 test('invalid graphs fail with context rather than render incorrect relationships', () => {
   assert.throws(() => graph({ a: ['missing'] }), /missing/);
   const data = { ...algorithmsExample, concepts: [...algorithmsExample.concepts, algorithmsExample.concepts[0]] };
