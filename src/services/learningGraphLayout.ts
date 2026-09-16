@@ -10,7 +10,10 @@ export const conceptEdgeKey = (source: string, target: string) => `${source}:${t
 
 type PrerequisiteMap = ReadonlyMap<string, readonly string[]>;
 
-function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number, alignShortBranchesToMerge = false) {
+const LATE_BRANCH_LANE_OFFSET = 220;
+const LATE_BRANCH_CONCEPT_LIFT = 200;
+
+function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontalGap: number, verticalGap: number, alignShortBranchesToMerge = false, lateBranchIds?: Set<string>) {
   const idSet = new Set(ids);
   const inputOrder = new Map(ids.map((id, index) => [id, index]));
   const degree = new Map(ids.map(id => [id, 0]));
@@ -112,10 +115,9 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
       const mainlineTop = -(mainline.length - 1) / 2 * gap;
       lateBranches.forEach((id, index) => points.set(id, {
         x: rank * horizontalGap,
-        // Keep enough room for the branch unit's expanded concept cluster so
-        // it cannot cover the mainline unit directly below it.
-        y: mainlineTop - 420 - (lateBranches.length - 1 - index) * gap,
+        y: mainlineTop - LATE_BRANCH_LANE_OFFSET - (lateBranches.length - 1 - index) * gap,
       }));
+      lateBranches.forEach(id => lateBranchIds?.add(id));
       continue;
     }
     layer.forEach((id, index) => points.set(id, {
@@ -126,10 +128,16 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
   return points;
 }
 
-export function layoutUnits(index: GraphIndex) {
+function layoutUnitGraph(index: GraphIndex) {
   const prerequisites = new Map(index.data.units.map(unit => [unit.id, [] as string[]]));
   index.unitEdges.forEach(edge => prerequisites.get(edge.target)!.push(edge.source));
-  return layeredLayout(index.data.units.map(unit => unit.id), prerequisites, 225, 132, true);
+  const lateBranchIds = new Set<string>();
+  const points = layeredLayout(index.data.units.map(unit => unit.id), prerequisites, 225, 132, true, lateBranchIds);
+  return { points, lateBranchIds };
+}
+
+export function layoutUnits(index: GraphIndex) {
+  return layoutUnitGraph(index).points;
 }
 
 export function layoutConcepts(ids: string[], center: Point, prerequisites: PrerequisiteMap = new Map()) {
@@ -283,10 +291,17 @@ export function routedConceptEdge(route: readonly Point[]) {
 /** Stable positions for every concept, whether it is currently hidden or shown. */
 export function layoutAllConcepts(index: GraphIndex, unitPoints: ReadonlyMap<string, Point>) {
   const result = new Map<string, Point>();
+  const { lateBranchIds } = layoutUnitGraph(index);
   for (const unit of index.data.units) {
     const concepts = index.unitConcepts.get(unit.id) ?? [];
     const prerequisites = new Map(concepts.map(concept => [concept.id, concept.prerequisites]));
-    for (const [id, point] of layoutConcepts(concepts.map(concept => concept.id), unitPoints.get(unit.id) ?? { x: 0, y: 0 }, prerequisites)) {
+    const unitPoint = unitPoints.get(unit.id) ?? { x: 0, y: 0 };
+    // Keep the unit in its compact upper lane, but open its details farther
+    // upward so the expanded cluster cannot cover the main route below.
+    const conceptCenter = lateBranchIds.has(unit.id)
+      ? { ...unitPoint, y: unitPoint.y - LATE_BRANCH_CONCEPT_LIFT }
+      : unitPoint;
+    for (const [id, point] of layoutConcepts(concepts.map(concept => concept.id), conceptCenter, prerequisites)) {
       result.set(id, point);
     }
   }
