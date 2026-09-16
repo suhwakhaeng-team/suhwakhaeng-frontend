@@ -112,7 +112,9 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
       const mainlineTop = -(mainline.length - 1) / 2 * gap;
       lateBranches.forEach((id, index) => points.set(id, {
         x: rank * horizontalGap,
-        y: mainlineTop - 220 - (lateBranches.length - 1 - index) * gap,
+        // Keep enough room for the branch unit's expanded concept cluster so
+        // it cannot cover the mainline unit directly below it.
+        y: mainlineTop - 420 - (lateBranches.length - 1 - index) * gap,
       }));
       continue;
     }
