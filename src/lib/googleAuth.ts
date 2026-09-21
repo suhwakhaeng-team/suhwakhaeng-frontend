@@ -17,7 +17,11 @@ function decodeGoogleIdToken(credential: string): GoogleIdTokenPayload {
     .replace(/_/g, '/');
   payload = payload.padEnd(payload.length + (4 - payload.length % 4) % 4, '=');
 
-  const decoded = atob(payload);
+  // JWT payload JSON is UTF-8. atob() returns a binary string, so parsing it
+  // directly corrupts non-ASCII profile names (for example Korean names).
+  const binary = atob(payload);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   return JSON.parse(decoded);
 }
 
