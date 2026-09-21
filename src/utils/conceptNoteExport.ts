@@ -101,14 +101,5 @@ export const createConceptNotePdfBlob = async (note: ConceptNote, noteElement: H
   }
 };
 
-export const downloadConceptNoteAsPdf = async (note: ConceptNote, noteElement: HTMLElement) => {
-  const blob = await createConceptNotePdfBlob(note, noteElement);
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${note.title.replace(/[\\/:*?"<>|]/g, '_')}-개념노트.pdf`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-};
+export const conceptNotePdfFilename = (note: ConceptNote) =>
+  `${note.title.replace(/[\\/:*?"<>|]/g, '_')}-개념노트.pdf`;
