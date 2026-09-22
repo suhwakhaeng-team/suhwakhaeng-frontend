@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { ONBOARDING_RESULT_STORAGE_KEY } from '../lib/localLearningStorage';
 import type { LearningRouteResponse } from '../types/learning';
 
 // 온보딩 스텝(학년/과목/단원/실력테스트 결과)을 스텝 간 공유하기 위한 컨텍스트.
@@ -24,11 +25,9 @@ interface OnboardingContextValue {
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
-const RESULT_STORAGE_KEY = 'suhwakhaeng.latestLevelTestResult';
-
 function loadStoredResult(): LearningRouteResponse | null {
   try {
-    const raw = sessionStorage.getItem(RESULT_STORAGE_KEY);
+    const raw = sessionStorage.getItem(ONBOARDING_RESULT_STORAGE_KEY);
     return raw ? JSON.parse(raw) as LearningRouteResponse : null;
   } catch {
     return null;
@@ -50,7 +49,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const setLevelTestResult = useCallback((r: LearningRouteResponse) => {
     setLevelTestResultState(r);
     try {
-      sessionStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(r));
+      sessionStorage.setItem(ONBOARDING_RESULT_STORAGE_KEY, JSON.stringify(r));
     } catch {
       // 저장 공간을 사용할 수 없어도 현재 화면의 결과 표시는 계속한다.
     }
@@ -62,7 +61,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setStartNodeLevelState('BN');
     setLevelTestResultState(null);
     try {
-      sessionStorage.removeItem(RESULT_STORAGE_KEY);
+      sessionStorage.removeItem(ONBOARDING_RESULT_STORAGE_KEY);
     } catch {
       // 저장 공간을 사용할 수 없는 환경에서는 메모리 상태만 초기화한다.
     }

@@ -1,3 +1,5 @@
+import { LOCAL_LEARNING_STORAGE_KEYS } from '../../lib/localLearningStorage.ts';
+
 export const STEPS = [
   { title: '도수분포표 읽어보기', subtitle: '정리하는 이유', goal: '표에서 구간별 인원을 확인하세요.', tip: '도수는 그 구간에 들어가는 자료의 개수예요.' },
   { title: '구간에 분류해보기', subtitle: '이상과 미만', goal: '20 이상 30 미만인 카드를 모두 선택하세요.', tip: '20 이상은 20을 포함하고, 30 미만은 30을 포함하지 않아요.' },
@@ -32,7 +34,7 @@ export function checkMission(step: number, answers: string[], selected: number[]
 
 export type CourseProgress = { completed: number[]; reviewPassed: boolean };
 export const EMPTY_PROGRESS: CourseProgress = { completed: [], reviewPassed: false };
-export const STORAGE_KEY = 'dev_frequency_course_v1';
+export const STORAGE_KEY = LOCAL_LEARNING_STORAGE_KEYS.frequencyCourse;
 
 export function parseProgress(raw: string | null): CourseProgress {
   try {

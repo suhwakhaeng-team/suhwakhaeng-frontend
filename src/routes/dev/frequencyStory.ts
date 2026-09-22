@@ -1,9 +1,10 @@
 import { frequencies } from './frequencyCourse.ts';
+import { LOCAL_LEARNING_STORAGE_KEYS } from '../../lib/localLearningStorage.ts';
 
 export const STORY_DATA = [23, 12, 35, 20, 18, 30, 29, 23];
 export const OTHER_CLASS_DATA = [19, 34, 20, 10, 39, 28, 31, 15, 30];
 export const STORY_NAMES = ['민서', '지우', '서준', '하린', '도윤', '수아', '예준', '유진'];
-export const STORY_STORAGE_KEY = 'dev_frequency_story_v2_completed';
+export const STORY_STORAGE_KEY = LOCAL_LEARNING_STORAGE_KEYS.frequencyStory;
 
 export function storyRange(value: number): number | null {
   if (!Number.isFinite(value) || value < 10 || value >= 40) return null;

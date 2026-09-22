@@ -1,11 +1,12 @@
 import type { CurriculumItem } from '../types/home';
 import type { CurriculumMapItem } from '../types/curriculumMap';
 import type { TopologyResponse } from '../types/topology';
+import { LOCAL_LEARNING_STORAGE_KEYS } from './localLearningStorage.ts';
 
 export const UT_FREQUENCY_FLOW_ENABLED = true;
 export const UT_FREQUENCY_TOPIC_NAME = '도수분포표';
 export const UT_FREQUENCY_LEARNING_ROUTE = '/main/learning/frequency-table';
-export const UT_FREQUENCY_COMPLETION_STORAGE_KEY = 'dev_frequency_assessment_ut1_passed';
+export const UT_FREQUENCY_COMPLETION_STORAGE_KEY = LOCAL_LEARNING_STORAGE_KEYS.frequencyAssessment;
 
 const UT_FREQUENCY_RECOMMENDATION: CurriculumItem = {
   id: 'ut-frequency-table',

@@ -4,6 +4,7 @@ import { tokenStorage } from '../lib/tokenStorage';
 import { loginWithGoogle } from '../lib/googleAuth';
 import { apiClient, resetAuthState } from '../lib/apiClient';
 import { localTestMode } from '../lib/localMode';
+import { clearAccountLearningData } from '../lib/localLearningStorage';
 import type { TokenResponse } from '../types/auth';
 
 interface AuthContextValue {
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
 
+    clearAccountLearningData(uid);
     tokenStorage.clear();
     setUser(null);
     window.location.href = '/onboarding/login';
