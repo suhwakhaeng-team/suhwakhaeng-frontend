@@ -5,9 +5,10 @@ interface Props {
   item: CurriculumItem;
   isActive: boolean;
   onSolveClick: () => void;
+  actionLabel?: string;
 }
 
-export default function CurriculumItemCard({ item, isActive, onSolveClick }: Props) {
+export default function CurriculumItemCard({ item, isActive, onSolveClick, actionLabel = '문제 풀기' }: Props) {
   return (
     <div
       style={{
@@ -48,7 +49,7 @@ export default function CurriculumItemCard({ item, isActive, onSolveClick }: Pro
             ...typography.headingMdSemiBold,
           }}
         >
-          문제 풀기
+          {actionLabel}
         </button>
       )}
     </div>

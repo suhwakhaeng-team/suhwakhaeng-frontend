@@ -5,7 +5,7 @@ import CurriculumItemCard from './CurriculumItemCard';
 interface Props {
   items: CurriculumItem[];
   activeId: string | null;
-  onSolveClick: () => void;
+  onSolveClick: (item: CurriculumItem) => void;
 }
 
 export default function CurriculumListSection({ items, activeId, onSolveClick }: Props) {
@@ -30,7 +30,8 @@ export default function CurriculumListSection({ items, activeId, onSolveClick }:
             key={item.id}
             item={item}
             isActive={item.id === activeId}
-            onSolveClick={onSolveClick}
+            onSolveClick={() => onSolveClick(item)}
+            actionLabel={item.topicName === '도수분포표' ? '학습 시작' : '문제 풀기'}
           />
         ))}
       </div>

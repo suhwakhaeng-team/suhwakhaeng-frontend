@@ -29,7 +29,7 @@ export default function HomePage() {
   // 커리큘럼 (GET /users/{uid}/curriculum)
   const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
   const [activeCurriculumId, setActiveCurriculumId] = useState<string | null>(null);
-  const [isCurriculumLoading, setIsCurriculumLoading] = useState(false);
+  const [isCurriculumLoading, setIsCurriculumLoading] = useState(true);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
 
   // 전체 커리큘럼 미니맵 (GET /users/{uid}/curriculum/overview)
@@ -55,9 +55,6 @@ export default function HomePage() {
     if (!uid) return; // 미로그인 상황은 AppRouter 차원에서 이미 차단됨. 방어용.
 
     let cancelled = false;
-    setIsCurriculumLoading(true);
-    setCurriculumError(null);
-
     fetchCurriculum(uid)
       .then((result) => {
         if (cancelled) return;
@@ -113,7 +110,13 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleSolveClick = () => navigate('/main/problem/start');
+  const handleSolveClick = (item: CurriculumItem) => {
+    if (item.topicName === '도수분포표') {
+      navigate('/main/learning/frequency-table');
+      return;
+    }
+    navigate('/main/problem/start');
+  };
   const handleFeedbackClick = () => navigate('/main/feedback');
   const handleRetry = () => {
     const uid = tokenStorage.getUid();
@@ -207,7 +210,7 @@ interface CurriculumSectionProps {
   error: string | null;
   items: CurriculumItem[];
   activeId: string | null;
-  onSolveClick: () => void;
+  onSolveClick: (item: CurriculumItem) => void;
   onRetry: () => void;
 }
 
