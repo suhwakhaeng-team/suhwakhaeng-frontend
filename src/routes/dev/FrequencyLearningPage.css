@@ -26,8 +26,6 @@
 .fl-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
 .fl-heading p { margin: 0 0 6px; font-size: 13px; color: #6b7280; }
 .fl-heading h1 { margin: 0; font-size: 30px; letter-spacing: -1px; }
-.fl-xp { font-size: 23px; font-weight: 800; color: #2563eb; }
-.fl-xp > span { color: #ca8a04; }.fl-xp small { display: block; text-align: right; font-size: 11px; font-weight: 400; color: #6b7280; }
 .fl-layout { display: grid; grid-template-columns: 290px minmax(0,1fr); gap: 24px; align-items: start; }
 .fl-roadmap, .fl-lesson { background: white; border: 1px solid #e5e7eb; border-radius: 22px; }
 .fl-roadmap { padding: 24px 20px; }.fl-roadmap-heading { display: flex; justify-content: space-between; font-size: 14px; }.fl-roadmap-heading > span { color: #6b7280; }
