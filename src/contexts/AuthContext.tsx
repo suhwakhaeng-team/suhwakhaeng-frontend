@@ -132,17 +132,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  // 회원 탈퇴: 서버 레코드 삭제 + 로컬 상태 초기화 + 로그인 화면 이동.
-  // 서버 호출 실패 시에도 로컬은 초기화해 재로그인 유도 (iOS와 동일 정책).
+  // 회원 탈퇴: 서버에서 실제 삭제가 확인된 뒤에만 로컬 인증 상태를 정리한다.
   const deleteAccount = useCallback(async () => {
     const uid = tokenStorage.getUid();
-    if (uid) {
-      try {
-        await apiClient.delete(`/users/${uid}`);
-      } catch {
-        // 서버 실패해도 로컬 초기화 진행
-      }
+    if (!uid) {
+      throw new Error('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.');
     }
+
+    const response = await apiClient.delete<boolean>(`/users/${uid}`);
+    if (!response.success || response.data !== true) {
+      throw new Error(response.error ?? '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+
     tokenStorage.clear();
     setUser(null);
     window.location.href = '/onboarding/login';

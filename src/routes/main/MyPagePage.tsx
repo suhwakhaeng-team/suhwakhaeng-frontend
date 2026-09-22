@@ -24,7 +24,13 @@ export default function MyPagePage() {
         '정말 탈퇴하시겠어요?\n모든 학습 기록이 삭제되며 복구할 수 없습니다.',
       );
       if (!confirmed) return;
-      await deleteAccount();
+      try {
+        await deleteAccount();
+      } catch (error) {
+        window.alert(error instanceof Error
+          ? error.message
+          : '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      }
       return;
     }
     if (item === '이용약관') {
