@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const response = await apiClient.delete<boolean>(`/users/${uid}`);
     if (!response.success || response.data !== true) {
-      throw new Error(response.error ?? '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      throw new Error('회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
 
     tokenStorage.clear();
