@@ -97,7 +97,7 @@ export default function FrequencyLearningPage({ onComplete }: { onComplete?: () 
           </>}
         </section>
       </div>
-      <footer className="fl-local-footer"><span>{onComplete ? '학습 활동은 이 기기에 임시 저장 · REAL 문제 결과는 계정에 기록' : '운영 DB 연결 없음 · 브라우저 저장 허용 시 이 기기에만 기록'}</span>{resetConfirm ? <div>체험 기록을 초기화할까요? <button onClick={() => { setProgress(EMPTY_PROGRESS); goTo(0); setResetConfirm(false); }}>초기화</button><button onClick={() => setResetConfirm(false)}>취소</button></div> : <button onClick={() => setResetConfirm(true)}>체험 초기화</button>}</footer>
+      <footer className="fl-local-footer"><span>{onComplete ? '학습 활동은 이 기기에 임시 저장 · 실전 문제 결과는 계정에 기록' : '운영 DB 연결 없음 · 브라우저 저장 허용 시 이 기기에만 기록'}</span>{resetConfirm ? <div>체험 기록을 초기화할까요? <button onClick={() => { setProgress(EMPTY_PROGRESS); goTo(0); setResetConfirm(false); }}>초기화</button><button onClick={() => setResetConfirm(false)}>취소</button></div> : <button onClick={() => setResetConfirm(true)}>체험 초기화</button>}</footer>
     </main>
   </div>;
 }

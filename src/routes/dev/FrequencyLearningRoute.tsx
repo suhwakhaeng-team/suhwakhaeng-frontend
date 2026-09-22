@@ -50,7 +50,7 @@ export default function FrequencyLearningRoute() {
   const phases: Array<{ id: Phase; label: string; unlocked: boolean; done: boolean }> = [
     { id: 'basic', label: '1. 기초 익히기', unlocked: true, done: completion.basic },
     { id: 'story', label: '2. 상황에 적용하기', unlocked: completion.basic, done: completion.story },
-    { id: 'assessment', label: '3. REAL 문제', unlocked: completion.basic && completion.story, done: false },
+    { id: 'assessment', label: '3. 실전 문제', unlocked: completion.basic && completion.story, done: false },
   ];
 
   const embedded = location.pathname.startsWith('/main/');

@@ -98,7 +98,7 @@ export default function FrequencyAssessmentPage({ onPassed, onBack }: Props) {
   </section></main>;
 
   return <main className="fa-shell"><section className="fa-panel">
-    <header><div><p>REAL 문제 · 최초 답안 기준</p><h1>도수분포표 확인하기</h1><span>3문제 중 {set.passScore}문제 이상이면 통과</span></div><button onClick={onBack}>← 학습으로</button></header>
+    <header><div><p>실전 문제 · 최초 답안 기준</p><h1>도수분포표 확인하기</h1><span>3문제 중 {set.passScore}문제 이상이면 통과</span></div><button onClick={onBack}>← 학습으로</button></header>
     <div className="fa-progress" role="progressbar" aria-label="답변 진행" aria-valuemin={0} aria-valuemax={set.totalQuestions} aria-valuenow={Object.keys(answers).length}><i style={{ width: `${Object.keys(answers).length / set.totalQuestions * 100}%` }} /></div>
     <div className="fa-questions">{set.questions.map((question, index) => <article key={question.questionId} className="fa-question">
       <div className="fa-question-meta"><strong>{index + 1}</strong><span>{question.tags.find(tag => tag.role === 'TARGET')?.tagName}</span><small>난이도 {question.difficulty}</small></div>
