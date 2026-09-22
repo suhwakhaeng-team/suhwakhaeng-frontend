@@ -17,6 +17,7 @@ import type {
 } from '../../types/learning';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
+const UNKNOWN_ANSWER = '모르겠습니다';
 
 // 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6). plan 문서의 통일된 매핑.
 function gradeStringToInt(g: Grade | null): number | undefined {
@@ -111,8 +112,10 @@ function BatchLevelTest() {
   }, [loadProblems]);
 
   const currentProblem = problems[currentIndex];
-  const currentAnswer = currentProblem ? answers[currentProblem.id] ?? '' : '';
-  const canProceed = currentAnswer.trim().length > 0;
+  const storedAnswer = currentProblem ? answers[currentProblem.id] ?? '' : '';
+  const isCurrentUnknown = storedAnswer === UNKNOWN_ANSWER;
+  const currentAnswer = isCurrentUnknown ? '' : storedAnswer;
+  const canProceed = isCurrentUnknown || currentAnswer.trim().length > 0;
   const isLastProblem = currentIndex === problems.length - 1;
 
   const handleAnswerChange = (value: string) => {
@@ -120,7 +123,7 @@ function BatchLevelTest() {
     setAnswers((prev) => ({ ...prev, [currentProblem.id]: value }));
   };
 
-  const submitAnswers = async () => {
+  const submitAnswers = async (submittedAnswers = answers) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);
@@ -128,7 +131,7 @@ function BatchLevelTest() {
     accrue(); // 마지막 문항 체류시간 마감
 
     const items: AnswerItem[] = problems.map((p) => {
-      const userAnswer = answers[p.id] ?? '';
+      const userAnswer = submittedAnswers[p.id] ?? '';
       return {
         problemId: p.id,
         topic: p.topic,
@@ -167,6 +170,18 @@ function BatchLevelTest() {
     if (!canProceed) return;
     if (isLastProblem) {
       void submitAnswers();
+    } else {
+      accrue();
+      setCurrentIndex((i) => i + 1);
+    }
+  };
+
+  const handleUnknown = () => {
+    if (!currentProblem || isSubmitting) return;
+    const nextAnswers = { ...answers, [currentProblem.id]: UNKNOWN_ANSWER };
+    setAnswers(nextAnswers);
+    if (isLastProblem) {
+      void submitAnswers(nextAnswers);
     } else {
       accrue();
       setCurrentIndex((i) => i + 1);
@@ -330,6 +345,25 @@ function BatchLevelTest() {
           {submitError}
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={handleUnknown}
+        disabled={isSubmitting}
+        style={{
+          width: '100%',
+          marginTop: spacing.lg,
+          padding: `${spacing.md}px 0`,
+          background: isCurrentUnknown ? colors.gray100 : colors.white,
+          color: colors.gray500,
+          border: `1px solid ${colors.gray300}`,
+          borderRadius: radius.md,
+          ...typography.bodyTextXLRegular,
+          cursor: isSubmitting ? 'default' : 'pointer',
+        }}
+      >
+        {isCurrentUnknown ? '모르겠습니다 선택됨' : '모르겠습니다'}
+      </button>
 
       {/* 네비게이션 버튼 */}
       <div style={{ display: 'flex', gap: spacing.md, marginTop: spacing.xl }}>

@@ -18,6 +18,7 @@ import type {
 type LoadState = 'loading' | 'ready' | 'empty' | 'error';
 // 현재 보여주는 문항의 단계: BN(복합) 본문제 / AN(하위 개념) drill-down.
 type Phase = 'bn' | 'an';
+const UNKNOWN_ANSWER = '모르겠습니다';
 
 // BN 출제 순서를 단원명으로 못박는다 (노션 Q1~Q10 = 확률 영역 → 통계 영역).
 // BN 은 고정된 10문제라 이 배열이 진실 원천. BE 가 어떤 순서로 주든 FE 가 이 순서로 재정렬하므로
@@ -165,18 +166,19 @@ export default function BnLevelTest() {
     }
   }, [bnIndex, bnProblems.length, submitAll]);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = useCallback(async (answerOverride?: string) => {
     const problem = currentProblem;
     if (!problem || busyRef.current || isSubmitting) return;
-    if (currentAnswer.trim().length === 0) return;
+    const submittedAnswer = answerOverride ?? currentAnswer;
+    if (submittedAnswer.trim().length === 0) return;
     busyRef.current = true;
 
     const timeTakenSec = Math.max(0, Math.round((Date.now() - enterAtRef.current) / 1000));
-    const correct = isProblemAnswerCorrect(problem, currentAnswer);
+    const correct = isProblemAnswerCorrect(problem, submittedAnswer);
     const item: AnswerItem = {
       problemId: problem.id,
       topic: problem.topic,
-      userAnswer: currentAnswer,
+      userAnswer: submittedAnswer,
       correct,
       timeTakenSec,
       concepts: problem.concepts,
@@ -366,6 +368,25 @@ export default function BnLevelTest() {
           {submitError}
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={() => void handleNext(UNKNOWN_ANSWER)}
+        disabled={isSubmitting}
+        style={{
+          width: '100%',
+          marginTop: spacing.lg,
+          padding: `${spacing.md}px 0`,
+          background: colors.white,
+          color: colors.gray500,
+          border: `1px solid ${colors.gray300}`,
+          borderRadius: radius.md,
+          ...typography.bodyTextXLRegular,
+          cursor: isSubmitting ? 'default' : 'pointer',
+        }}
+      >
+        모르겠습니다
+      </button>
 
       {/* 다음/제출 버튼 (drill-down 은 뒤로가기 없음 — 전진형) */}
       <div style={{ display: 'flex', gap: spacing.md, marginTop: spacing.xl }}>
