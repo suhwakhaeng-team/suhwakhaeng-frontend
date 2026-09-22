@@ -3,9 +3,9 @@ import QuestionPrompt from '../../components/QuestionPrompt';
 import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import {
-  ASSESSMENT_STORAGE_KEY,
   FREQUENCY_ASSESSMENT_SET_KEY,
 } from './frequencyAssessment';
+import { UT_FREQUENCY_COMPLETION_STORAGE_KEY } from '../../lib/utFrequencyFlow';
 import type { AssessmentSet, AssessmentSubmissionResult } from './frequencyAssessment';
 import './FrequencyAssessmentPage.css';
 
@@ -68,7 +68,7 @@ export default function FrequencyAssessmentPage({ onPassed, onBack }: Props) {
     if (submitted) {
       setResult(submitted);
       if (submitted.passed) {
-        try { localStorage.setItem(ASSESSMENT_STORAGE_KEY, 'true'); } catch { /* in-memory result remains available */ }
+        try { localStorage.setItem(UT_FREQUENCY_COMPLETION_STORAGE_KEY, 'true'); } catch { /* in-memory result remains available */ }
       }
     }
     setSubmitting(false);

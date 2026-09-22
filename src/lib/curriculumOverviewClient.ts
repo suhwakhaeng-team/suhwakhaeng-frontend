@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient';
 import { coerceStatus, type CurriculumMapItem } from '../types/curriculumMap';
+import { applyUtFrequencyMasteryToOverview } from './utFrequencyFlow';
 
 // MARK: - Network DTO (BE CurriculumOverviewResponse / CurriculumOverviewItem 와 1:1)
 
@@ -25,13 +26,13 @@ export async function fetchCurriculumOverview(uid: string): Promise<CurriculumMa
     throw new Error(res.error ?? '전체 커리큘럼을 불러오지 못했습니다.');
   }
 
-  return res.data.items.map((dto) => ({
+  return applyUtFrequencyMasteryToOverview(res.data.items.map((dto) => ({
     id: dto.tagId,
     tagName: dto.tagName,
     categoryPath: dto.categoryPath,
     status: coerceStatus(dto.status),
     colorDepth: dto.colorDepth ?? null,
-  }));
+  })));
 }
 
 /**

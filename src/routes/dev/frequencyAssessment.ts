@@ -1,5 +1,4 @@
 export const FREQUENCY_ASSESSMENT_SET_KEY = 'FREQUENCY_TABLE_UT1';
-export const ASSESSMENT_STORAGE_KEY = 'dev_frequency_assessment_ut1_passed';
 
 export interface AssessmentTag {
   tagId: number;
@@ -41,8 +40,4 @@ export interface AssessmentSubmissionResult {
   passScore: number;
   passed: boolean;
   results: Array<{ questionId: number; correct: boolean; correctAnswer: string; explanation: string | null }>;
-}
-
-export function hasPassedFrequencyAssessment(): boolean {
-  try { return localStorage.getItem(ASSESSMENT_STORAGE_KEY) === 'true'; } catch { return false; }
 }

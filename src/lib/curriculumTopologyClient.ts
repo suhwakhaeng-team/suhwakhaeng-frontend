@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient';
 import { coerceStatus } from '../types/curriculumMap';
 import type { TopologyNode, TopologyEdge, TopologyResponse } from '../types/topology';
+import { applyUtFrequencyMasteryToTopology } from './utFrequencyFlow';
 
 interface TopologyNodeDTO {
   tagId: string;
@@ -49,5 +50,5 @@ export async function fetchTopology(uid: string): Promise<TopologyResponse> {
     targetTagId: dto.targetTagId,
   }));
 
-  return { nodes, edges };
+  return applyUtFrequencyMasteryToTopology({ nodes, edges });
 }
