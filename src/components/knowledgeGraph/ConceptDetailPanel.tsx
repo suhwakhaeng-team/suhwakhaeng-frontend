@@ -4,6 +4,7 @@ import type { GraphIndex, ProgressMap } from '../../types/learningGraph';
 import type { AdaptiveQuestion } from '../../types/adaptive';
 import { statusOf } from '../../services/learningGraph';
 import { apiClient } from '../../lib/apiClient';
+import { isUtFrequencyConcept, UT_FREQUENCY_LEARNING_ROUTE } from '../../lib/utFrequencyFlow';
 import GraphIcon from './GraphIcon';
 
 const serverLabel = { MASTERED: '통과', IN_PROGRESS: '진행 중', WEAK: '약점', UNDIAGNOSED: '미진단' };
@@ -21,11 +22,17 @@ export default function ConceptDetailPanel({ index, selected, progress, practice
   const concept = index.concepts.get(selected)!;
   const unit = index.units.get(concept.unitId)!;
   const tagId = /^\d+$/.test(concept.id) ? Number(concept.id) : null;
+  const isFrequencyLearning = isUtFrequencyConcept(concept.name);
   const currentStatus = concept.metadata?.assessmentStatus
     ? serverLabel[concept.metadata.assessmentStatus]
     : ({ known: '앎', unknown: '모름', unset: '미정' })[statusOf(progress, selected)];
 
   const startPractice = async () => {
+    if (isFrequencyLearning) {
+      navigate(UT_FREQUENCY_LEARNING_ROUTE);
+      return;
+    }
+
     if (!practiceUid || tagId === null) {
       setPracticeMessage('실서비스에서 로그인하면 DB 문제와 연결됩니다.');
       return;
@@ -58,10 +65,10 @@ export default function ConceptDetailPanel({ index, selected, progress, practice
       <span className="kg-unit-breadcrumb">{unit.name}</span>
       <div className="kg-title-row"><h2>{concept.name}</h2><span className="kg-grade-badge">{concept.metadata?.grade ?? '학년 미정'}</span><span className={`kg-current-status assessment-${concept.metadata?.assessmentStatus?.toLowerCase() ?? statusOf(progress, selected)}`}>{currentStatus}</span></div>
       <section className="kg-practice" aria-label="선택한 개념 연습">
-        <span>연습 문제</span>
+        <span>{isFrequencyLearning ? '개념 학습' : '연습 문제'}</span>
         <strong>{concept.name}</strong>
         <button type="button" onClick={() => void startPractice()} disabled={isLoadingPractice}>
-          {isLoadingPractice ? '불러오는 중…' : '문제 풀기'}
+          {isLoadingPractice ? '불러오는 중…' : isFrequencyLearning ? '학습 시작' : '문제 풀기'}
           {!isLoadingPractice && <GraphIcon name="arrow" size={17} />}
         </button>
         {practiceMessage && <p role="status">{practiceMessage}</p>}

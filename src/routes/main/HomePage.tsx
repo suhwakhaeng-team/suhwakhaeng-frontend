@@ -12,6 +12,11 @@ import { progressLabelFor } from '../../lib/masteryClient';
 import { fetchDailyStats } from '../../lib/dailyStatsClient';
 import { fetchReviewItems } from '../../lib/reviewClient';
 import { tokenStorage } from '../../lib/tokenStorage';
+import {
+  applyUtFrequencyRecommendation,
+  isUtFrequencyConcept,
+  UT_FREQUENCY_LEARNING_ROUTE,
+} from '../../lib/utFrequencyFlow';
 import type { CurriculumMapItem } from '../../types/curriculumMap';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
@@ -58,8 +63,9 @@ export default function HomePage() {
     fetchCurriculum(uid)
       .then((result) => {
         if (cancelled) return;
-        setCurriculumItems(result.items);
-        setActiveCurriculumId(result.activeId);
+        const utResult = applyUtFrequencyRecommendation(result.items, result.activeId);
+        setCurriculumItems(utResult.items);
+        setActiveCurriculumId(utResult.activeId);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -111,8 +117,8 @@ export default function HomePage() {
   }, []);
 
   const handleSolveClick = (item: CurriculumItem) => {
-    if (item.topicName === '도수분포표') {
-      navigate('/main/learning/frequency-table');
+    if (isUtFrequencyConcept(item.topicName)) {
+      navigate(UT_FREQUENCY_LEARNING_ROUTE);
       return;
     }
     navigate('/main/problem/start');
@@ -125,8 +131,9 @@ export default function HomePage() {
     setCurriculumError(null);
     fetchCurriculum(uid)
       .then((result) => {
-        setCurriculumItems(result.items);
-        setActiveCurriculumId(result.activeId);
+        const utResult = applyUtFrequencyRecommendation(result.items, result.activeId);
+        setCurriculumItems(utResult.items);
+        setActiveCurriculumId(utResult.activeId);
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : '커리큘럼을 불러오지 못했습니다.';

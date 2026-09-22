@@ -1,6 +1,7 @@
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import type { CurriculumItem } from '../../types/home';
 import CurriculumItemCard from './CurriculumItemCard';
+import { isUtFrequencyConcept } from '../../lib/utFrequencyFlow';
 
 interface Props {
   items: CurriculumItem[];
@@ -31,7 +32,7 @@ export default function CurriculumListSection({ items, activeId, onSolveClick }:
             item={item}
             isActive={item.id === activeId}
             onSolveClick={() => onSolveClick(item)}
-            actionLabel={item.topicName === '도수분포표' ? '학습 시작' : '문제 풀기'}
+            actionLabel={isUtFrequencyConcept(item.topicName) ? '학습 시작' : '문제 풀기'}
           />
         ))}
       </div>
