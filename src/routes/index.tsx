@@ -22,6 +22,7 @@ import ReviewDetailPage from './main/ReviewDetailPage';
 import FeedbackPage from './main/FeedbackPage';
 import { KnowledgeGraphRoute, TopologyRoute } from './GraphRoutes';
 import FrequencyLearningRoute from './dev/FrequencyLearningRoute';
+import CurriculumOverviewPage from './main/CurriculumOverviewPage';
 
 export const router = createBrowserRouter([
   ...(import.meta.env.DEV ? [{
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
       { path: 'feedback', element: <FeedbackPage /> },
       { path: 'topology', element: <TopologyRoute /> },
       { path: 'knowledge-graph', element: <KnowledgeGraphRoute /> },
+      { path: 'curriculum', element: <CurriculumOverviewPage /> },
       { path: 'learning/frequency-table', element: <FrequencyLearningRoute /> },
     ],
   },

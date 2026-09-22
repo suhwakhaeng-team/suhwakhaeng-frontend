@@ -13,7 +13,7 @@ import GraphIcon from '../../components/knowledgeGraph/GraphIcon';
 import { useConceptProgress } from '../../components/knowledgeGraph/useConceptProgress';
 import './KnowledgeGraphPage.css';
 
-export default function KnowledgeGraphPage({ preview = false }: { preview?: boolean }) {
+export default function KnowledgeGraphPage({ preview = false, embedded = false }: { preview?: boolean; embedded?: boolean }) {
   const { user } = useAuth();
   const [dataset, setDataset] = useState(learningGraphExamples[0]);
   const [notice, setNotice] = useState('');
@@ -30,10 +30,10 @@ export default function KnowledgeGraphPage({ preview = false }: { preview?: bool
     return () => { active = false; };
   }, [preview, user]);
   const account = preview ? 'local-preview' : user?.uid ?? 'guest-preview';
-  return <div className="kg-page">
-    <header className="kg-page-heading">
+  return <div className={`kg-page ${embedded ? 'kg-page-embedded' : ''}`}>
+    {!embedded && <header className="kg-page-heading">
       <div className="kg-heading-row">{!preview && <Link to="/main/home">← 홈</Link>}<h1>개념 지도</h1></div>
-    </header>
+    </header>}
     <GraphWorkspace
       key={`${account}:${dataset.id}`}
       data={dataset}

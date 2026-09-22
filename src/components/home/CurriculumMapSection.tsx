@@ -5,9 +5,15 @@ import CurriculumMapCell from './CurriculumMapCell';
 
 interface Props {
   items: CurriculumMapItem[];
+  actionPath?: string;
+  actionLabel?: string;
 }
 
-export default function CurriculumMapSection({ items }: Props) {
+export default function CurriculumMapSection({
+  items,
+  actionPath = '/main/home',
+  actionLabel = '개념 지도 보기 →',
+}: Props) {
   const navigate = useNavigate();
 
   return (
@@ -22,8 +28,11 @@ export default function CurriculumMapSection({ items }: Props) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
+          전체 커리큘럼
+        </h3>
         <button
-          onClick={() => navigate('/main/knowledge-graph')}
+          onClick={() => navigate(actionPath)}
           style={{
             background: 'none',
             border: 'none',
@@ -33,11 +42,8 @@ export default function CurriculumMapSection({ items }: Props) {
             padding: 0,
           }}
         >
-          개념 지도 보기 →
+          {actionLabel}
         </button>
-        <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-          전체 커리큘럼
-        </h3>
       </div>
 
       {items.length === 0 ? (

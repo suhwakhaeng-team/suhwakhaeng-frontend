@@ -3,6 +3,7 @@
 .kg-preview-nav strong { margin-right: auto; color: #111827; }
 .kg-preview-content { padding: 22px; }
 .kg-page { height: calc(100dvh - 93px); min-height: 660px; display: flex; flex-direction: column; color: #111827; font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif; }
+.kg-page.kg-page-embedded { height: 720px; min-height: 620px; }
 .kg-page *, .kg-page *::before, .kg-page *::after { box-sizing: border-box; }
 .kg-page button, .kg-page input, .kg-page select { font: inherit; }
 .kg-page button { cursor: pointer; }

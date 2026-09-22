@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import {
@@ -17,10 +17,9 @@ import {
   isUtFrequencyConcept,
   UT_FREQUENCY_LEARNING_ROUTE,
 } from '../../lib/utFrequencyFlow';
-import type { CurriculumMapItem } from '../../types/curriculumMap';
 import HomeHeader from '../../components/home/HomeHeader';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
-import CurriculumMapSection from '../../components/home/CurriculumMapSection';
+import HomeKnowledgeGraphSection from '../../components/home/HomeKnowledgeGraphSection';
 import ReviewListSection from '../../components/home/ReviewListSection';
 import ProgressGauge from '../../components/home/ProgressGauge';
 import DailyStatsCard from '../../components/home/DailyStatsCard';
@@ -28,6 +27,7 @@ import FeedbackCard from '../../components/home/FeedbackCard';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const displayName = user?.nickname || user?.name || '학생';
 
@@ -36,10 +36,6 @@ export default function HomePage() {
   const [activeCurriculumId, setActiveCurriculumId] = useState<string | null>(null);
   const [isCurriculumLoading, setIsCurriculumLoading] = useState(true);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
-
-  // 전체 커리큘럼 미니맵 (GET /users/{uid}/curriculum/overview)
-  // 실패 시 UI 에러 미표시, 빈 배열 유지 (상단 추천 흐름 보호).
-  const [curriculumMapItems, setCurriculumMapItems] = useState<CurriculumMapItem[]>([]);
 
   // 학습 진도 (GET /users/{uid}/masteries 평균 기반).
   // 로드 전/실패 시 0/"시작 단계" 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
@@ -54,6 +50,12 @@ export default function HomePage() {
   // 로드 전/실패 시 0 유지하고 UI 에러는 표시하지 않음 (iOS 와 동일 정책).
   const [todaySolvedCount, setTodaySolvedCount] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
+
+  useEffect(() => {
+    if (location.hash !== '#concept-map') return;
+    const frame = requestAnimationFrame(() => document.getElementById('concept-map')?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [location.hash]);
 
   useEffect(() => {
     const uid = tokenStorage.getUid();
@@ -76,12 +78,10 @@ export default function HomePage() {
         if (!cancelled) setIsCurriculumLoading(false);
       });
 
-    // 전체 커리큘럼 미니맵 조회. 실패는 조용히 무시 (iOS 와 동일 정책).
-    // 전체 커리큘럼(모든 개념 태그) — 미니맵 + 홈 게이지("전체 개념 대비 이해도") 동시 산출.
+    // 전체 커리큘럼(모든 개념 태그) 기준으로 홈 게이지를 산출. 실패는 조용히 무시.
     fetchCurriculumOverview(uid)
       .then((items) => {
         if (cancelled) return;
-        setCurriculumMapItems(items);
         const percent = overallProgress(items);
         setProgressPercent(percent);
         setProgressLabel(progressLabelFor(percent));
@@ -204,7 +204,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <CurriculumMapSection items={curriculumMapItems} />
+        <HomeKnowledgeGraphSection />
       </div>
     </div>
   );
