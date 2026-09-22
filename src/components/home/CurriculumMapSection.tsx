@@ -22,9 +22,6 @@ export default function CurriculumMapSection({ items }: Props) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
-          전체 커리큘럼
-        </h3>
         <button
           onClick={() => navigate('/main/knowledge-graph')}
           style={{
@@ -38,6 +35,9 @@ export default function CurriculumMapSection({ items }: Props) {
         >
           개념 지도 보기 →
         </button>
+        <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
+          전체 커리큘럼
+        </h3>
       </div>
 
       {items.length === 0 ? (
