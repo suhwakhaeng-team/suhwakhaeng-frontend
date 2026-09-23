@@ -24,6 +24,7 @@ function StoryExperience({ onComplete }: { onComplete?: () => void }) {
   const [reportReady, setReportReady] = useState(false);
   const [finished, setFinished] = useState(false);
   const [everCompleted, setEverCompleted] = useState(readCompletion);
+  const [skippedChapters, setSkippedChapters] = useState<number[]>([]);
   const [resetConfirm, setResetConfirm] = useState(false);
   const counts = frequencies(STORY_DATA);
   const data = chapter === 4 ? OTHER_CLASS_DATA : STORY_DATA;
@@ -35,6 +36,16 @@ function StoryExperience({ onComplete }: { onComplete?: () => void }) {
 
   function next() {
     setChapter(value => value + 1); setAnswers([]); setMessage(''); setReportReady(false);
+  }
+
+  function skipChapter() {
+    setSkippedChapters(previous => [...new Set([...previous, chapter])].sort((a, b) => a - b));
+    if (chapter === CHAPTERS.length - 1) {
+      setFinished(true);
+      setEverCompleted(true);
+      return;
+    }
+    next();
   }
 
   function place(index: number | null, range: number) {
@@ -68,9 +79,9 @@ function StoryExperience({ onComplete }: { onComplete?: () => void }) {
     <nav className="fs-nav"><strong>수확행</strong><Link to="/dev/knowledge-graph">개념 지도</Link><span>{onComplete ? '도수분포표 상황 적용' : '이야기형 체험'}</span></nav>
     <main className="fs-main">
       <header className="fs-header"><div><span>자료의 정리</span><h1>도수분포표 학습해보기</h1></div></header>
-      <ol className="fs-chapters" aria-label="이야기 진행">{CHAPTERS.map((title,index) => <li className={index === chapter ? 'active' : index < chapter || finished ? 'done' : ''} aria-current={index === chapter ? 'step' : undefined} key={title}><span>{index < chapter || finished ? '✓' : index + 1}</span>{title}</li>)}</ol>
-      {finished ? <section className="fs-scene fs-finish"><span className="fs-finish-star">✦</span><p className="fs-eyebrow">체험 완료</p><h2>도수분포표 학습 완료</h2><div className="fs-poster"><h3>우리 반 통학 시간</h3>{RANGES.map((range,index) => <div className="fs-poster-row" key={range}><span>{range}</span><i style={{ width: `${counts[index] / STORY_DATA.length * 100}%` }} /><strong>{counts[index]}명</strong></div>)}<p>가장 많은 구간: 20 이상 30 미만<br />30분 이상 걸리는 친구: 2명</p></div><div className="fs-concept-earned"><span>✓</span><div><strong>도수분포표 · 이번 체험 완료</strong><small>{onComplete ? '이제 실전 문제로 확인해요.' : '운영 숙련도에는 반영되지 않아요.'}</small></div></div>{onComplete && <button className="fs-primary" onClick={onComplete}>실전 문제 풀기 →</button>}<button className={onComplete ? 'fs-secondary' : 'fs-primary'} onClick={() => { setChapter(0); setGuess(null); setPlaced({}); setCard(null); setSeenTerms([]); setTerm('range'); setAnswers([]); setFinished(false); setMessage(''); setReportReady(false); }}>처음부터 다시 해보기</button></section>
-      : <section className="fs-scene"><p className="fs-eyebrow">{`STEP ${chapter + 1}`}</p><h2>{TITLES[chapter]}</h2>
+      <ol className="fs-chapters" aria-label="이야기 진행">{CHAPTERS.map((title,index) => { const skipped = skippedChapters.includes(index); return <li className={`${index === chapter ? 'active' : ''} ${index < chapter || finished ? 'done' : ''} ${skipped ? 'skipped' : ''}`} aria-current={index === chapter ? 'step' : undefined} aria-label={`${title}${skipped ? ' (건너뜀)' : ''}`} key={title}><span>{skipped ? '–' : index < chapter || finished ? '✓' : index + 1}</span>{title}</li>; })}</ol>
+      {finished ? <section className="fs-scene fs-finish"><span className="fs-finish-star">✦</span><p className="fs-eyebrow">체험 완료</p><h2>{skippedChapters.length ? '학습 단계를 모두 확인했어요' : '도수분포표 학습 완료'}</h2>{skippedChapters.length > 0 && <p>완료 {CHAPTERS.length - skippedChapters.length} · 건너뜀 {skippedChapters.length}</p>}<div className="fs-poster"><h3>우리 반 통학 시간</h3>{RANGES.map((range,index) => <div className="fs-poster-row" key={range}><span>{range}</span><i style={{ width: `${counts[index] / STORY_DATA.length * 100}%` }} /><strong>{counts[index]}명</strong></div>)}<p>가장 많은 구간: 20 이상 30 미만<br />30분 이상 걸리는 친구: 2명</p></div><div className="fs-concept-earned"><span>✓</span><div><strong>도수분포표 · 학습 단계 종료</strong><small>{onComplete ? '이제 실전 문제로 이해도를 확인해요.' : '운영 숙련도에는 반영되지 않아요.'}</small></div></div>{onComplete && <button className="fs-primary" onClick={onComplete}>실전 문제 풀기 →</button>}<button className={onComplete ? 'fs-secondary' : 'fs-primary'} onClick={() => { setChapter(0); setGuess(null); setPlaced({}); setCard(null); setSeenTerms([]); setTerm('range'); setAnswers([]); setFinished(false); setMessage(''); setReportReady(false); setSkippedChapters([]); }}>처음부터 다시 해보기</button></section>
+      : <section className="fs-scene"><div className="fs-scene-heading"><div><p className="fs-eyebrow">{`STEP ${chapter + 1}`}</p><h2>{TITLES[chapter]}</h2></div><button type="button" className="fs-skip-step" onClick={skipChapter}>이 단계 건너뛰기</button></div>
         {chapter === 0 && <><p className="fs-dialogue">학생 8명의 통학 시간을 살펴보세요.</p><div className="fs-cards scattered">{STORY_DATA.map((value,index) => <div key={index}><span>{STORY_NAMES[index]}</span><strong>{value}<small>분</small></strong></div>)}</div><p className="fs-prompt">가장 많아 보이는 시간대를 선택하세요.</p><div className="fs-choices">{RANGES.map((range,index) => <button aria-pressed={guess === index} key={range} onClick={() => setGuess(index)}>{range}</button>)}</div></>}
         {chapter === 1 && <><p className="fs-dialogue">카드와 구간을 차례로 누르거나 끌어서 넣으세요.<br />20은 두 번째 구간에, 30은 세 번째 구간에 포함돼요.</p><button className="fs-demo" disabled={placed[1] !== undefined} onClick={() => place(1,0)}>12분 카드 예시 보기</button><div className="fs-cards movable">{STORY_DATA.map((value,index) => <button key={index} draggable={placed[index] === undefined} aria-label={`${STORY_NAMES[index]} ${value}분`} disabled={placed[index] !== undefined} aria-pressed={card === index} onDragStart={event => event.dataTransfer.setData('text/plain',String(index))} onClick={() => setCard(index)}><span>{STORY_NAMES[index]}</span><strong>{value}<small>{placed[index] !== undefined ? '✓' : '분'}</small></strong></button>)}</div><div className="fs-bins">{RANGES.map((range,index) => <button key={range} onClick={() => place(card,index)} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const raw = event.dataTransfer.getData('text/plain'); const value = Number(raw); if (raw !== '' && Number.isInteger(value) && value >= 0 && value < STORY_DATA.length) place(value,index); }}><strong>{range}</strong><span className="fs-bin-cards">{bins[index].length === 0 ? '여기에 넣기' : bins[index].map(id => <i key={id}>{STORY_DATA[id]}분</i>)}</span><b>{bins[index].length}<small>명</small></b></button>)}</div><p className="fs-inline-note">분류 {Object.keys(placed).length} / 8 · 23분 카드도 각각 세세요.</p></>}
         {chapter === 2 && <><p className="fs-dialogue">계급과 도수를 각각 눌러 확인하세요.</p>{table()}<div className="fs-choices fs-term-choices"><button aria-pressed={term === 'range'} onClick={() => { setTerm('range'); setSeenTerms(previous => [...new Set([...previous,'range'])]); }}>계급</button><button aria-pressed={term === 'count'} onClick={() => { setTerm('count'); setSeenTerms(previous => [...new Set([...previous,'count'])]); }}>도수</button></div><div className="fs-definition" aria-live="polite"><strong>{term === 'range' ? '계급 = 자료를 나눈 구간' : '도수 = 그 계급에 들어가는 자료의 개수'}</strong><p>{term === 'range' ? '‘20 이상 30 미만’이 하나의 계급이에요.' : '이 계급에 4명이 속하므로 도수는 4예요.'}</p></div><p className="fs-inline-note">도수분포표는 구간별 인원을 나타내요. 개별 학생의 정확한 시간은 알 수 없어요.</p></>}

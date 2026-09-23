@@ -24,6 +24,7 @@ export default function FrequencyLearningPage({ onComplete }: { onComplete?: () 
   const data = review ? DATASETS.review : step === 4 ? DATASETS.independent : step === 5 ? DATASETS.challenge : DATASETS.practice;
   const counts = frequencies(data);
   const correct = feedback === 'correct';
+  const skippedCount = progress.skipped.length;
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch { /* Private mode: in-memory progress remains usable. */ }
@@ -45,7 +46,27 @@ export default function FrequencyLearningPage({ onComplete }: { onComplete?: () 
     setFeedback('correct');
     setProgress(previous => review
       ? { ...previous, reviewPassed: !hint || previous.reviewPassed }
-      : { ...previous, completed: [...new Set([...previous.completed, step])].sort((a, b) => a - b) });
+      : {
+          ...previous,
+          completed: [...new Set([...previous.completed, step])].sort((a, b) => a - b),
+          skipped: previous.skipped.filter(skippedStep => skippedStep !== step),
+        });
+  }
+
+  function skipStep() {
+    const nextProgress: CourseProgress = {
+      ...progress,
+      completed: [...new Set([...progress.completed, step])].sort((a, b) => a - b),
+      skipped: [...new Set([...progress.skipped, step])].sort((a, b) => a - b),
+    };
+    setProgress(nextProgress);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(nextProgress)); } catch { /* In-memory progress still advances. */ }
+    if (step === STEPS.length - 1) {
+      if (onComplete) onComplete();
+      else goTo(step, true);
+      return;
+    }
+    goTo(step + 1);
   }
 
   function numericInput(index: number, label: string) {
@@ -63,17 +84,18 @@ export default function FrequencyLearningPage({ onComplete }: { onComplete?: () 
           <div className="fl-progress" role="progressbar" aria-label="코스 진행" aria-valuenow={progress.completed.length} aria-valuemin={0} aria-valuemax={6}><i style={{ width: `${progress.completed.length / 6 * 100}%` }} /></div>
           <ol>{STEPS.map((item, index) => {
             const done = progress.completed.includes(index);
+            const skipped = progress.skipped.includes(index);
             const locked = index > progress.completed.length;
-            return <li key={item.title}><button aria-label={`${index + 1}단계 ${item.title}${locked ? ' (잠김)' : ''}`} className={`${step === index && !review ? 'active' : ''} ${done ? 'done' : ''}`} disabled={locked} aria-current={step === index && !review ? 'step' : undefined} onClick={() => goTo(index)}>
-              <span className="fl-station">{done ? '✓' : locked ? '·' : index + 1}</span><span><strong>{item.title}</strong></span>{locked && <span className="fl-lock">잠김</span>}
+            return <li key={item.title}><button aria-label={`${index + 1}단계 ${item.title}${locked ? ' (잠김)' : skipped ? ' (건너뜀)' : ''}`} className={`${step === index && !review ? 'active' : ''} ${done ? 'done' : ''} ${skipped ? 'skipped' : ''}`} disabled={locked} aria-current={step === index && !review ? 'step' : undefined} onClick={() => goTo(index)}>
+              <span className="fl-station">{skipped ? '–' : done ? '✓' : locked ? '·' : index + 1}</span><span><strong>{item.title}</strong>{skipped && <small>건너뜀</small>}</span>{locked && <span className="fl-lock">잠김</span>}
             </button></li>;
           })}</ol>
-          <div className={`fl-harvest ${finished ? 'is-complete' : ''}`}><span className="fl-harvest-icon">{finished ? '✦' : '◇'}</span><strong>{progress.reviewPassed ? '복습까지 확인했어요' : finished ? '학습을 완료했어요' : '도수분포표 학습'}</strong><p>{finished ? '도수분포표 · 1차 학습 완료' : '6단계 학습'}</p>
+          <div className={`fl-harvest ${finished ? 'is-complete' : ''}`}><span className="fl-harvest-icon">{finished ? '✦' : '◇'}</span><strong>{progress.reviewPassed ? '복습까지 확인했어요' : finished ? skippedCount ? '학습 단계를 모두 확인했어요' : '학습을 완료했어요' : '도수분포표 학습'}</strong><p>{finished ? skippedCount ? `완료 ${STEPS.length - skippedCount} · 건너뜀 ${skippedCount}` : '도수분포표 · 1차 학습 완료' : '6단계 학습'}</p>
             {finished && (onComplete ? <button className="fl-secondary" onClick={onComplete}>상황에 적용하기 →</button> : <button className="fl-secondary" onClick={() => goTo(5, true)}>{progress.reviewPassed ? '복습 다시 하기' : '복습 미션 체험'}</button>)}
           </div>
         </aside>
         <section className="fl-lesson" aria-label="현재 미션">
-          <div className="fl-lesson-top"><span>{review ? '복습 미션' : `STEP ${step + 1}`}</span><span>{review ? '복습' : progress.completed.includes(step) ? '재도전' : '첫 학습'}</span></div>
+          <div className="fl-lesson-top"><span>{review ? '복습 미션' : `STEP ${step + 1}`}</span><div>{!review && !correct && <button type="button" className="fl-skip-step" onClick={skipStep}>이 단계 건너뛰기</button>}<span>{review ? '복습' : progress.skipped.includes(step) ? '건너뛴 단계' : progress.completed.includes(step) ? '재도전' : '첫 학습'}</span></div></div>
           <h2>{review ? '새 자료로 복습해보기' : lesson.title}</h2>{(practicing || review) && <p className="fl-goal">{lesson.goal}</p>}
           {!review && <div className="fl-phase-tabs"><button aria-pressed={!practicing} onClick={() => setPracticing(false)}>1. 개념과 예시</button><span>→</span><button disabled={!practicing} aria-pressed={practicing}>2. 혼자 풀기</button></div>}
           {!review && !practicing ? <FrequencyExploration key={step} step={step} onPractice={() => { setPracticing(true); setFeedback(null); }} /> : <>

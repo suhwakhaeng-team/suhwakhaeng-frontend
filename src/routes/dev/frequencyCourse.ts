@@ -32,8 +32,8 @@ export function checkMission(step: number, answers: string[], selected: number[]
   return answers[3] === String(expected.indexOf(Math.max(...expected))) && answers[4]?.trim() !== '' && Number(answers[4]) === data.length;
 }
 
-export type CourseProgress = { completed: number[]; reviewPassed: boolean };
-export const EMPTY_PROGRESS: CourseProgress = { completed: [], reviewPassed: false };
+export type CourseProgress = { completed: number[]; skipped: number[]; reviewPassed: boolean };
+export const EMPTY_PROGRESS: CourseProgress = { completed: [], skipped: [], reviewPassed: false };
 export const STORAGE_KEY = LOCAL_LEARNING_STORAGE_KEYS.frequencyCourse;
 
 export function parseProgress(raw: string | null): CourseProgress {
@@ -43,6 +43,9 @@ export function parseProgress(raw: string | null): CourseProgress {
     // Only restore a contiguous unlocked path, never arbitrary corrupted step IDs.
     const completed: number[] = [];
     for (let index = 0; index < STEPS.length && value.completed.includes(index); index++) completed.push(index);
-    return { completed, reviewPassed: completed.length === STEPS.length && 'reviewPassed' in value && value.reviewPassed === true };
+    const skipped = 'skipped' in value && Array.isArray(value.skipped)
+      ? value.skipped.filter((step): step is number => Number.isInteger(step) && completed.includes(step))
+      : [];
+    return { completed, skipped, reviewPassed: completed.length === STEPS.length && 'reviewPassed' in value && value.reviewPassed === true };
   } catch { return EMPTY_PROGRESS; }
 }
