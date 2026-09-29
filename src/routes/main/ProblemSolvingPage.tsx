@@ -4,6 +4,7 @@ import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
 import QuestionPrompt from '../../components/QuestionPrompt';
+import TimedConceptHints from '../../components/problem/TimedConceptHints';
 import { parseQuestionChoices } from '../../lib/questionChoices';
 import { hasStructuredChoices, isProblemAnswerCorrect } from '../../lib/answerEvaluation';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
@@ -333,6 +334,9 @@ export default function ProblemSolvingPage() {
           {isSubmitting ? '제출 중...' : '확인'}
         </button>
       </div>
+
+      {/* 문제와 답안을 먼저 읽은 뒤 필요할 때 확인하는 힌트 영역 */}
+      <TimedConceptHints key={currentQuestion.questionId} tags={currentQuestion.tags ?? []} />
     </div>
   );
 }
