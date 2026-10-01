@@ -5,6 +5,7 @@ import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import TimedConceptHints from '../../components/problem/TimedConceptHints';
+import { useSolutionHint } from '../../lib/useSolutionHint';
 import { parseQuestionChoices } from '../../lib/questionChoices';
 import { hasStructuredChoices, isProblemAnswerCorrect } from '../../lib/answerEvaluation';
 import type { AdaptiveQuestion, StudySubmitRequest, StudySubmitResponse } from '../../types/adaptive';
@@ -32,6 +33,7 @@ export default function ProblemSolvingPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentQuestion = questions[currentIndex] ?? null;
+  const solutionHint = useSolutionHint(currentQuestion?.questionId);
 
   const resetQuestionState = useCallback(() => {
     setAttemptCount(0);
@@ -336,7 +338,11 @@ export default function ProblemSolvingPage() {
       </div>
 
       {/* 문제와 답안을 먼저 읽은 뒤 필요할 때 확인하는 힌트 영역 */}
-      <TimedConceptHints key={currentQuestion.questionId} tags={currentQuestion.tags ?? []} />
+      <TimedConceptHints
+        key={currentQuestion.questionId}
+        tags={currentQuestion.tags ?? []}
+        solutionHint={solutionHint}
+      />
     </div>
   );
 }
