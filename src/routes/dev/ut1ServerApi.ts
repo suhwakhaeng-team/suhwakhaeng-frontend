@@ -24,7 +24,7 @@ export function ut1Api(base = '/api/v1', transport: typeof fetch = fetch) {
   }
   return {
     enter: (password: string) => request<void>('/entry', 'POST', { password }),
-    create: (password: string, nickname: string, token: string) => request<UT1Reply>('/sessions', 'POST', { password, nickname, token }),
+    create: (password: string, nickname: string, token: string) => request<UT1Reply>('/sessions', 'POST', { password, nickname, token, testVersion: 2 }),
     get: (credential: UT1Credential) => request<UT1Reply>(`/sessions/${encodeURIComponent(credential.id)}`, 'GET', undefined, credential.token),
     save: (credential: UT1Credential, session: UTSession) => request<UT1Reply>(`/sessions/${encodeURIComponent(credential.id)}`, 'PUT', { revision: credential.revision, session }, credential.token),
   };

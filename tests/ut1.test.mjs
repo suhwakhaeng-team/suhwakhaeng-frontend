@@ -21,24 +21,64 @@ function brute(total, minima) {
   visit(total, 0); return result;
 }
 
-test('A/B 모두 숫자 답안 10개, 개념별 2개이며 대응 문항 구조는 같고 숫자는 다르다', () => {
+test('A/B 모두 기초 5개·목표 응용 5개이며 대응 문항 구조는 같고 숫자는 다르다', () => {
   const a = testForm('A'); const b = testForm('B');
   assert.equal(a.length, 10); assert.equal(b.length, 10);
-  for (const skill of SKILLS) assert.equal(a.filter(item => item.skill === skill).length, 2);
+  for (const skill of SKILLS) assert.equal(a.filter(item => item.group === 'foundation' && item.skill === skill).length, 1);
+  assert.deepEqual(a.slice(5).map(item => item.goalId), UT_GOALS.map(goal => goal.id));
   for (let i = 0; i < 10; i++) {
     assert.equal(a[i].id, b[i].id); assert.equal(a[i].skill, b[i].skill);
     assert.equal(a[i].answerType, 'NUMBER'); assert.equal(a[i].choices, undefined);
     assert.notDeepEqual(a[i].params, b[i].params); assert.notEqual(a[i].prompt, b[i].prompt);
     assert.ok(Number.isSafeInteger(Number(a[i].answer))); assert.ok(Number.isSafeInteger(Number(b[i].answer)));
   }
-  assert.deepEqual(a.map(item => Number(item.answer)), [12, 18, 24, 24, 20, 60, 15, 35, 15, 15]);
-  assert.deepEqual(b.map(item => Number(item.answer)), [15, 24, 120, 120, 30, 120, 21, 56, 21, 21]);
+  assert.deepEqual(a.map(item => Number(item.answer)), [12, 120, 60, 35, 35, 66, 45, 220, 55, 28]);
+  assert.deepEqual(b.map(item => Number(item.answer)), [15, 720, 120, 56, 56, 78, 55, 286, 66, 36]);
+  for (const questions of [a, b]) for (const question of questions.slice(5)) {
+    const [total, boxes, ...minima] = question.params;
+    assert.equal(boxes, minima.length);
+    assert.equal(Number(question.answer), brute(total, minima));
+  }
 });
 test('참가자별 A→B와 B→A를 교대하며 학습 전후 답안은 별개다', () => {
   const a = createSession('UT-01', 0, 10); const b = createSession('UT-02', 1, 10);
   assert.equal(a.pre.form, 'A'); assert.equal(a.post.form, 'B');
   assert.equal(b.pre.form, 'B'); assert.equal(b.post.form, 'A'); assert.notEqual(a.id, b.id);
   a.pre.responses.push({}); assert.equal(a.post.responses.length, 0); assert.equal(b.pre.responses.length, 0);
+});
+
+test('응용을 전부 틀려도 맞힌 기초는 다시 배우지 않으며 성적은 구분한다', () => {
+  const fresh = createSession('기초 확인');
+  const session = solveRun(fresh, fresh.pre.questions.map(q => q.group === 'foundation' ? q.answer : null));
+  assert.equal(runSummary(session.pre).accuracy, 50);
+  assert.equal(runSummary(session.pre, undefined, 'foundation').accuracy, 100);
+  assert.equal(runSummary(session.pre, undefined, 'application').accuracy, 0);
+  assert.equal(runSummary(session.post, undefined, 'application').accuracy, null);
+  for (const skill of SKILLS) assert.equal(learningDiagnostic(session)[`c-${skill}`], 'passed');
+  assert.equal(beginUTLearning(session, 'bn-1').learning.currentId, 'bn-1');
+  const post = solveRun(beginPost({ ...session, completed: UT_GOALS.map(q => q.id) }));
+  assert.equal(gain(post, undefined, 'foundation'), 0);
+  assert.equal(gain(post, undefined, 'application'), 100);
+  assert.equal(gain(post), 50);
+});
+
+test('버전 없는 기존 참가자의 A/B 검사·답안·기초 판정을 그대로 복원한다', () => {
+  const legacy = createSession('기존 검사'); delete legacy.testVersion;
+  for (const phase of ['pre', 'post']) legacy[phase].questions = testForm(legacy[phase].form, 1);
+  assert.deepEqual(legacy.pre.questions.map(q => Number(q.answer)), [12, 18, 24, 24, 20, 60, 15, 35, 15, 15]);
+  let pending = resumeTest(legacy, 1000); pending = submitTest(pending, '12', 3000, 'product-1');
+  const restored = decodeStore(JSON.stringify({ version: 1, activeId: pending.id, sessions: [pending] })).sessions[0];
+  assert.deepEqual(restored, pending);
+  const finished = solveRun(legacy, ['12', '18', '24', null, '20', '60', null, null, null, null]);
+  assert.equal(learningDiagnostic(finished)['c-product'], 'passed');
+  assert.equal(learningDiagnostic(finished)['c-factorial'], 'failed');
+  assert.equal(recommendedUTNode(finished, 'bn-1'), 'c-factorial');
+  assert.equal(runSummary(finished.pre, 'product').total, 2);
+  assert.equal(runSummary(finished.pre, undefined, 'application').accuracy, null);
+  const store = { version: 1, activeId: finished.id, sessions: [finished] };
+  assert.deepEqual(decodeStore(JSON.stringify(store)).sessions[0], finished);
+  const tampered = structuredClone(store); tampered.sessions[0].testVersion = 2;
+  assert.deepEqual(decodeStore(JSON.stringify(tampered)), emptyStore());
 });
 test('잘못된 숫자 입력·중복 제출을 차단하고 최초 응답과 시간을 남긴다', () => {
   let session = createSession('timing', 0, 10);
@@ -278,8 +318,8 @@ test('사전 전부 모름이면 곱의 법칙 설명부터 다섯 기초를 순
   assert.equal(session.pre.responses.filter(item => item.answer === null).length, 10);
 });
 
-test('2/2 정답 기초는 건너뛰되 1/2·오답·모름은 설명과 확인 문제로 보충한다', () => {
-  const session = solveRun(createSession('혼합'), ['12', '18', '24', null, '20', '60', '0', '0', null, null]);
+test('기초 정답은 건너뛰되 기초 오답·모름은 설명과 확인 문제로 보충한다', () => {
+  const session = solveRun(createSession('혼합'), ['12', null, '60', '0', null, null, null, null, null, null]);
   const diagnostic = learningDiagnostic(session);
   assert.equal(diagnostic['c-product'], 'passed'); assert.equal(diagnostic['c-factorial'], 'failed');
   assert.equal(diagnostic['c-permutation'], 'passed'); assert.equal(diagnostic['c-combination'], 'failed');

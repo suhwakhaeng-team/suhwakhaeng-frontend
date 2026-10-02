@@ -6,12 +6,14 @@ export const UT_STORAGE_KEY = 'suhwakhaeng:ut1:local:v1';
 export const SKILLS = ['product', 'factorial', 'permutation', 'combination', 'repetition'] as const;
 export type Skill = typeof SKILLS[number];
 export const LABELS: Record<Skill, string> = { product: '곱의 법칙', factorial: '팩토리얼', permutation: '순열', combination: '조합', repetition: '중복조합' };
-export type UTQuestion = LearningQuestion & { id: string; skill: Skill; params: number[] };
+export type TestGroup = 'foundation' | 'application';
+export type UTQuestion = LearningQuestion & { id: string; skill: Skill; params: number[]; group?: TestGroup; goalId?: string };
 export type Response = { questionId: string; answer: string | null; correct: boolean; seconds: number; answeredAt: number };
 export type TestRun = { form: 'A' | 'B'; questions: UTQuestion[]; responses: Response[] };
 export type Timer = { key: string; elapsed: number; startedAt: number | null };
 export type UTLearningState = LearningState & { preparation?: string[]; preparationVersion?: 1 };
 export type UTSession = {
+  testVersion?: 1 | 2;
   id: string; participant: string; createdAt: number; stage: 'pre' | 'learning' | 'post' | 'done';
   pre: TestRun; post: TestRun; completed: string[]; learning: UTLearningState | null;
   history: LearningState['history']; evidence: Diagnostic; timer: Timer | null;
@@ -32,7 +34,7 @@ export function distribute(total: number, boxes: number, minima: number[] = []):
 const q = (prompt: string, answer: number, explanation: string): LearningQuestion => ({ prompt, answer: String(answer), explanation, answerType: 'NUMBER' });
 function item(id: string, skill: Skill, params: number[], question: LearningQuestion): UTQuestion { return { id, skill, params, ...question }; }
 
-export function testForm(form: 'A' | 'B'): UTQuestion[] {
+export function legacyTestForm(form: 'A' | 'B'): UTQuestion[] {
   const b = form === 'B'; const n = b ? 5 : 4; const p = b ? 6 : 5; const c = b ? 7 : 6; const t = b ? 5 : 4;
   return [
     item('product-1', 'product', b ? [3, 5] : [4, 3], q(`셔츠 ${b ? 3 : 4}벌과 바지 ${b ? 5 : 3}벌 중에서 각각 하나씩 고르는 방법의 수는?`, b ? 15 : 12, '두 단계의 선택지 수를 곱합니다.')),
@@ -47,9 +49,36 @@ export function testForm(form: 'A' | 'B'): UTQuestion[] {
     item('repetition-2', 'repetition', [t + 3, 3, 1], q(`구별되지 않는 공 ${t + 3}개를 서로 다른 상자 A, B, C에 모두 넣는다. 각 상자에 적어도 1개씩 넣는 방법의 수는?`, distribute(t + 3, 3, [1, 1, 1]), `먼저 1개씩 넣고 남은 ${t}개를 배분합니다. $_${t + 2}C_2=${distribute(t, 3)}$입니다.`)),
   ];
 }
+// V1 remains immutable so cached and server participants can finish their original pair.
+export function testForm(form: 'A' | 'B', version: 1 | 2 = 2): UTQuestion[] {
+  if (version === 1) return legacyTestForm(form);
+  const b = form === 'B', n = b ? 6 : 5, people = b ? 8 : 7, selected = b ? 5 : 4;
+  const foundations: UTQuestion[] = [
+    item('product-1', 'product', b ? [3, 5] : [4, 3], q(`셔츠 ${b ? 3 : 4}벌과 바지 ${b ? 5 : 3}벌 중에서 각각 하나씩 고르는 방법의 수는?`, b ? 15 : 12, '두 단계의 선택지 수를 곱합니다.')),
+    item('factorial-1', 'factorial', [n], q(`서로 다른 카드 ${n}장을 모두 사용해 한 줄로 놓는 방법의 수는?`, factorial(n), `각 자리에 놓을 수 있는 카드 수를 곱하면 $${n}!=${factorial(n)}$입니다.`)),
+    item('permutation-1', 'permutation', [n, 3], q(`학생 ${n}명 중에서 회장, 부회장, 총무를 한 명씩 뽑는다. 한 사람이 두 역할을 맡을 수 없을 때 방법의 수는?`, n * (n - 1) * (n - 2), '역할이 다르므로 뽑는 순서를 구별하고 이미 뽑은 학생은 제외합니다.')),
+    item('combination-1', 'combination', [people, 3], q(`학생 ${people}명 중에서 역할 구별 없이 대표 3명을 뽑는 방법의 수는?`, choose(people, 3), `뽑는 순서를 구별하지 않으므로 $_${people}C_3=${choose(people, 3)}$입니다.`)),
+    item('repetition-1', 'repetition', [selected, 4], q(`4종류의 과자가 충분히 있다. 같은 종류를 여러 개 골라도 되고 같은 종류의 과자는 구별하지 않는다. 과자 ${selected}개를 고르는 방법의 수는?`, distribute(selected, 4), `종류별 개수를 정합니다. 별 ${selected}개와 칸막이 3개에서 $_${selected + 3}C_3=${distribute(selected, 4)}$입니다.`)),
+  ].map(question => ({ ...question, group: 'foundation' }));
+  const totals = b ? [11, 15, 10, 13, 10] : [10, 14, 9, 12, 9];
+  const minima = [[0, 0, 0], [2, 3, 1], [0, 0, 0, 0], [1, 1, 1], [1, 2, 0]];
+  const prompts = [
+    `정수 $x,y,z$가 $x+y+z=${totals[0]}$, $x,y,z\\ge0$을 만족한다. 순서쌍 $(x,y,z)$의 개수는?`,
+    `정수 $x,y,z$가 $x+y+z=${totals[1]}$, $x\\ge2$, $y\\ge3$, $z\\ge1$을 만족한다. 순서쌍 $(x,y,z)$의 개수는?`,
+    `구별되지 않는 공 ${totals[2]}개를 서로 다른 상자 A, B, C, D에 모두 넣는다. 빈 상자가 있어도 될 때 방법의 수는?`,
+    `구별되지 않는 공 ${totals[3]}개를 서로 다른 상자 A, B, C에 모두 넣는다. 각 상자에 적어도 1개씩 넣는 방법의 수는?`,
+    `빨강, 파랑, 노랑 볼펜이 충분히 있다. 총 ${totals[4]}자루를 고르되 빨강은 적어도 1자루, 파랑은 적어도 2자루 고른다. 같은 색 볼펜은 구별하지 않을 때 방법의 수는?`,
+  ];
+  return [...foundations, ...totals.map((total, i): UTQuestion => {
+    const minimum = minima[i].reduce((sum, value) => sum + value, 0), boxes = minima[i].length;
+    const answer = distribute(total, boxes, minima[i]);
+    return { ...item(`application-${i + 1}`, 'repetition', [total, boxes, ...minima[i]], q(prompts[i], answer,
+      `먼저 필요한 최솟값 ${minimum}을 확보합니다. 남은 ${total - minimum}개와 칸막이 ${boxes - 1}개를 놓으므로 $_${total - minimum + boxes - 1}C_${boxes - 1}=${answer}$입니다.`)), group: 'application', goalId: `bn-${i + 1}` };
+  })];
+}
 export function createSession(participant: string, ordinal = 0, now = Date.now()): UTSession {
   const form = ordinal % 2 === 0 ? 'A' : 'B';
-  return { id: `ut-${now}-${ordinal}`, participant: participant.trim() || `참가자 ${ordinal + 1}`, createdAt: now, stage: 'pre',
+  return { testVersion: 2, id: `ut-${now}-${ordinal}`, participant: participant.trim() || `참가자 ${ordinal + 1}`, createdAt: now, stage: 'pre',
     pre: { form, questions: testForm(form), responses: [] }, post: { form: form === 'A' ? 'B' : 'A', questions: testForm(form === 'A' ? 'B' : 'A'), responses: [] },
     completed: [], learning: null, history: [], evidence: {}, timer: null };
 }
@@ -76,17 +105,17 @@ export function submitTest(session: UTSession, answer: string | null, now = Date
   const nextStage = responses.length === run.questions.length ? stage === 'pre' ? 'learning' : 'done' : stage;
   return { ...session, [stage]: { ...run, responses }, stage: nextStage, timer: null };
 }
-export function runSummary(run: TestRun, skill?: Skill) {
-  const questions = run.questions.filter(question => !skill || question.skill === skill);
+export function runSummary(run: TestRun, skill?: Skill, group?: TestGroup) {
+  const questions = run.questions.filter(question => (!skill || question.skill === skill) && (!group || question.group === group));
   const responses = run.responses.filter(response => questions.some(question => question.id === response.questionId));
   const correct = responses.filter(response => response.correct).length;
   const seconds = responses.reduce((sum, response) => sum + response.seconds, 0);
-  return { correct, answered: responses.length, total: questions.length, complete: responses.length === questions.length,
-    accuracy: responses.length === questions.length ? correct / questions.length * 100 : null,
+  return { correct, answered: responses.length, total: questions.length, complete: questions.length > 0 && responses.length === questions.length,
+    accuracy: questions.length > 0 && responses.length === questions.length ? correct / questions.length * 100 : null,
     unknown: responses.filter(response => response.answer === null).length, seconds, average: responses.length ? seconds / responses.length : null };
 }
-export function gain(session: UTSession, skill?: Skill): number | null {
-  const pre = runSummary(session.pre, skill).accuracy; const post = runSummary(session.post, skill).accuracy;
+export function gain(session: UTSession, skill?: Skill, group?: TestGroup): number | null {
+  const pre = runSummary(session.pre, skill, group).accuracy; const post = runSummary(session.post, skill, group).accuracy;
   return pre === null || post === null ? null : post - pre;
 }
 
@@ -268,7 +297,7 @@ export const FOUNDATION_ROOTS: Record<Skill, string> = { product: 'a-product', f
 export function learningDiagnostic(session: UTSession): Diagnostic {
   const diagnostic: Diagnostic = {};
   SKILLS.forEach(skill => {
-    const summary = runSummary(session.pre, skill);
+    const summary = runSummary(session.pre, skill, session.testVersion === 2 ? 'foundation' : undefined);
     if (summary.complete) {
       diagnostic[`c-${skill}`] = summary.correct === summary.total ? 'passed' : 'failed';
       if (summary.correct === summary.total) diagnostic[FOUNDATION_ROOTS[skill]] = 'passed';
@@ -368,8 +397,9 @@ export function decodeStore(raw: string | null): UTStore {
     for (let sessionIndex = 0; sessionIndex < store.sessions.length; sessionIndex++) {
       const session = store.sessions[sessionIndex];
       if (!session || typeof session.id !== 'string' || typeof session.participant !== 'string' || !Number.isFinite(session.createdAt) || !['pre', 'learning', 'post', 'done'].includes(session.stage) || !Array.isArray(session.completed) || session.completed.some(id => !UT_GOALS.some(goal => goal.id === id)) || !session.evidence || !Array.isArray(session.history)) throw new Error('session');
+      if (session.testVersion !== undefined && session.testVersion !== 1 && session.testVersion !== 2) throw new Error('test version');
       for (const run of [session.pre, session.post]) {
-        if (!run || !['A', 'B'].includes(run.form) || !Array.isArray(run.responses) || run.responses.length > 10 || JSON.stringify(run.questions) !== JSON.stringify(testForm(run.form))) throw new Error('run');
+        if (!run || !['A', 'B'].includes(run.form) || !Array.isArray(run.responses) || run.responses.length > 10 || JSON.stringify(run.questions) !== JSON.stringify(testForm(run.form, session.testVersion ?? 1))) throw new Error('run');
         run.responses.forEach((response, i) => { if (response.questionId !== run.questions[i].id || !(response.answer === null || typeof response.answer === 'string' && isNumericAnswer(response.answer)) || response.correct !== (response.answer !== null && isProblemAnswerCorrect(run.questions[i], response.answer)) || !Number.isFinite(response.seconds) || response.seconds < 0 || !Number.isFinite(response.answeredAt)) throw new Error('response'); });
       }
       if (session.pre.form === session.post.form || new Set(session.completed).size !== session.completed.length || (session.stage === 'pre' && runSummary(session.pre).complete) || (session.stage !== 'pre' && !runSummary(session.pre).complete) || (['pre', 'learning'].includes(session.stage) && session.post.responses.length > 0) || (['post', 'done'].includes(session.stage) && session.completed.length !== 5) || (session.stage === 'done' && !runSummary(session.post).complete)) throw new Error('phase');

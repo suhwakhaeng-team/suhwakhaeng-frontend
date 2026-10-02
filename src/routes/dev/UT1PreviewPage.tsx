@@ -92,12 +92,16 @@ function ConceptLesson({ nodeId, retry, onContinue }: { nodeId: string; retry: b
 
 function Comparison({ session }: { session: UTSession }) {
   const pre = runSummary(session.pre); const post = runSummary(session.post);
+  const group = session.testVersion === 2 ? 'foundation' : undefined;
   return <div className="ut-comparison">
     <div className="ut-score-row"><div><span>학습 전</span><strong>{pre.accuracy === null ? '진행 중' : `${pre.accuracy.toFixed(0)}%`}</strong><small>{pre.correct} / {pre.total} 정답</small></div>
       <div><span>학습 후</span><strong>{post.accuracy === null ? '미완료' : `${post.accuracy.toFixed(0)}%`}</strong><small>{post.answered ? `${post.correct} / ${post.total} 정답` : '아직 응답 없음'}</small></div>
       <div><span>정답률 변화</span><strong className="ut-gain">{signed(gain(session))}</strong><small>퍼센트포인트 차이</small></div></div>
-    <div className="ut-table-scroll"><table><thead><tr><th>개념</th><th>학습 전</th><th>학습 후</th><th>변화</th><th>평균 시간 · 전 / 후</th></tr></thead><tbody>
-      {SKILLS.map(skill => { const a = runSummary(session.pre, skill); const b = runSummary(session.post, skill); return <tr key={skill}><th>{LABELS[skill]}</th><td>{a.complete ? `${a.correct}/2` : '—'}</td><td>{b.complete ? `${b.correct}/2` : '—'}</td><td>{signed(gain(session, skill))}</td><td>{seconds(a.average)} / {seconds(b.average)}</td></tr>; })}
+    {session.testVersion === 2 && <div className="ut-table-scroll"><table><thead><tr><th>구분</th><th>학습 전</th><th>학습 후</th><th>정답률 변화</th><th>평균 시간 · 전 / 후</th></tr></thead><tbody>
+      {(['foundation', 'application'] as const).map(part => { const a = runSummary(session.pre, undefined, part), b = runSummary(session.post, undefined, part); return <tr key={part}><th>{part === 'foundation' ? '기초 확인' : '목표 문제 응용'}</th><td>{a.complete ? `${a.correct}/${a.total} (${a.accuracy!.toFixed(0)}%)` : '미완료'}</td><td>{b.complete ? `${b.correct}/${b.total} (${b.accuracy!.toFixed(0)}%)` : '미완료'}</td><td>{signed(gain(session, undefined, part))}</td><td>{seconds(a.average)} / {seconds(b.average)}</td></tr>; })}
+    </tbody></table></div>}
+    <div className="ut-table-scroll"><table><thead><tr><th>{group ? '기초 개념' : '개념'}</th><th>학습 전</th><th>학습 후</th><th>변화</th><th>평균 시간 · 전 / 후</th></tr></thead><tbody>
+      {SKILLS.map(skill => { const a = runSummary(session.pre, skill, group); const b = runSummary(session.post, skill, group); return <tr key={skill}><th>{LABELS[skill]}</th><td>{a.complete ? `${a.correct}/${a.total}` : '—'}</td><td>{b.complete ? `${b.correct}/${b.total}` : '—'}</td><td>{signed(gain(session, skill, group))}</td><td>{seconds(a.average)} / {seconds(b.average)}</td></tr>; })}
     </tbody></table></div>
     <p className="plm-live-muted">평균 풀이 시간 {seconds(pre.average)} → {seconds(post.average)} · 모르겠습니다 {pre.unknown} → {post.unknown}문항</p>
   </div>;
@@ -254,7 +258,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     <h3 className="ut-section-title" id="ut-foundation-heading">기초 확인 문제</h3>
     <p className="plm-live-muted">필요한 개념을 골라 짧은 문제로 확인해 보세요.</p>
     <div className="ut-foundation-list">{SKILLS.map(skill => {
-      const summary = session && runSummary(session.pre, skill);
+      const summary = session && runSummary(session.pre, skill, session.testVersion === 2 ? 'foundation' : undefined);
       const confirmed = diagnostic[`c-${skill}`] === 'passed';
       const available = stage === 'learning';
       return <button key={skill} type="button" className={confirmed ? 'is-confirmed' : ''} onClick={() => beginLearning(FOUNDATION_ROOTS[skill])} disabled={!available}>
@@ -285,7 +289,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
               reasoning: preparing ? '사전 테스트에서 확인하지 못한 기초부터 학습해요. 확인 문제를 풀면 다음 개념으로 이어져요.' : '필요한 기초가 확인됐어요. 이제 목표 문제에 적용해 보세요.' }]}
             activeId={recommendationGoal.id} showReasoning actionLabel={state ? '학습 이어가기' : preparing ? '기초부터 학습' : '문제 풀기'} onSolveClick={() => beginLearning(recommendationGoal.id)} />
             : <section style={card}><h3 className="ut-section-title">{stage === 'done' ? '학습 결과' : stage === 'pre' ? '학습 전 레벨테스트' : '학습 후 레벨테스트'}</h3>
-              <p className="plm-live-muted">{stage === 'done' ? '학습 전후 정답률과 풀이 시간을 비교해 보세요.' : stage === 'pre' ? '5개 개념 · 10문항. 답은 숫자로 적어 주세요.' : '같은 유형의 10문항을 숫자를 바꿔 다시 풀어요.'}</p>
+              <p className="plm-live-muted">{stage === 'done' ? '학습 전후 정답률과 풀이 시간을 비교해 보세요.' : stage === 'pre' ? session.testVersion === 2 ? '기초 5문항 · 응용 5문항. 답은 숫자로 적어 주세요.' : '5개 개념 · 10문항. 답은 숫자로 적어 주세요.' : '같은 유형의 10문항을 숫자를 바꿔 다시 풀어요.'}</p>
               <button style={primary} onClick={() => { if (stage === 'done') setView('results'); else if (stage === 'learning') { update(value => resumeTest(beginPost(value))); setView('test'); } else beginTest(); }}>
                 {stage === 'done' ? '결과 보기 →' : run?.responses.length ? `${run.responses.length + 1}번부터 이어서 →` : '테스트 시작 →'}</button></section>}
             feedback={<section style={card}><h3 className="ut-section-title">이번 학습</h3><ol className="ut-flow-list"><li className={stage === 'pre' ? 'is-current' : ''}>학습 전 테스트 <small>{session.pre.responses.length}/10</small></li><li className={stage === 'learning' ? 'is-current' : ''}>중복조합 문제 학습 <small>{session.completed.length}/5</small></li><li className={stage === 'post' ? 'is-current' : ''}>학습 후 테스트 <small>{session.post.responses.length}/10</small></li></ol><p className="plm-live-muted">테스트 중에는 해설을 보여주지 않아요. ‘모르겠습니다’도 기록돼요.</p></section>}
@@ -305,7 +309,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
       </> : view === 'test' && question && session ? <section className="plm-live-solver ut-test" style={{ maxWidth: 720, margin: '0 auto' }}>
         <div className="plm-section-row"><button style={textButton} onClick={goHome}>← 잠시 나가기</button><span className="plm-live-muted">{stage === 'pre' ? '학습 전' : '학습 후'} · {run!.responses.length + 1} / 10</span></div>
         <progress className="ut-progress" value={run!.responses.length} max={10} aria-label="테스트 진행도" />
-        <ProblemQuestionCard tagLabel={LABELS[question.skill]} problem={{ description: question.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />
+        <ProblemQuestionCard tagLabel={question.group === 'application' ? `응용 · ${UT_NODES[question.goalId!].label}` : `${question.group === 'foundation' ? '기초 · ' : ''}${LABELS[question.skill]}`} problem={{ description: question.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />
         <NumericAnswer value={answer} onChange={setAnswer} onSubmit={() => submit(answer)} />
         {answer && !isNumericAnswer(answer) && <p className="plm-live-muted">0 이상의 정수를 입력해 주세요.</p>}
         <div className="plm-live-actions"><button style={textButton} onClick={() => submit(null)}>모르겠습니다</button><button style={primary} disabled={!isNumericAnswer(answer)} onClick={() => submit(answer)}>다음 →</button></div>
@@ -343,13 +347,13 @@ export function UT1AdminPreviewPage() {
   const location = useLocation(); const demo = new URLSearchParams(location.search).get('demo') === '1';
   const { store, error } = useLocalUT(`${UT_STORAGE_KEY}${demo ? ':demo' : ''}`, true); const [selected, setSelected] = useState<string | null>(null);
   const session = store.sessions.find(item => item.id === selected);
-  const complete = store.sessions.filter(item => item.stage === 'done');
+  const complete = store.sessions.filter(item => item.stage === 'done' && item.testVersion === 2);
   const meanGain = complete.length ? complete.reduce((sum, item) => sum + (gain(item) ?? 0), 0) / complete.length : null;
   return <div className="plm-live-preview ut-preview ut-admin"><header className="ut-admin-header"><Link to={`/dev/ut1${demo ? '?demo=1' : ''}`}>← 학습 화면</Link><span>{demo ? '데모 통계 · 실제 UT와 별도' : '1차 UT · 로컬 관리자 미리보기'}</span></header>
-    <main><h1>학습 전후 비교</h1><p className="plm-live-muted">로컬 참가자 {store.sessions.length}명 · 전후 완료 {complete.length}명 · 완료자 평균 변화 {signed(meanGain)}<br />이 브라우저의 기록만 표시합니다. 실제 UID·서버 통계가 아닙니다.</p>
+    <main><h1>학습 전후 비교</h1><p className="plm-live-muted">로컬 참가자 {store.sessions.length}명 · 새 검사 전후 완료 {complete.length}명 · 새 검사 완료자 평균 변화 {signed(meanGain)}<br />이 브라우저의 기록만 표시합니다. 실제 UID·서버 통계가 아닙니다.</p>
       {error && <p role="alert" className="ut-error">{error}</p>}
       <div className="ut-table-scroll"><table><thead><tr><th>참가자</th><th>진행</th><th>학습 전</th><th>학습 후</th><th>정답률 변화</th><th>평균 시간 · 전 / 후</th><th>기록</th></tr></thead><tbody>
-        {store.sessions.map(item => { const pre = runSummary(item.pre); const post = runSummary(item.post); return <tr key={item.id}><th>{item.participant}<small className="ut-table-sub">{new Date(item.createdAt).toLocaleString('ko-KR')} · {item.pre.form}→{item.post.form}</small></th>
+        {store.sessions.map(item => { const pre = runSummary(item.pre); const post = runSummary(item.post); return <tr key={item.id}><th>{item.participant}<small className="ut-table-sub">{new Date(item.createdAt).toLocaleString('ko-KR')} · {item.pre.form}→{item.post.form} · {item.testVersion === 2 ? '기초 + 응용' : '기존 검사'}</small></th>
           <td>{item.stage === 'done' ? '완료' : item.stage === 'pre' ? `사전 ${pre.answered}/10` : item.stage === 'post' ? `사후 ${post.answered}/10` : `학습 ${item.completed.length}/5`}</td>
           <td>{pre.accuracy === null ? '—' : `${pre.accuracy.toFixed(0)}% (${pre.correct}/10)`}</td><td>{post.accuracy === null ? '—' : `${post.accuracy.toFixed(0)}% (${post.correct}/10)`}</td><td>{signed(gain(item))}</td><td>{seconds(pre.average)} / {seconds(post.average)}</td>
           <td><button style={{ ...textButton, color: colors.brand600 }} onClick={() => setSelected(item.id)}>보기 →</button></td></tr>; })}
@@ -359,7 +363,7 @@ export function UT1AdminPreviewPage() {
           {session.pre.questions.map((question, i) => { const a = session.pre.responses[i]; const b = session.post.responses[i]; const post = session.post.questions[i];
             const answerText = (response: typeof a | undefined) => !response ? '미응답' : response.answer === null ? '모르겠습니다' : response.answer;
             const verdict = (response: typeof a | undefined) => !response ? '—' : response.correct ? '정답' : response.answer === null ? '모름' : '오답';
-            return <tr key={question.id}><th>{i + 1}. {LABELS[question.skill]}<details><summary>문제 내용</summary><ProblemContent content={`학습 전: ${question.prompt}\n\n학습 후: ${post.prompt}`} /></details></th><td>{question.params.join(', ')} / {post.params.join(', ')}</td><td>{answerText(a)} / {answerText(b)}</td><td>{question.answer} / {post.answer}</td><td>{verdict(a)} / {verdict(b)}</td><td>{seconds(a?.seconds ?? null)} / {seconds(b?.seconds ?? null)}</td></tr>; })}
+            return <tr key={question.id}><th>{i + 1}. {question.group === 'application' ? `응용 · ${UT_NODES[question.goalId!].label}` : LABELS[question.skill]}<details><summary>문제 내용</summary><ProblemContent content={`학습 전: ${question.prompt}\n\n학습 후: ${post.prompt}`} /></details></th><td>{question.params.join(', ')} / {post.params.join(', ')}</td><td>{answerText(a)} / {answerText(b)}</td><td>{question.answer} / {post.answer}</td><td>{verdict(a)} / {verdict(b)}</td><td>{seconds(a?.seconds ?? null)} / {seconds(b?.seconds ?? null)}</td></tr>; })}
         </tbody></table></div>
         <h3>학습 중 경로</h3><p className="plm-live-muted">목표 문제 {session.completed.length}/5 · 하위 문제·개념 확인을 포함한 제출 {(session.history.length + (session.learning?.history.length ?? 0))}회</p>
         <div className="ut-table-scroll"><table><thead><tr><th>순서</th><th>문제 / 개념</th><th>변형</th><th>답안</th><th>판정</th><th>시간</th></tr></thead><tbody>{[...session.history, ...(session.learning?.history ?? [])].map((record, i) => <tr key={i}><td>{i + 1}</td><th>{UT_NODES[record.nodeId]?.label ?? record.nodeId}</th><td>{record.variant === 0 ? '첫 문제' : `변형 ${record.variant}`}</td><td>{record.answer ?? '모르겠습니다'}</td><td>{record.correct ? '정답' : record.answer === null ? '모름' : '오답'}</td><td>{seconds(record.seconds)}</td></tr>)}</tbody></table></div>

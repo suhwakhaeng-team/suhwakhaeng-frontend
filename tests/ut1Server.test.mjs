@@ -1,17 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { ut1Api, UT1ApiError, UT1Sync } from '../src/routes/dev/ut1ServerApi.ts';
 import { createSession, testForm, UT_NODES } from '../src/routes/dev/ut1Model.ts';
 
 test('백엔드 검사·변형 문제은행은 프론트와 정확히 같다', () => {
   const bank = JSON.parse(readFileSync(new URL('../../suhwakhaeng-backend/src/main/resources/ut1/question-bank-v1.json', import.meta.url), 'utf8'));
-  for (const form of ['A', 'B']) assert.deepEqual(bank.forms[form], testForm(form));
+  const v2 = JSON.parse(readFileSync(new URL('../../suhwakhaeng-backend/src/main/resources/ut1/question-bank-v2.json', import.meta.url), 'utf8'));
+  for (const form of ['A', 'B']) {
+    assert.deepEqual(bank.forms[form], testForm(form, 1));
+    assert.deepEqual(v2.forms[form], testForm(form));
+  }
   assert.deepEqual(Object.keys(bank.nodes), Object.keys(UT_NODES));
   for (const [id, node] of Object.entries(UT_NODES)) for (let v = 0; v < 100; v++) {
     const index = id.startsWith('bn-') ? (v === 0 ? 0 : 1 + (v - 1) % 7) : v % 6;
     assert.deepEqual(bank.nodes[id].questions[index], node.make(v));
   }
+});
+test('새 서버 경로 fixture는 실제 프론트 모델의 A/B 완주 기록과 같다', () => {
+  const generated = JSON.parse(execFileSync(process.execPath, [fileURLToPath(new URL('./fixtures/generateUT1Journeys.mjs', import.meta.url))], { encoding: 'utf8' }));
+  const fixture = JSON.parse(readFileSync(new URL('../../suhwakhaeng-backend/src/test/resources/ut1/frontend-journeys-v2.json', import.meta.url), 'utf8'));
+  assert.deepEqual(fixture, generated);
 });
 test('UT API는 기존 계정 JWT 대신 참가자 키를 쓰고 서버 오류를 숨기지 않는다', async () => {
   const calls = [];
@@ -22,6 +33,11 @@ test('UT API는 기존 계정 JWT 대신 참가자 키를 쓰고 서버 오류�
   assert.equal(calls[0].options.headers.Authorization, undefined);
   assert.equal(JSON.parse(calls[0].options.body).revision, 2);
   await assert.rejects(ut1Api('/api/v1', async () => new Response('{"error":"충돌"}', { status: 409 })).enter('1234'), error => error.status === 409 && error.message === '충돌');
+});
+test('신규 참가자 생성 요청은 새 검사 버전을 명시한다', async () => {
+  let body;
+  await ut1Api('/api/v1', async (_, options) => { body = JSON.parse(options.body); return new Response('{}'); }).create('1234', '새 참가자', 'a'.repeat(64));
+  assert.equal(body.testVersion, 2);
 });
 const cache = () => ({ credential: { id: 'ut-test', token: 'a'.repeat(64), revision: 1 }, session: { ...createSession('QA'), id: 'ut-test' }, pending: true });
 test('연속 저장은 직렬화하고 최신 변경을 빠뜨리지 않는다', async () => {
