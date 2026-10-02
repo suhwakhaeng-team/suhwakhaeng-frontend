@@ -4,6 +4,7 @@ import { useOnboarding, type Grade } from '../../contexts/OnboardingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import './CurriculumResultPage.css';
+import DiagnosticBnConnectionMap from '../../components/diagnostic/DiagnosticBnConnectionMap';
 import {
   buildDiagnosticReport,
   DIAGNOSTIC_REPORT_PREVIEWS,
@@ -102,6 +103,8 @@ export default function CurriculumResultPage() {
           ))}
         </div>
       </section>
+
+      {import.meta.env.DEV && activeResult.diagnosticAnswers && <DiagnosticBnConnectionMap answers={activeResult.diagnosticAnswers} demo={Boolean(previewResult)} />}
 
       <section className="report-section report-concept-section">
         <h2 className="report-section-title" style={{ ...typography.headingXLBold, fontSize: 22 }}>보완할 개념</h2>

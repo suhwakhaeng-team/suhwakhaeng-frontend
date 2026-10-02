@@ -1,0 +1,72 @@
+/* Only learning-specific placement; all question controls and nodes reuse ltm styles. */
+.plm-question-toolbar { display: flex; align-items: center; justify-content: space-between; margin: -10px -8px 24px; gap: 12px; }
+.plm-question-toolbar a { display: inline-flex; align-items: center; }
+.plm-goal-nav { margin: 0 -4px 24px; border: 0; background: transparent; padding: 0; }
+.plm-goal-nav button { font-size: 12px; min-height: 36px; }
+.plm-goal-question { color: #435066; font-size: 16px; line-height: 1.7; }
+.plm-reason { margin: 22px 0 0; color: #64748b; font-size: 13px; line-height: 1.7; word-break: keep-all; }
+.plm-demo-note { color: #8a95a6; font-size: 11px; line-height: 1.6; margin: 12px 0 0; }
+.plm-parent { margin: 8px 0 0; color: #8a95a6; font-size: 12px; }
+.plm-concept-note { color: #435066; font-size: 17px; line-height: 1.9; margin: 0 0 30px; }
+.plm-feedback-copy strong { font-size: 15px; }
+.plm-feedback-copy p { margin: 6px 0 0; color: #64748b; font-size: 13px; line-height: 1.6; }
+.plm-solution { color: #536075; font-size: 13px; line-height: 1.7; margin-top: 12px; }
+.plm-solution summary { cursor: pointer; margin-bottom: 8px; }
+.plm-map-header h1 { flex: 1; margin: 0; font-size: 18px; color: #273349; text-align: center; letter-spacing: -.03em; }
+.plm-header-spacer { width: 112px; }
+.plm-map-window .ltm-edges path { marker-end: url(#plm-arrow); }
+.plm-map-window .ltm-edges path.plm-current-edge { stroke: #7da6ef; stroke-width: 2; stroke-dasharray: 5 6; opacity: 1; }
+.plm-map-window .ltm-node.is-idle { color: #64748b; --node-color: #94a3b8; }
+.plm-map-window .ltm-node.is-selected { color: #1d4ed8; --node-color: #2563eb; }
+.plm-map-window .ltm-node > span { width: 230px; white-space: nowrap; }
+.plm-node-kind { position: absolute; top: 68px; left: 0; width: 100%; color: #8a95a6; font-size: 11px; font-weight: 550; line-height: 1.1; text-align: center; }
+.ltm-recommendation .plm-start-link { min-height: 40px; margin-top: 12px; font-size: 12px; text-decoration: none; }
+/* The integrated preview uses the live MainLayout/HomeDashboard/QuestionPrompt,
+   not the separate level-test shell. Only new flow-specific placement lives here. */
+.plm-live-preview { color: #111827; }
+.plm-live-preview *, .plm-live-preview *::before, .plm-live-preview *::after { box-sizing: border-box; }
+.plm-live-preview main:focus { outline: none; }
+.plm-local-note { margin: -8px 0 24px; color: #6d7280; font-size: 11px; line-height: 1.7; }
+.plm-local-note a { color: #2563eb; margin-left: 10px; }
+.plm-section-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.plm-section-row button { flex-shrink: 0; }
+.plm-section-row select { max-width: 250px; padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; color: #4b5563; background: white; font-size: 12px; }
+.plm-live-muted { color: #6d7280; font-size: 13px; line-height: 1.7; }
+.plm-live-notice { padding: 12px 16px; color: #4b5563; background: #eff6ff; border-radius: 8px; font-size: 13px; }
+.plm-home-map .plm-map-window { height: 420px; margin: 12px 0; padding: 12px; background: #f9fafb; border-radius: 12px; }
+.plm-live-full-map .plm-map-window { height: calc(100svh - 190px); min-height: 420px; }
+.plm-live-solver > div > .plm-map-window { height: 400px; }
+.plm-live-legend { display: flex; align-items: center; gap: 20px; color: #6d7280; font-size: 12px; margin: 12px 0 20px; }
+.plm-live-legend span { display: flex; align-items: center; gap: 6px; }
+.plm-live-legend i { width: 8px; height: 8px; border-radius: 50%; }
+.plm-live-path { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; font-size: 12px; color: #9ca3af; }
+.plm-live-path > span { display: flex; align-items: center; gap: 5px; }
+.plm-live-path .is-current { color: #2563eb; font-weight: 600; }
+.plm-live-path i { font-style: normal; }
+.plm-live-actions { display: flex; justify-content: flex-end; align-items: center; gap: 24px; margin-top: 24px; }
+.plm-live-feedback { border-radius: 8px; padding: 16px; margin-top: 24px; }
+.plm-live-feedback .plm-live-muted { margin: 8px 0; }
+.plm-number-answer { display: grid; gap: 8px; margin-top: 24px; color: #4b5563; font-size: 14px; }
+.plm-number-answer input { width: 100%; min-height: 48px; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px 16px; font: inherit; background: white; }
+.plm-number-answer input:focus { outline: 2px solid #60a5fa; outline-offset: 2px; }
+.plm-question-reference { margin-top: 16px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; font-size: 14px; }
+.plm-question-reference > span { color: #6d7280; font-size: 12px; }
+.plm-live-result { text-align: center; margin: 32px 0; }
+.plm-live-result > span { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; color: #22c55e; background: #dcfce7; font-size: 28px; font-weight: 700; }
+.plm-live-result h2 { color: #15803d; font-size: 20px; }
+.plm-live-result p { color: #6d7280; font-size: 14px; }
+.plm-live-preview .plm-map-window .ltm-node { font-size: 14px !important; }
+.plm-live-preview button:focus-visible, .plm-live-preview a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; }
+@media (max-width:760px) {
+  .plm-live-preview .home-dashboard-columns { grid-template-columns: minmax(0, 1fr) !important; }
+  .plm-live-preview .home-dashboard > div:first-child { flex-wrap: wrap; gap: 12px; }
+  .plm-section-row { flex-wrap: wrap; gap: 8px; }
+  .plm-section-row select { max-width: 100%; }
+  .plm-home-map .plm-map-window { height: 420px; }
+  .plm-live-legend { gap: 12px; flex-wrap: wrap; }
+  .plm-map-header { flex-wrap: nowrap; padding: 10px 12px; gap: 8px; }
+  .plm-map-header h1 { text-align: right; font-size: 15px; }
+  .plm-header-spacer { display: none; }
+  .plm-question-toolbar { margin-bottom: 16px; }
+  .plm-concept-note { font-size: 15px; }
+}

@@ -69,6 +69,9 @@ export default function LoginPage() {
         />}
       </div>
       {localTestMode && <p>로컬 복원 DB 연결 · 테스트 기록은 내 컴퓨터에만 저장됩니다.<br />AI·Google·AWS 연동은 비활성 상태입니다.</p>}
+      {(import.meta.env.DEV || import.meta.env.VITE_UT1_ENABLED === 'true') && <div style={{ marginTop: 24 }}>
+        <button type="button" onClick={() => navigate('/ut1')} style={{ width: 320, padding: '14px 24px', border: '1px solid #2563EB', borderRadius: 8, background: 'white', color: '#2563EB', fontSize: 16, cursor: 'pointer' }}>학습 체험하기</button>
+      </div>}
 
       {error && (
         <p style={{ color: '#EF4444', marginTop: '16px', fontSize: '14px' }}>{error}</p>

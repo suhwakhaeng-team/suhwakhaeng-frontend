@@ -17,12 +17,9 @@ import {
   isUtFrequencyConcept,
   UT_FREQUENCY_LEARNING_ROUTE,
 } from '../../lib/utFrequencyFlow';
-import HomeHeader from '../../components/home/HomeHeader';
+import HomeDashboard from '../../components/home/HomeDashboard';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
 import HomeKnowledgeGraphSection from '../../components/home/HomeKnowledgeGraphSection';
-import ReviewListSection from '../../components/home/ReviewListSection';
-import ProgressGauge from '../../components/home/ProgressGauge';
-import DailyStatsCard from '../../components/home/DailyStatsCard';
 import FeedbackCard from '../../components/home/FeedbackCard';
 
 export default function HomePage() {
@@ -148,66 +145,18 @@ export default function HomePage() {
     navigate(`/main/review/${item.id}`, { state: { tagName: item.topicName } });
   };
 
-  return (
-    <div
-      style={{
-        background: colors.gray100,
-        minHeight: '100%',
-        margin: `-${spacing.xl}px`,
-        padding: spacing.xl,
-      }}
-    >
-      <HomeHeader nickname={displayName} grade={user?.grade} />
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing.lg,
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-            gap: spacing.lg,
-            alignItems: 'start',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-            {renderCurriculumSection({
-              isLoading: isCurriculumLoading,
-              error: curriculumError,
-              items: curriculumItems,
-              activeId: activeCurriculumId,
-              onSolveClick: handleSolveClick,
-              onRetry: handleRetry,
-            })}
-            <FeedbackCard onClick={handleFeedbackClick} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-            <ReviewListSection
-              items={reviewItems}
-              onSeeAllClick={handleReviewSeeAll}
-              onItemClick={handleReviewItemClick}
-            />
-            <ProgressGauge
-              nickname={displayName}
-              percent={progressPercent}
-              label={progressLabel}
-            />
-            <DailyStatsCard
-              todaySolvedCount={todaySolvedCount}
-              streakDays={streakDays}
-            />
-          </div>
-        </div>
-
-        <HomeKnowledgeGraphSection />
-      </div>
-    </div>
-  );
+  return <HomeDashboard
+    nickname={displayName} grade={user?.grade}
+    recommendation={renderCurriculumSection({
+      isLoading: isCurriculumLoading, error: curriculumError, items: curriculumItems,
+      activeId: activeCurriculumId, onSolveClick: handleSolveClick, onRetry: handleRetry,
+    })}
+    feedback={<FeedbackCard onClick={handleFeedbackClick} />}
+    maps={<HomeKnowledgeGraphSection />}
+    reviewItems={reviewItems} progressPercent={progressPercent} progressLabel={progressLabel}
+    todaySolvedCount={todaySolvedCount} streakDays={streakDays}
+    onReviewSeeAll={handleReviewSeeAll} onReviewItemClick={handleReviewItemClick}
+  />;
 }
 
 // MARK: - Curriculum Section (로딩/에러/빈/정상 4분기)
