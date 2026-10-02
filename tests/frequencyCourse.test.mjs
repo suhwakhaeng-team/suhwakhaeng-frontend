@@ -34,7 +34,8 @@ test('table missions require every row and the final mission requires interpreta
 });
 
 test('restore only valid consecutive completed steps; tolerate unavailable/corrupt storage', () => {
-  for (const raw of [null, 'bad', '{}', 'null', '{"completed":"all"}']) assert.deepEqual(parseProgress(raw), { completed: [], reviewPassed: false });
-  assert.deepEqual(parseProgress('{"completed":[0,0,2,9],"reviewPassed":true}'), { completed: [0], reviewPassed: false });
-  assert.deepEqual(parseProgress('{"completed":[0,1,2,3,4,5],"reviewPassed":true}'), { completed: [0,1,2,3,4,5], reviewPassed: true });
+  for (const raw of [null, 'bad', '{}', 'null', '{"completed":"all"}']) assert.deepEqual(parseProgress(raw), { completed: [], skipped: [], reviewPassed: false });
+  assert.deepEqual(parseProgress('{"completed":[0,0,2,9],"reviewPassed":true}'), { completed: [0], skipped: [], reviewPassed: false });
+  assert.deepEqual(parseProgress('{"completed":[0,1,2,3,4,5],"reviewPassed":true}'), { completed: [0,1,2,3,4,5], skipped: [], reviewPassed: true });
+  assert.deepEqual(parseProgress('{"completed":[0,1],"skipped":[1,2,-1,"0"],"reviewPassed":true}'), { completed: [0,1], skipped: [1], reviewPassed: false });
 });
