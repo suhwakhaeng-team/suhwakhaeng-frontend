@@ -4,7 +4,7 @@ import { colors, radius, spacing, typography } from '../../lib/designTokens';
 
 const KnowledgeGraphPage = lazy(() => import('../../routes/main/KnowledgeGraphPage'));
 
-export default function HomeKnowledgeGraphSection() {
+export default function HomeKnowledgeGraphSection({ preview = false, onCurriculumClick }: { preview?: boolean; onCurriculumClick?: () => void } = {}) {
   const navigate = useNavigate();
 
   return (
@@ -25,7 +25,7 @@ export default function HomeKnowledgeGraphSection() {
         </h3>
         <button
           type="button"
-          onClick={() => navigate('/main/curriculum')}
+          onClick={() => onCurriculumClick ? onCurriculumClick() : navigate('/main/curriculum')}
           style={{
             background: 'none',
             border: 'none',
@@ -46,7 +46,7 @@ export default function HomeKnowledgeGraphSection() {
           </div>
         )}
       >
-        <KnowledgeGraphPage embedded />
+        <KnowledgeGraphPage embedded preview={preview} />
       </Suspense>
     </section>
   );

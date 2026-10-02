@@ -1,0 +1,752 @@
+{
+  "source": "검수·패치 CSV 2026-09-30 / 문제은행 추출 2026-09-29",
+  "questions": [
+    {
+      "questionId": 675,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "어느 식품 회사에서 생산되는 제품 1개의 무게는 평균이 50 g이고 표준편차가 4 g 이라고 한다. 이 식품 회사에서 생산된 제품 중에서 49개를 임의추출할 때, 제품 무게의 표본평균의 평균과 표준편차를 구하시오",
+      "choices": [
+        "평균: 50g , 표준편차: 4/9g",
+        "평균: 50g , 표준편차: 4/7g",
+        "평균: 50g , 표준편차: 4/6g",
+        "평균: 50g , 표준편차: 4/8g"
+      ],
+      "answer": "B",
+      "explanation": "표본평균 $\\bar X$의 평균은 모평균과 같아 50 g이고, 표준편차는 $\\sigma/\\sqrt{n}=4/\\sqrt{49}=4/7$ g이다.",
+      "tags": [
+        {
+          "tag_id": 23,
+          "tag_name": "표준편차",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 28,
+          "tag_name": "평균",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 33,
+          "tag_name": "모평균",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 34,
+          "tag_name": "임의추출",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 35,
+          "tag_name": "표본평균",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 670,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "NUMBER",
+      "content": "이산확률변수 $X$의 확률질량함수가 $P(X=x)=\\frac{x}{10}\\quad(x=1,2,3,4)$일 때, $X$의 기댓값을 구하시오.",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "3",
+      "explanation": "$E(X)=\\sum xP(X=x)$이므로 $E(X)=1\\cdot\\frac{1}{10}+2\\cdot\\frac{2}{10}+3\\cdot\\frac{3}{10}+4\\cdot\\frac{4}{10}=\\frac{30}{10}=3$이다.",
+      "tags": [
+        {
+          "tag_id": 31,
+          "tag_name": "이산확률변수",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 37,
+          "tag_name": "기댓값",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 46,
+          "tag_name": "확률질량함수",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 678,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "정규분포를 따르는 모집단의 모표준편차가 알려져 있다고 하자. 크기가 $n$인 표본으로 모평균에 대한 신뢰도 95%의 신뢰구간을 구했더니 길이가 8이었다. 같은 모집단에서 크기가 $4n$인 표본으로 같은 방식의 95% 신뢰구간을 구할 때 그 신뢰구간의 길이는?",
+      "choices": [
+        "4",
+        "8",
+        "16",
+        "6"
+      ],
+      "answer": "A",
+      "explanation": "모표준편차와 신뢰수준이 같으면 모평균 신뢰구간의 길이는 $2z_{0.025}\\sigma/\\sqrt n$이므로 $1/\\sqrt n$에 비례한다. 표본 크기가 $n$에서 $4n$으로 4배가 되면 길이는 $1/2$이 되어 $8\\times\\frac12=4$이다.",
+      "tags": [
+        {
+          "tag_id": 60,
+          "tag_name": "모집단",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 61,
+          "tag_name": "모평균",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 62,
+          "tag_name": "신뢰구간",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 63,
+          "tag_name": "표본비율",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 64,
+          "tag_name": "표본평균",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 65,
+          "tag_name": "표준편차",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 685,
+      "nodeLevel": "AN",
+      "difficulty": 3,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "자료 ‘빨강, 빨강, 노랑, 파랑, 빨강, 파랑’의 최빈값을 구하시오.",
+      "choices": [
+        "파랑",
+        "최빈값이 없다",
+        "노랑",
+        "빨강"
+      ],
+      "answer": "D",
+      "explanation": "빨강은 3번, 파랑은 2번, 노랑은 1번 나타난다. 가장 많이 나타난 값은 빨강이므로 최빈값은 빨강이다.",
+      "tags": [
+        {
+          "tag_id": 38,
+          "tag_name": "최빈값",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 687,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "NUMBER",
+      "content": "어느 과수원에서 생산되는 사과 한 개의 당도는 평균이 13브릭스이고 표준편차가 2브릭스인 정규분포를 따른다고 한다. 이 과수원에서 생산된 사과 중에서 당도가 14브릭스 이상인 것은 전체의 몇 %인지 구하시오.",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "30.85",
+      "explanation": "$Z=(14-13)/2=0.5$이다. 따라서 $P(X\\ge14)=P(Z\\ge0.5)=0.5-0.1915=0.3085$이므로 약 $30.85\\%$이다.",
+      "tags": [
+        {
+          "tag_id": 23,
+          "tag_name": "표준편차",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 27,
+          "tag_name": "정규분포",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 694,
+      "nodeLevel": "AN",
+      "difficulty": 3,
+      "answerType": "NUMBER",
+      "content": "다음은 어느 병원에서 환자 5명의 접수 후 대기 시간에 대한 편차를 조사하여 나타낸 것이다. 대기 시간의 평균이 12분일 때, 환자 $B$의 대기 시간을 구하시오.\n\n대기 시간 (단위: 분)\n\n| 환자 | $A$ | $B$ | $C$ | $D$ | $E$ |\n| --- | --- | --- | --- | --- | --- |\n| 편차 | 8 | | 2 | -6 | -1 |",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "9",
+      "explanation": "편차의 합은 항상 0이므로 $8+x+2-6-1=0$에서 환자 B의 편차는 $x=-3$이다. 평균이 12분이므로 B의 대기 시간은 $12-3=9$분이다.",
+      "tags": [
+        {
+          "tag_id": 39,
+          "tag_name": "편차",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 700,
+      "nodeLevel": "AN",
+      "difficulty": 3,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "어떤 자료의 각 변량에 대한 편차가 a, -3, 5, -4, 3, -1이다. 이 자료의 분산과 표준편차를 순서대로 구한 것은?",
+      "choices": [
+        "분산 10, 표준편차 √11",
+        "분산 10, 표준편차 3",
+        "분산 10, 표준편차 √10",
+        "분산 10, 표준편차 √12"
+      ],
+      "answer": "C",
+      "explanation": "편차의 합은 0이므로 $a-3+5-4+3-1=0$에서 $a=0$이다. 편차 제곱의 합은 $0+9+25+16+9+1=60$이므로 분산은 $60/6=10$, 표준편차는 $\\sqrt{10}$이다.",
+      "tags": [
+        {
+          "tag_id": 23,
+          "tag_name": "표준편차",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 25,
+          "tag_name": "분산",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 705,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "다음 5개의 변량 $a,b,c,4,7$의 평균이 5이고, 최빈값 4가 정확히 3번 나타난다. 이 자료의 분산은?",
+      "choices": [
+        "2.4",
+        "2.8",
+        "2.0",
+        "1.6"
+      ],
+      "answer": "D",
+      "explanation": "4가 정확히 세 번 나타나므로 자료는 $4,4,4,x,7$의 꼴이다. 평균이 5이므로 합이 25여야 하여 $x=6$이다. 편차는 $-1,-1,-1,1,2$이므로 분산은 $(1+1+1+1+4)/5=8/5=1.6$이다.",
+      "tags": [
+        {
+          "tag_id": 68,
+          "tag_name": "분산",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 69,
+          "tag_name": "중앙값",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 70,
+          "tag_name": "최빈값",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 71,
+          "tag_name": "편차",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 72,
+          "tag_name": "평균",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 73,
+          "tag_name": "표준편차",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 708,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "이산확률변수 $X$의 확률질량함수가 $P(X=x)=kx\\quad(x=1,2,3,4)$ 일 때, 새로운 확률변수 $Y=5X-3$의 표준편차 $\\sigma(Y)$의 값은?",
+      "choices": [
+        "1",
+        "7",
+        "5",
+        "10"
+      ],
+      "answer": "C",
+      "explanation": "확률의 합이 1이므로 $k(1+2+3+4)=1$에서 $k=1/10$이다. $E(X)=3$, $E(X^2)=10$이므로 $V(X)=10-3^2=1$, 따라서 $\\sigma(X)=1$이다. $Y=5X-3$이므로 $\\sigma(Y)=|5|\\sigma(X)=5$이다.",
+      "tags": [
+        {
+          "tag_id": 74,
+          "tag_name": "기댓값",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 75,
+          "tag_name": "분산",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 76,
+          "tag_name": "확률변수",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 77,
+          "tag_name": "확률질량함수",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 709,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "어느 공장에서 생산되는 제품의 무게 $X$는 평균이 50g, 표준편차가 4g인 정규분포를 따른다고 한다. 이 공장에서 생산된 제품 중 임의로 선택한 한 제품의 무게가 46g 이상이고 56g 이하일 확률을 오른쪽 표준정규분포표를 이용하여 구한 것은? \n\n| $z$ | $P(0\\le Z\\le z)$ |\n| --- | --- |\n| 1.0 | 0.3413 |\n| 1.5 | 0.4332 |\n| 2.0 | 0.4772 |",
+      "choices": [
+        "0.8185",
+        "0.9105",
+        "0.8413",
+        "0.7745"
+      ],
+      "answer": "D",
+      "explanation": "$X\\sim N(50,4^2)$이므로 46 g과 56 g을 표준화하면 각각 $z=-1$, $z=1.5$이다. 따라서 $P(46\\le X\\le56)=P(-1\\le Z\\le0)+P(0\\le Z\\le1.5)=0.3413+0.4332=0.7745$이다.",
+      "tags": [
+        {
+          "tag_id": 78,
+          "tag_name": "정규분포",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 79,
+          "tag_name": "확률밀도함수",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 710,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "두 사건 $A$와 $B$가 서로 배반사건이고, $P(A)=\\frac{1}{4},\\ P(A\\cup B)=\\frac{2}{3}$일 때, $P(B)$의 값은?",
+      "choices": [
+        "$\\frac{1}{2}$",
+        "$\\frac{7}{12}$",
+        "$\\frac{1}{4}$",
+        "$\\frac{5}{12}$"
+      ],
+      "answer": "D",
+      "explanation": "서로 배반이므로 $P(A\\cap B)=0$이고 $P(A\\cup B)=P(A)+P(B)$이다. 따라서 $P(B)=2/3-1/4=8/12-3/12=5/12$이다.",
+      "tags": [
+        {
+          "tag_id": 15,
+          "tag_name": "배반사건",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 16,
+          "tag_name": "확률의 덧셈 정리",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 711,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "남학생 4명과 여학생 3명으로 구성된 동아리에서 3명의 대표를 동시에 임의로 선출한다. 선출된 3명에 남학생과 여학생이 각각 적어도 1명씩 포함될 확률은?",
+      "choices": [
+        "$\\frac{2}{7}$",
+        "$\\frac{6}{7}$",
+        "$\\frac{3}{7}$",
+        "$\\frac{4}{7}$"
+      ],
+      "answer": "B",
+      "explanation": "전체 경우의 수는 $\\binom73=35$이다. 남녀가 모두 포함되지 않는 경우는 남학생만 3명 뽑는 $\\binom43=4$가지와 여학생만 3명 뽑는 $\\binom33=1$가지이다. 따라서 확률은 $(35-5)/35=6/7$이다.",
+      "tags": [
+        {
+          "tag_id": 80,
+          "tag_name": "곱의 법칙",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 81,
+          "tag_name": "수학적 확률",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 82,
+          "tag_name": "조합",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 713,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "NUMBER",
+      "content": "다항식 $(3x+2y)^5$의 전개식에서 $x^2y^3$의 계수를 구하시오.",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "720",
+      "explanation": "$x^2y^3$을 만들려면 5개 인수 중 2개에서 $3x$, 3개에서 $2y$를 택한다. 계수는 $\\binom52 3^2 2^3=10\\cdot9\\cdot8=720$이다.",
+      "tags": [
+        {
+          "tag_id": 11,
+          "tag_name": "이항정리",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 714,
+      "nodeLevel": "AN",
+      "difficulty": 3,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "$n$이 3 이상의 자연수일 때, 다음 네 값 중 나머지 셋과 다른 것은?",
+      "choices": [
+        "$ {}_nC_1$",
+        "$ {}_nC_{n-1}$",
+        "$n$",
+        "$ {}_nP_n$"
+      ],
+      "answer": "D",
+      "explanation": "$\\binom n1=n$, $\\binom n{n-1}=n$이고 세 번째 식도 $n$이다. 반면 ${}_nP_n=n!$이며 $n\\ge3$에서는 $n!\\ne n$이므로 나머지와 다른 것은 ${}_nP_n$이다.",
+      "tags": [
+        {
+          "tag_id": 8,
+          "tag_name": "조합",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 716,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "NUMBER",
+      "content": "정사각형의 네 변에 정삼각형이 하나씩 붙어 있는 도형이 있다. 중앙의 정사각형 1개와 그 주위의 정삼각형 4개, 총 5개의 영역에 서로 다른 5가지 색을 모두 한 번씩 사용하여 칠하는 경우의 수를 구하시오. (단, 한 영역에는 한 가지 색만 칠하고, 회전하여 일치하는 것은 같은 것으로 본다.)",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "30",
+      "explanation": "중앙 정사각형에 칠할 색은 5가지 중 하나이므로 5가지이다. 남은 4색을 네 삼각형에 배치하는 경우는 $4!$가지이며, 회전만 다른 배치 4개씩이 하나의 같은 배치를 이루므로 $4!/4=6$가지이다. 따라서 전체 경우의 수는 $5\\times6=30$이다.",
+      "tags": [
+        {
+          "tag_id": 83,
+          "tag_name": "원순열",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 719,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "남학생 3명과 여학생 3명 중에서 2명을 대표를 뽑을 때, 남학생 2명 또는 여학생 2명이 대표로 뽑힐 확률은?",
+      "choices": [
+        "$\\frac{1}{3}$",
+        "$\\frac{2}{5}$",
+        "$\\frac{3}{10}$",
+        "$\\frac{4}{15}$"
+      ],
+      "answer": "B",
+      "explanation": "전체는 $\\binom62=15$가지이다. 남학생 2명은 $\\binom32=3$가지, 여학생 2명도 3가지이므로 같은 성별 2명을 뽑을 확률은 $(3+3)/15=2/5$이다.",
+      "tags": [
+        {
+          "tag_id": 86,
+          "tag_name": "확률",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 721,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "어느 고등학교의 2학년 학생 120명과 3학년 학생 120명을 대상으로 체험활동에 대한 선호도를 조사하였다. 이 조사에 참여한 학생은 공연 관람과 전시회 관람 중 하나를 선택하였고, 각각의 체험활동을 선택한 학생의 수는 표와 같다.\n\n(단위: 명)\n\n| 체험활동 | 공연 관람 | 전시회 관람 | 합계 |\n| --- | --- | --- | --- |\n| 2학년 | 74 | 46 | 120 |\n| 3학년 | 68 | 52 | 120 |\n| 합계 | 142 | 98 | 240 |\n\n이 조사에 참여한 학생 240명 중에서 임의로 선택한 한 명이 공연 관람을 선택한 학생일 때, 이 학생이 3학년 학생일 확률은?",
+      "choices": [
+        "$\\frac{36}{71}$",
+        "$\\frac{37}{71}$",
+        "$\\frac{35}{71}$",
+        "$\\frac{34}{71}$"
+      ],
+      "answer": "D",
+      "explanation": "공연 관람을 선택한 학생은 $74+68=142$명이고 그중 3학년은 68명이다. 따라서 조건부확률은 $68/142=34/71$이다.",
+      "tags": [
+        {
+          "tag_id": 17,
+          "tag_name": "조건부확률",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 733,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "원 모양의 탁자에 6개의 의자가 일정한 간격으로 놓여 있다. 서로 다른 1학년 학생 1명, 2학년 학생 2명, 3학년 학생 3명이 모두 앉을 때, 1학년 학생의 양옆에 모두 2학년 학생이 앉는 경우의 수는? (단, 회전하여 일치하는 것은 같은 것으로 본다.)",
+      "choices": [
+        "16",
+        "20",
+        "24",
+        "12"
+      ],
+      "answer": "D",
+      "explanation": "회전하여 같은 것은 하나로 보므로 1학년 학생의 자리를 고정한다. 양옆에 2학년 학생 2명을 배치하는 방법은 $2!$, 나머지 세 자리에 3학년 학생을 배치하는 방법은 $3!$이다. 따라서 $2!\\times3!=12$이다.",
+      "tags": [
+        {
+          "tag_id": 5,
+          "tag_name": "원순열",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 735,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "5개의 숫자 $0,1,2,3,4$ 중에서 중복을 허용하여 5자리의 자연수를 만들 때, \r\n숫자 1이 적어도 두 번 이상 포함되는 자연수의 개수는?",
+      "choices": [
+        "708",
+        "704",
+        "716",
+        "720"
+      ],
+      "answer": "A",
+      "explanation": "전체 다섯 자리 수는 $4\\cdot5^4=2500$개이다. 숫자 1이 한 번도 없는 수는 $3\\cdot4^4=768$개이고, 정확히 한 번 있는 수는 첫 자리가 1인 $4^4=256$개와 나머지 자리에 1이 있는 $3\\cdot4\\cdot4^3=768$개를 합해 1024개이다. 따라서 1이 두 번 이상인 수는 $2500-768-1024=708$개이다.",
+      "tags": [
+        {
+          "tag_id": 89,
+          "tag_name": "같은 것이 있는 순열",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 90,
+          "tag_name": "여사건",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 91,
+          "tag_name": "중복순열",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 737,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "NUMBER",
+      "content": "숫자 0, 1, 2, 3, 4 중에서 중복을 허락하여 4개를 택해 일렬로 나열하여 네 자리의 자연수를 만들 때, 0을 홀수 개 포함하고 있는 자연수의 개수를 구하시오.",
+      "choices": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "answer": "196",
+      "explanation": "0이 정확히 1개이면 첫 자리에는 올 수 없으므로 위치 3가지와 나머지 세 자리 $4^3$가지로 $192$개이다. 0이 정확히 3개이면 첫 자리만 1~4 중 하나여서 4개이다. 합은 196개이다.",
+      "tags": [
+        {
+          "tag_id": 6,
+          "tag_name": "중복순열",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 738,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "서로 다른 남학생 4명과 여학생 4명이 원탁에 둘러앉는다. 남학생 4명이 연속한 네 자리에 앉고 여학생 4명도 연속한 네 자리에 앉을 확률은? (단, 회전하여 일치하는 것은 같은 것으로 본다.)",
+      "choices": [
+        "$\\frac{2}{35}$",
+        "$\\frac{4}{35}$",
+        "$\\frac17$",
+        "$\\frac{3}{35}$"
+      ],
+      "answer": "B",
+      "explanation": "전체 원순열은 $(8-1)!=7!$가지이다. 남학생 4명과 여학생 4명이 각각 연속해서 앉으려면 두 성별을 두 블록으로 보고 각 블록 내부를 배열하면 $4!\\cdot4!=576$가지이다. 따라서 확률은 $576/7!=4/35$이다.",
+      "tags": [
+        {
+          "tag_id": 92,
+          "tag_name": "원순열",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 740,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "각 자리의 수가 0이 아닌 다섯 자리의 자연수 중 각 자리의 수의 합이 10인 자연수의 개수는?",
+      "choices": [
+        "98",
+        "126",
+        "84",
+        "140"
+      ],
+      "answer": "B",
+      "explanation": "각 자리 수를 $x_1,\\ldots,x_5$라 하면 모두 양의 정수이고 합이 10이다. 양의 정수해의 개수는 $\\binom{10-1}{5-1}=\\binom94=126$이다.",
+      "tags": [
+        {
+          "tag_id": 10,
+          "tag_name": "중복조합의 활용",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 745,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "두 집합 $X=\\{1,2,3,4\\}$, $Y=\\{1,2,3,4,5,6\\}$에 대하여 다음 조건을 만족시키는 함수 $f:X\\to Y$의 개수는?\n(가) 집합 $X$의 임의의 두 원소 $x_1,x_2$에 대하여 $x_1<x_2$ 이면 $f(x_1)\\le f(x_2)$ 이다.\n(나) $f(1)=2$ 이고 $f(4)=5$ 이다.",
+      "choices": [
+        "15",
+        "28",
+        "21",
+        "10"
+      ],
+      "answer": "D",
+      "explanation": "$f(1)=2$, $f(4)=5$이고 비감소 함수이므로 $2\\le f(2)\\le f(3)\\le5$이다. 2,3,4,5 중 중복을 허용해 두 값을 고르는 경우와 같아 $\\binom{4+2-1}{2}=\\binom52=10$개이다.",
+      "tags": [
+        {
+          "tag_id": 93,
+          "tag_name": "중복조합",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 94,
+          "tag_name": "중복조합의 활용",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 751,
+      "nodeLevel": "AN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "흰 공 4개, 검은 공 2개가 들어 있는 주머니 $A$와 흰 공 3개, 검은 공 2개가 들어 있는 주머니 $B$가 있다. 먼저 주사위를 던져서 3의 배수의 눈이 나오면 주머니 $A$를 선택하고, 그 밖의 눈이 나오면 주머니 $B$를 선택하여 임의로 공 한 개를 꺼낼 때, 꺼낸 공이 흰 공일 확률은?",
+      "choices": [
+        "$\\frac{28}{45}$",
+        "$\\frac{7}{15}$",
+        "$\\frac{11}{30}$",
+        "$\\frac{19}{30}$"
+      ],
+      "answer": "A",
+      "explanation": "주머니 A를 고를 확률은 $2/6=1/3$, B는 $2/3$이다. 흰 공이 나올 조건부확률은 각각 $4/6=2/3$, $3/5$이므로 전체 확률은 $\\frac13\\frac23+\\frac23\\frac35=\\frac{2}{9}+\\frac25=28/45$이다.",
+      "tags": [
+        {
+          "tag_id": 86,
+          "tag_name": "확률",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 757,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "다항식 $\\left(2x^2-\\frac{1}{x}\\right)^6$의 전개식에서 상수항을 $a$라 하자. 두 사건 $A,B$가 서로 배반사건이고 $P(A)=\\frac{1}{a}$, $P(A\\cup B)=\\frac{5}{12}$ 일 때, 확률 $P(B)$의 값은?",
+      "choices": [
+        "$\\frac{2}{5}$",
+        "$\\frac{1}{2}$",
+        "$\\frac{1}{4}$",
+        "$\\frac{1}{6}$"
+      ],
+      "answer": "A",
+      "explanation": "상수항은 일반항 $\\binom6r(2x^2)^{6-r}(-x^{-1})^r$에서 지수 $12-3r=0$, 즉 $r=4$일 때이다. 따라서 $a=\\binom64 2^2=60$이고 $P(A)=1/60$이다. 배반사건이므로 $P(B)=5/12-1/60=2/5$이다.",
+      "tags": [
+        {
+          "tag_id": 96,
+          "tag_name": "이항계수의 활용",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 97,
+          "tag_name": "이항분포",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 98,
+          "tag_name": "이항정리",
+          "tag_role": "TARGET"
+        }
+      ]
+    },
+    {
+      "questionId": 769,
+      "nodeLevel": "BN",
+      "difficulty": 1,
+      "answerType": "MULTIPLE_CHOICE",
+      "content": "주머니 $A$에는 흰 공 2개와 검은 공 3개가 들어 있고, 주머니 $B$에는 흰 공 3개와 검은 공 1개가 들어 있다. 한 개의 주사위를 던져 3의 배수의 눈이 나오면 주머니 $A$에서, 그 외의 눈이 나오면 주머니 $B$에서 임의로 2개의 공을 동시에 꺼내기로 한다. 꺼낸 2개의 공이 모두 흰 공이었을 때, 선택된 주머니가 A였을 확률은?",
+      "choices": [
+        "$\\frac{2}{11}$",
+        "$\\frac{4}{11}$",
+        "$\\frac{3}{11}$",
+        "$\\frac{1}{11}$"
+      ],
+      "answer": "D",
+      "explanation": "주머니 A를 고를 확률은 $1/3$, B는 $2/3$이다. 흰 공 2개를 뽑을 확률은 A에서 $1/10$, B에서 $1/2$이므로 흰 공 2개가 나올 전체 확률은 $1/30+1/3=11/30$이다. 베이즈 정리에 따라 $P(A|흰2)= (1/30)/(11/30)=1/11$이다.",
+      "tags": [
+        {
+          "tag_id": 99,
+          "tag_name": "독립사건",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 100,
+          "tag_name": "독립시행",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 101,
+          "tag_name": "독립시행의 확률",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 102,
+          "tag_name": "사건의 독립",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 103,
+          "tag_name": "조건부확률",
+          "tag_role": "TARGET"
+        },
+        {
+          "tag_id": 104,
+          "tag_name": "확률의 곱셈정리",
+          "tag_role": "TARGET"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+.gl-page { --gl-ink: #1f2937; --gl-blue: #2563eb; --gl-muted: #6d7280; --gl-line: #e5e7eb; color: var(--gl-ink); background: #f3f4f6; min-height: 100svh; font-family: inherit; }
+.gl-page button, .gl-page input { font: inherit; }
+.gl-page button { cursor: pointer; }
+.gl-page button:disabled { cursor: default; background: #e5e7eb; border-color: #e5e7eb; color: #6b7280; box-shadow: none; }
+.gl-page button:focus-visible, .gl-page a:focus-visible, .gl-page input:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.gl-header { display: flex; align-items: center; gap: 16px; min-height: 66px; padding: 12px max(24px, calc((100vw - 1240px) / 2)); background: #fff; border-bottom: 1px solid var(--gl-line); }
+.gl-back { color: #4b5563; font-size: 14px; font-weight: 600; text-decoration: none; padding: 6px 16px 6px 0; border-right: 1px solid #e5e7eb; white-space: nowrap; }
+.gl-back:hover { color: #2563eb; }
+.gl-brand { color: #2563eb; font-size: 21px; font-weight: 800; letter-spacing: -.035em; }
+.gl-preview-label { color: #64748b; background: #f1f5f9; border-radius: 5px; font-size: 12px; padding: 4px 8px; }
+.gl-reset { margin-left: auto; border: 0; border-radius: 7px; background: #f3f4f6; color: #4b5563; padding: 8px 12px; font-size: 12px !important; white-space: nowrap; }
+.gl-shell { max-width: 1288px; margin: auto; padding: 24px; }
+.gl-breadcrumb { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
+.gl-breadcrumb a { color: #6b7280; text-decoration: none; }
+.gl-breadcrumb strong { color: #374151; font-weight: 600; }
+.gl-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 24px; align-items: start; }
+.gl-layout--finished { grid-template-columns: minmax(0, 820px); justify-content: center; }
+.gl-main { min-width: 0; background: #fff; border: 1px solid var(--gl-line); border-radius: 20px; padding: 28px; }
+.gl-eyebrow { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #2563eb; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.gl-eyebrow > span { font-size: 12px; font-weight: 500; color: #64748b; }
+.gl-main h1 { color: #111827; font-size: 28px; line-height: 1.4; letter-spacing: -.035em; margin: 0 0 8px; font-weight: 750; word-break: keep-all; }
+.gl-main h1:focus { outline: none; }
+.gl-lead { color: #6b7280; font-size: 14px; line-height: 1.7; margin: 0 0 22px; word-break: keep-all; }
+.gl-problem-paper { padding: 0; }
+.gl-question { color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 18px; }
+.gl-question strong { color: #111827; font-weight: 700; }
+.gl-data { display: grid; grid-template-columns: minmax(185px, .9fr) minmax(0, 1.2fr); gap: 24px; align-items: center; background: #f9fafb; border: 1px solid #eef0f3; border-radius: 12px; padding: 20px; }
+.gl-table { width: 100%; color: #374151; background: #fff; border-collapse: collapse; font-size: 14px; text-align: center; }
+.gl-table caption { color: #4b5563; font-size: 13px; font-weight: 600; padding-bottom: 12px; }
+.gl-table th, .gl-table td { padding: 9px 6px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.gl-table th { font-weight: 500; }
+.gl-table thead { background: #eff6ff; color: #1e40af; font-size: 12px; }
+.gl-table td { color: #1f2937; font-weight: 750; font-variant-numeric: tabular-nums; }
+.gl-table tfoot { background: #f3f4f6; }
+.gl-chart { display: block; width: 100%; height: auto; max-width: 360px; margin: auto; overflow: visible; }
+.gl-chart text { fill: #4b5563; font-size: 13px; font-family: inherit; }
+.gl-chart text.gl-chart__unknown { fill: #2563eb; font-size: 32px; font-weight: 750; }
+.gl-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; margin-top: 24px; }
+.gl-primary, .gl-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 16px; min-height: 50px; padding: 12px 23px; border-radius: 10px; font-size: 15px !important; font-weight: 650 !important; transition: background .15s, border-color .15s; }
+.gl-primary { background: #2563eb; color: #fff; border: 1px solid #2563eb; }
+.gl-primary:hover:not(:disabled) { background: #1d4ed8; border-color: #1d4ed8; }
+.gl-secondary { border: 1px solid #d2d5da; background: #fff; color: #374151; }
+.gl-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+.gl-actions--intro > button { flex: 1; }
+.gl-footnote { font-size: 12px; color: #6b7280; line-height: 1.6; margin: 13px 0 0; }
+.gl-aside { position: sticky; top: 24px; border: 1px solid var(--gl-line); background: #fff; border-radius: 16px; padding: 22px 18px; }
+.gl-guide-title { display: flex; align-items: center; gap: 8px; color: #1f2937; font-size: 15px; font-weight: 700; }
+.gl-guide-dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; }
+.gl-guide-copy { color: #6b7280; font-size: 13px; line-height: 1.7; margin: 10px 0 16px; }
+.gl-map { position: relative; width: 100%; height: 235px; background: radial-gradient(#dbe3ef 1px, transparent 1px) 0 0 / 16px 16px; border-radius: 10px; }
+.gl-map > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gl-map path { fill: none; stroke: #a8bde0; stroke-width: 2; stroke-dasharray: 4 5; }
+.gl-map path.is-done { stroke: #22a06b; stroke-width: 3; stroke-dasharray: none; }
+.gl-map__goal { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: 190px; height: 74px; display: flex; flex-direction: column; justify-content: center; gap: 5px; text-align: center; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 11px; }
+.gl-map__goal span { font-size: 11px; color: #2563eb; }
+.gl-map__goal strong { font-size: 13px; color: #1e3a8a; }
+.gl-map__goal.is-done { background: #ecfdf5; border-color: #6ee7b7; }
+.gl-map__goal.is-done span, .gl-map__goal.is-done strong { color: #047857; }
+.gl-map__branch { position: absolute; top: 157px; width: 46%; height: 66px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 1px solid #d2d5da; background: #fff; border-radius: 10px; padding: 5px 3px; }
+.gl-map__branch--table { left: 1%; }
+.gl-map__branch--graph { right: 1%; }
+.gl-map__branch span { font-size: 10px; color: #6b7280; }
+.gl-map__branch strong { font-size: 11px; color: #374151; }
+.gl-map__branch.is-done { background: #ecfdf5; border-color: #86d6ad; }
+.gl-map__branch.is-done span { color: #047857; }
+.gl-map__branch[aria-pressed="true"] { outline: 2px solid #2563eb; outline-offset: 2px; }
+.gl-map-help { color: #6b7280; font-size: 12px; line-height: 1.7; text-align: center; margin: 16px 0 0; }
+.gl-map-explanation { background: #eff6ff; border-radius: 8px; padding: 14px; margin-top: 16px; }
+.gl-map-explanation strong { color: #1d4ed8; font-size: 13px; }
+.gl-map-explanation p { color: #475569; font-size: 13px; line-height: 1.7; margin: 6px 0 0; }
+.gl-route-status { padding-top: 17px; margin-top: 20px; border-top: 1px solid #e5e7eb; }
+.gl-route-status span { color: #2563eb; font-size: 12px; font-weight: 700; }
+.gl-route-status p { color: #6b7280; font-size: 12px; line-height: 1.7; margin: 7px 0 0; }
+.gl-answers, .gl-mini-answers { min-width: 0; border: 0; padding: 0; margin: 0; }
+.gl-answers legend { color: #374151; font-size: 16px; line-height: 1.7; margin-bottom: 18px; padding: 0; }
+.gl-answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.gl-answer-grid label { display: flex; align-items: center; gap: 12px; padding: 15px 17px; min-height: 54px; background: #fff; border: 1px solid #d2d5da; border-radius: 10px; font-size: 16px; color: #374151; cursor: pointer; }
+.gl-answer-grid input { accent-color: #2563eb; width: 17px; height: 17px; margin: 0; }
+.gl-option-letter { display: none; }
+.gl-answer-grid label.is-selected, .gl-mini-answers label.is-selected { background: #eff6ff; border-color: #3b82f6; box-shadow: inset 0 0 0 1px #3b82f6; color: #1d4ed8; }
+.gl-note, .gl-feedback { border-radius: 12px; padding: 18px 20px; font-size: 14px; line-height: 1.7; margin-top: 20px; }
+.gl-note { border: 1px solid #bfdbfe; background: #eff6ff; color: #1e40af; }
+.gl-note p, .gl-feedback p { margin: 6px 0 0; }
+.gl-feedback--try { border: 1px solid #fcd99a; background: #fffbeb; color: #854d0e; }
+.gl-feedback--success { border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; }
+.gl-feedback > button { margin-top: 15px; }
+.gl-text-button { border: 0; background: transparent; padding: 10px 3px; color: #4b5563; font-size: 13px !important; text-decoration: underline; text-underline-offset: 4px; margin-top: 6px; }
+.gl-feedback > .gl-text-button { display: block; }
+.gl-why { display: flex; align-items: center; gap: 9px; padding: 11px 14px; margin: -4px 0 24px; border-radius: 8px; color: #1d4ed8; background: #eff6ff; font-size: 13px; line-height: 1.6; }
+.gl-why > span { font-size: 19px; }
+.gl-lesson-paper { padding: 22px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; }
+.gl-lesson-paper h2 { font-size: 18px; color: #1f2937; text-align: center; line-height: 1.6; margin: 20px 0; letter-spacing: -.02em; word-break: keep-all; }
+.gl-interval { display: flex; justify-content: center; align-items: center; gap: 28px; padding: 15px 0; }
+.gl-interval > span { font-size: 42px; color: #2563eb; font-weight: 750; line-height: 1.2; }
+.gl-interval small { display: block; text-align: center; color: #4b5563; font-size: 14px; font-weight: 500; margin-top: 8px; }
+.gl-interval i { font-size: 25px; font-style: normal; color: #93c5fd; letter-spacing: -3px; }
+.gl-centered-copy { color: #4b5563; font-size: 14px; line-height: 1.6; text-align: center; margin: 12px 0 0; }
+.gl-number-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 420px; margin: 24px auto; }
+.gl-number-tiles button { border: 2px solid #d2d5da; background: #fff; color: #374151; border-radius: 12px; min-height: 78px; font-size: 27px; font-weight: 700; }
+.gl-number-tiles button:hover:not(:disabled) { border-color: #60a5fa; }
+.gl-number-tiles button.is-selected { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
+.gl-number-tiles button:disabled { border-color: #d2d5da; background: #fff; color: #6b7280; }
+.gl-number-tiles button:disabled.is-selected { background: #ecfdf5; border-color: #34d399; color: #047857; }
+.gl-mini-answers { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+.gl-mini-answers label { flex: 1; max-width: 130px; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #374151; border: 1px solid #d2d5da; border-radius: 10px; font-size: 16px; cursor: pointer; }
+.gl-mini-answers input { accent-color: #2563eb; margin: 0; }
+.gl-raw-data { background: #eff6ff; color: #1e40af; padding: 24px 12px; border-radius: 10px; text-align: center; font-size: clamp(21px, 3vw, 29px); font-weight: 600; letter-spacing: .03em; }
+.gl-result-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 30px; font-weight: 750; margin-bottom: 20px; }
+.gl-result-map { padding: 18px 30px 22px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; margin-top: 22px; }
+.gl-result-map .gl-map { max-width: 430px; margin: auto; }
+.gl-result-evidence { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.gl-result-evidence span { background: #eff6ff; color: #1d4ed8; font-size: 12px; padding: 6px 10px; border-radius: 6px; }
+.gl-reflection { font-size: 13px; line-height: 1.7; color: #6b7280; margin: 20px 0 0; }
+.gl-end-card { display: flex; flex-direction: column; align-items: start; gap: 8px; border-radius: 12px; background: #f0fdf4; padding: 24px; margin-top: 24px; }
+.gl-end-card strong { color: #166534; font-size: 18px; }
+.gl-end-card > span { color: #4b5563; font-size: 14px; line-height: 1.6; }
+.gl-footer { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 11px; line-height: 1.8; color: #6b7280; margin-top: 24px; padding: 0 3px; }
+.gl-footer a { color: #2563eb; }
+.gl-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 1050px) {
+  .gl-layout { grid-template-columns: 1fr; }
+  .gl-aside { position: static; max-width: none; width: 100%; }
+  .gl-aside .gl-map { max-width: 410px; margin: auto; }
+  .gl-shell { max-width: 850px; }
+  .gl-guide-copy br, .gl-map-help br { display: none; }
+}
+@media (max-width: 760px) {
+  .gl-header { min-height: 58px; padding: 10px 18px; gap: 12px; }
+  .gl-shell { padding: 18px; }
+  .gl-breadcrumb { margin-bottom: 14px; font-size: 12px; }
+  .gl-main { padding: 22px; border-radius: 16px; }
+  .gl-main h1 { font-size: 25px; }
+  .gl-lead { margin-bottom: 18px; }
+  .gl-data { gap: 16px; padding: 16px; grid-template-columns: minmax(185px, .9fr) minmax(0, 1.2fr); }
+  .gl-table th, .gl-table td { padding: 7px 4px; }
+  .gl-actions { margin-top: 20px; }
+  .gl-layout { gap: 18px; }
+}
+@media (max-width: 540px) {
+  .gl-preview-label { display: none; }
+  .gl-header { padding: 10px 14px; gap: 10px; }
+  .gl-back { padding-right: 10px; font-size: 13px; }
+  .gl-brand { font-size: 19px; }
+  .gl-reset { padding: 7px 9px; font-size: 11px !important; }
+  .gl-shell { padding: 14px 12px; }
+  .gl-main { padding: 19px 16px; }
+  .gl-main h1 { font-size: 23px; }
+  .gl-data { grid-template-columns: 1fr; gap: 20px; padding: 17px 14px; }
+  .gl-table { max-width: 310px; margin: auto; }
+  .gl-chart { max-width: 310px; }
+  .gl-actions { flex-direction: column; gap: 10px; }
+  .gl-primary, .gl-secondary { width: 100%; min-height: 48px; padding: 12px 14px; font-size: 14px !important; }
+  .gl-answer-grid { gap: 9px; }
+  .gl-answer-grid label { font-size: 15px; padding: 13px 10px; gap: 8px; }
+  .gl-question, .gl-answers legend { font-size: 15px; }
+  .gl-lesson-paper { padding: 20px 12px; }
+  .gl-lesson-paper h2 { font-size: 16px; }
+  .gl-number-tiles { gap: 8px; }
+  .gl-number-tiles button { min-height: 62px; font-size: 24px; }
+  .gl-result-map { padding: 15px 8px; }
+  .gl-feedback { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .gl-page *, .gl-page *::before, .gl-page *::after { transition: none !important; } }

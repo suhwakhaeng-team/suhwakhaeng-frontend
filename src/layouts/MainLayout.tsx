@@ -1,8 +1,13 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import type { ReactNode } from 'react';
 
-export default function MainLayout() {
+export default function MainLayout({ children, onNavigate, activePath, showTagCatalog = true }: {
+  children?: ReactNode; onNavigate?: (path: string) => void; activePath?: string; showTagCatalog?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const go = onNavigate ?? navigate;
+  const currentPath = activePath ?? location.pathname;
 
   const navItems = [
     { path: '/main/home', label: '홈' },
@@ -14,17 +19,17 @@ export default function MainLayout() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ display: 'flex', gap: '16px', padding: '12px 24px', borderBottom: '1px solid #eee' }}>
-        <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => navigate('/main/home')}>수확행</strong>
-        {navItems.map((item) => (
+        <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => go('/main/home')}>수확행</strong>
+        {navItems.filter(item => showTagCatalog || item.path !== '/main/tag-catalog').map((item) => (
           <button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => go(item.path)}
             style={{
               border: 'none',
               background: 'none',
               cursor: 'pointer',
-              fontWeight: location.pathname === item.path ? 'bold' : 'normal',
-              color: location.pathname === item.path ? '#2563EB' : '#666',
+              fontWeight: currentPath === item.path ? 'bold' : 'normal',
+              color: currentPath === item.path ? '#2563EB' : '#666',
             }}
           >
             {item.label}
@@ -32,7 +37,7 @@ export default function MainLayout() {
         ))}
       </nav>
       <div style={{ flex: 1, padding: '24px' }}>
-        <Outlet />
+        {children ?? <Outlet />}
       </div>
     </div>
   );

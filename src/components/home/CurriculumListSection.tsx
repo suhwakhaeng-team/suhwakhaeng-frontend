@@ -7,9 +7,11 @@ interface Props {
   items: CurriculumItem[];
   activeId: string | null;
   onSolveClick: (item: CurriculumItem) => void;
+  actionLabel?: string;
+  showReasoning?: boolean;
 }
 
-export default function CurriculumListSection({ items, activeId, onSolveClick }: Props) {
+export default function CurriculumListSection({ items, activeId, onSolveClick, actionLabel, showReasoning }: Props) {
   return (
     <section
       style={{
@@ -32,7 +34,8 @@ export default function CurriculumListSection({ items, activeId, onSolveClick }:
             item={item}
             isActive={item.id === activeId}
             onSolveClick={() => onSolveClick(item)}
-            actionLabel={isUtFrequencyConcept(item.topicName) ? '학습 시작' : '문제 풀기'}
+            actionLabel={actionLabel ?? (isUtFrequencyConcept(item.topicName) ? '학습 시작' : '문제 풀기')}
+            showReasoning={showReasoning}
           />
         ))}
       </div>

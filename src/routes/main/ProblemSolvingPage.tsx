@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { colors, spacing, radius, typography } from '../../lib/designTokens';
-import QuestionPrompt from '../../components/QuestionPrompt';
+import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import TimedConceptHints from '../../components/problem/TimedConceptHints';
 import { useSolutionHint } from '../../lib/useSolutionHint';
 import { parseQuestionChoices } from '../../lib/questionChoices';
@@ -234,37 +234,8 @@ export default function ProblemSolvingPage() {
         </span>
       </div>
 
-      {/* 태그 */}
-      {tagLabel && (
-        <span
-          style={{
-            display: 'inline-block',
-            padding: `${spacing.xxs}px ${spacing.sm}px`,
-            background: colors.brand50,
-            color: colors.brand600,
-            borderRadius: radius.full,
-            ...typography.captionSemiBold,
-            marginBottom: spacing.md,
-          }}
-        >
-          {tagLabel}
-        </span>
-      )}
-
-      {/* 문제 내용 */}
-      <div
-        style={{
-          padding: spacing.xl,
-          background: colors.gray50,
-          borderRadius: radius.md,
-          minHeight: 120,
-          whiteSpace: 'pre-wrap',
-          ...typography.bodyTextXLRegular,
-          color: colors.gray800,
-          lineHeight: 1.7,
-        }}
-      >
-        <QuestionPrompt
+      <ProblemQuestionCard
+          tagLabel={tagLabel}
           problem={{
             description: currentQuestion.content,
             answerType: currentQuestion.answerType,
@@ -277,7 +248,6 @@ export default function ProblemSolvingPage() {
           onChange={setAnswer}
           disabled={isSubmitting}
         />
-      </div>
 
       {/* 오답 배지 */}
       {showWrongBadge && (
