@@ -15,6 +15,7 @@ import { archiveLearning, beginPost, beginUTLearning, createSession, decodeStore
 import type { Diagnostic } from './problemLearningModel';
 import { acceptsUTPreviewPassword, validUTNickname } from './ut1EntryModel';
 import useUT1Server from './useUT1Server';
+import UT1ConnectionNotice from './UT1ConnectionNotice';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
 import './UT1PreviewPage.css';
@@ -221,11 +222,21 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     finally { setEntryBusy(false); }
   }
   function openMap() { setMapReturn(view); setView('map'); }
+  function resetEntry() {
+    setPassword(''); setName(''); setAnswer(''); setEntryError(''); setNotice('');
+    setSelectedGoal('bn-1'); setView('home'); setEntry('password');
+  }
+  function disconnectDeleted() {
+    if (remote.startNewParticipant()) resetEntry();
+  }
+  const connectionNotice = server
+    ? <UT1ConnectionNotice message={error} deleted={remote.deleted} onRetry={() => void remote.retry()} onStartNew={disconnectDeleted} />
+    : error && <p className="ut-error" role="alert">{error}</p>;
   if (entry !== 'ready') return <div className="ut-preview ut-entry"><main className="ut-registration" style={card}>
     <div className="ut-entry-brand">수확행</div>
     <h1>{entry === 'password' ? '학습 체험하기' : '닉네임을 알려주세요'}</h1>
     <p>{entry === 'password' ? '안내받은 입장 암호를 입력해 주세요.' : '이 닉네임으로 학습 전후 기록을 남겨요.'}</p>
-    {error && <p className="ut-error" role="alert">{error}{server && <button type="button" onClick={() => void remote.retry()}>다시 연결</button>}</p>}
+    {connectionNotice}
     {entry === 'password' ? <form onSubmit={event => { event.preventDefault(); void checkEntry(); }}>
       <label>입장 암호<input autoFocus type="password" inputMode="numeric" autoComplete="off" aria-label="입장 암호" value={password} onChange={event => { setPassword(event.target.value); setEntryError(''); }} /></label>
       {entryError && <p className="ut-error" role="alert">{entryError}</p>}
@@ -256,12 +267,12 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
   const homeNotice = notice && <p className="plm-live-notice ut-home-notice" role="status">{notice}</p>;
   const participantFooter = <footer className="ut-participants">
     {demo && !!store.sessions.length && <label>참가자 선택 <select aria-label="참가자 선택" value={store.activeId ?? ''} onChange={event => { update(pauseTimer); setStore(previous => ({ ...previous, activeId: event.target.value })); setAnswer(''); setSelectedGoal('bn-1'); setNotice(''); }}>{store.sessions.map(item => <option key={item.id} value={item.id}>{item.participant} · {item.stage === 'done' ? '완료' : '진행 중'}</option>)}</select></label>}
-    {session && <button type="button" className="ut-new-participant" disabled={blocked} onClick={() => { goHome(); setName(''); setEntry('nickname'); }}>새 참가자로 시작 <span aria-hidden="true">→</span></button>}
+    {session && <button type="button" className="ut-new-participant" disabled={blocked} onClick={() => { goHome(); resetEntry(); }}>새 참가자로 시작 <span aria-hidden="true">→</span></button>}
   </footer>;
   const comparison = session && <Comparison session={session} />;
   return <div className="plm-live-preview ut-preview"><MainLayout activePath="/main/home" onNavigate={path => { goHome(); if (path === '/main/ai-concept') setNotice('홈 아래의 기초 확인 문제에서 개념 학습을 시작할 수 있어요.'); if (path === '/main/mypage') setNotice('참가자를 바꾸려면 홈 아래의 ‘새 참가자로 시작’을 눌러 주세요.'); }}>
     <main ref={mainRef} tabIndex={-1} data-screen={`ut1-${view}`}>
-      {error && <p className="ut-error" role="alert">{error}{server && <button type="button" onClick={() => void remote.retry()}>다시 저장</button>}</p>}
+      {connectionNotice}
       <fieldset disabled={server && blocked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       {notice && (view !== 'home' || !session) && <p className="plm-live-notice" role="status">{notice}</p>}
       {view === 'home' ? <>

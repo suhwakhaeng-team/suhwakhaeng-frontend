@@ -29,6 +29,7 @@ function load(file) {
   return module.exports;
 }
 const HomeDashboard = load(fileURLToPath(new URL('../src/components/home/HomeDashboard.tsx', import.meta.url))).default;
+const ConnectionNotice = load(fileURLToPath(new URL('../src/routes/dev/UT1ConnectionNotice.tsx', import.meta.url))).default;
 const props = { nickname: '레이아웃 확인', recommendation: null, feedback: null, maps: null,
   reviewItems: [], progressPercent: 0, progressLabel: '시작', todaySolvedCount: 0, streakDays: 0,
   onReviewSeeAll() {}, onReviewItemClick() {},
@@ -48,4 +49,19 @@ test('일반 홈은 추가 안내와 참가자 하단 없이 기존 내용을 �
   assert.ok(html.includes('home-dashboard-columns'));
   assert.ok(!html.includes('role="status"'));
   assert.ok(!html.includes('<footer'));
+});
+
+test('삭제된 참가자 안내에는 비활성 폼 밖에서 쓸 수 있는 신규 시작 버튼을 렌더한다', () => {
+  const html = renderToStaticMarkup(createElement(ConnectionNotice, {
+    message: '이전 참가자의 기록이 삭제됐어요.', deleted: true, onRetry() {}, onStartNew() {},
+  }));
+  assert.ok(html.includes('새 참가자로 시작')); assert.ok(html.includes('다시 연결'));
+  assert.ok(html.includes('role="alert"')); assert.ok(!html.includes('disabled'));
+});
+
+test('삭제가 아닌 저장 장애 안내에는 연결 초기화 버튼을 노출하지 않는다', () => {
+  const html = renderToStaticMarkup(createElement(ConnectionNotice, {
+    message: '오프라인', deleted: false, onRetry() {}, onStartNew() {},
+  }));
+  assert.ok(!html.includes('새 참가자로 시작')); assert.ok(html.includes('다시 연결'));
 });

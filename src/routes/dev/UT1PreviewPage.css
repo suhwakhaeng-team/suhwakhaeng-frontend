@@ -13,6 +13,11 @@
 .ut-entry-resume { margin-top:24px; padding-top:16px; border-top:1px solid #e5e7eb; font-size:14px; }
 .ut-preview input:not([type=radio]),.ut-preview select { min-height:44px; border:1px solid #d1d5db; border-radius:8px; padding:10px 12px; font:inherit; max-width:100%; background:white; color:#111827; }
 .ut-error { color:#b91c1c; padding:16px; border:1px solid #fecaca; border-radius:8px; background:#fff7f7; }
+.ut-connection-notice > p { margin:0; color:#b91c1c; font-size:14px; }
+.ut-connection-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.ut-connection-actions button { min-height:42px; padding:10px 14px; border-radius:8px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+.ut-new-session-button { color:white; background:#2563eb; border:1px solid #2563eb; }
+.ut-reconnect-button { color:#475569; background:white; border:1px solid #d1d5db; }
 .ut-flow-list { list-style:none; padding:0; margin:20px 0; display:grid; gap:18px; counter-reset:stage; }
 .ut-flow-list li { display:flex; align-items:center; gap:12px; color:#6b7280; font-size:14px; counter-increment:stage; }
 .ut-flow-list li::before { content:counter(stage); width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:#f3f4f6; font-size:12px; }
