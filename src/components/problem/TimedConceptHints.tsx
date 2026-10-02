@@ -5,6 +5,7 @@ import './TimedConceptHints.css';
 
 interface Props {
   tags: AdaptiveQuestionTag[];
+  solutionHint?: string | null;
 }
 
 const HINT_UNLOCK_SECONDS = 30;
@@ -16,7 +17,7 @@ function formatCountdown(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-export default function TimedConceptHints({ tags }: Props) {
+export default function TimedConceptHints({ tags, solutionHint }: Props) {
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
   const [isHintOpen, setIsHintOpen] = useState(false);
@@ -188,14 +189,36 @@ export default function TimedConceptHints({ tags }: Props) {
           {isSolutionHintOpen && (
             <div
               id="solution-hint-content"
-              className="timed-hints__card timed-hints__card--placeholder"
+              className={`timed-hints__card${solutionHint ? '' : ' timed-hints__card--placeholder'}`}
               role="status"
+              style={solutionHint ? {
+                marginTop: spacing.sm,
+                padding: spacing.lg,
+                background: '#FFF9E8',
+                border: '1px solid #F5D98B',
+                borderRadius: radius.md,
+                color: colors.gray800,
+              } : undefined}
             >
-              <span aria-hidden="true">🚧</span>
-              <div>
-                <strong>풀이 힌트는 아직 준비 중이에요.</strong>
-                <p>조금만 기다려 주세요. 더 이해하기 쉬운 풀이 힌트로 찾아올게요.</p>
-              </div>
+              {solutionHint ? (
+                <>
+                  <div className="timed-hints__card-heading" style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
+                    <span aria-hidden="true" style={{ fontSize: 20 }}>✏️</span>
+                    <strong style={{ ...typography.bodyTextXLSemiBold }}>풀이를 시작하는 방향</strong>
+                  </div>
+                  <p style={{ margin: 0, ...typography.bodyTextXLRegular, lineHeight: 1.7 }}>
+                    {solutionHint}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">🚧</span>
+                  <div>
+                    <strong>풀이 힌트는 아직 준비 중이에요.</strong>
+                    <p>조금만 기다려 주세요. 더 이해하기 쉬운 풀이 힌트로 찾아올게요.</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

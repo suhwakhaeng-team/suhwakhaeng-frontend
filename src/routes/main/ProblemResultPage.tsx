@@ -6,6 +6,9 @@ import { saveProblem, unsaveProblem } from '../../lib/savedProblemClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import ProblemContent from '../../components/ProblemContent';
 import QuestionPrompt from '../../components/QuestionPrompt';
+import HintFeedbackForm from '../../components/problem/HintFeedbackForm';
+import { useSolutionHint } from '../../lib/useSolutionHint';
+import '../../components/problem/TimedConceptHints.css';
 
 interface ResultState {
   isCorrect: boolean;
@@ -22,6 +25,7 @@ export default function ProblemResultPage() {
   const state = location.state as ResultState | null;
   const [isSaved, setIsSaved] = useState(false);
   const [isSaveInflight, setIsSaveInflight] = useState(false);
+  const solutionHint = useSolutionHint(state?.question.questionId);
 
   if (!state) {
     return (
@@ -192,6 +196,11 @@ export default function ProblemResultPage() {
           </div>
         </div>
       )}
+
+      <div className="result-feedback">
+        <HintFeedbackForm key={question.questionId} uid={tokenStorage.getUid()}
+          questionId={question.questionId} hintText={solutionHint} />
+      </div>
 
       {/* 버튼 */}
       <div style={{ display: 'flex', gap: spacing.md, justifyContent: 'center', alignItems: 'center' }}>
