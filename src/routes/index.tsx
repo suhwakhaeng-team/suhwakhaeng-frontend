@@ -23,14 +23,45 @@ import FeedbackPage from './main/FeedbackPage';
 import { KnowledgeGraphRoute, TopologyRoute } from './GraphRoutes';
 import FrequencyLearningRoute from './dev/FrequencyLearningRoute';
 import CurriculumOverviewPage from './main/CurriculumOverviewPage';
+import DiagnosticTagWebPreviewPage from './dev/DiagnosticTagWebPreviewPage';
+import QMapPreviewPage from './dev/QMapPreviewPage';
+import GoalLearningPreviewPage from './dev/GoalLearningPreviewPage';
+import LevelTestMapPreviewPage from './dev/LevelTestMapPreviewPage';
+import ProblemLearningPreviewPage from './dev/ProblemLearningPreviewPage';
+import UT1PreviewPage, { UT1AdminPreviewPage } from './dev/UT1PreviewPage';
 
 export const router = createBrowserRouter([
+  { path: '/ut1', element: <UT1PreviewPage server /> },
   ...(import.meta.env.DEV ? [{
     path: '/dev/knowledge-graph',
     element: <KnowledgeGraphRoute preview />,
   }, {
     path: '/dev/frequency-learning',
     element: <FrequencyLearningRoute />,
+  }, {
+    path: '/dev/diagnostic-tag-web',
+    element: <DiagnosticTagWebPreviewPage />,
+  }, {
+    path: '/dev/q-map',
+    element: <QMapPreviewPage />,
+  }, {
+    path: '/dev/goal-learning',
+    element: <GoalLearningPreviewPage />,
+  }, {
+    path: '/dev/level-test',
+    element: <LevelTestMapPreviewPage />,
+  }, {
+    path: '/dev/problem-learning',
+    element: <ProblemLearningPreviewPage />,
+  }, {
+    path: '/dev/ut1',
+    element: <UT1PreviewPage />,
+  }, {
+    path: '/dev/ut1/admin',
+    element: <UT1AdminPreviewPage />,
+  }, {
+    path: '/dev/level-test-map',
+    element: <Navigate to="/dev/level-test" replace />,
   }] : []),
   {
     path: '/',

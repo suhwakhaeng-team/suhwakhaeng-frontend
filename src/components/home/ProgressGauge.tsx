@@ -4,11 +4,12 @@ interface Props {
   nickname: string;
   percent: number; // 0.0 ~ 1.0
   label: string;
+  heading?: string;
 }
 
 // 웹 대시보드 스타일 — 수평 프로그레스 바 + 큰 퍼센트 + 라벨 배지.
 // iOS의 반원 게이지는 iPad/모바일 한정이고, 데스크톱에선 폭을 꽉 채우는 막대가 더 자연스러움.
-export default function ProgressGauge({ nickname, percent, label }: Props) {
+export default function ProgressGauge({ nickname, percent, label, heading = '님의 학습 숙련도' }: Props) {
   const clamped = Math.max(0, Math.min(1, percent));
   const percentText = `${Math.round(clamped * 100)}%`;
 
@@ -25,7 +26,7 @@ export default function ProgressGauge({ nickname, percent, label }: Props) {
     >
       <h3 style={{ ...typography.headingLgBold, color: colors.gray900, margin: 0 }}>
         <span style={{ color: colors.brand600 }}>{nickname}</span>
-        <span>님의 학습 숙련도</span>
+        <span>{heading}</span>
       </h3>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>

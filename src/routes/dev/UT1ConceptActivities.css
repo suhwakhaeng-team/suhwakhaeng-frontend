@@ -1,0 +1,143 @@
+/* 개념 학습 활동. 색·반경은 designTokens(brand600 #2563EB, gray, radius 8/12)와 UT1 화면의 기존 값을 따른다. */
+.uca { margin-top: 8px; color: #111827; }
+.uca button { font: inherit; cursor: pointer; }
+.uca button:disabled { cursor: default; }
+
+.uca-steps { display: flex; flex-wrap: wrap; gap: 8px 16px; list-style: none; padding: 0; margin: 0 0 20px; }
+.uca-steps li { display: flex; align-items: center; gap: 6px; color: #9ca3af; font-size: 12px; }
+.uca-steps li > span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #f3f4f6; font-size: 11px; font-weight: 600; }
+.uca-steps li.is-current { color: #2563eb; font-weight: 600; }
+.uca-steps li.is-current > span { background: #2563eb; color: #fff; }
+.uca-steps li.is-done { color: #15803d; }
+.uca-steps li.is-done > span { background: #dcfce7; color: #15803d; }
+
+.uca-stage { display: grid; gap: 16px; padding: 24px; background: #f9fafb; border-radius: 12px; min-width: 0; }
+.uca-lead { margin: 0; font-size: 15px; line-height: 1.7; color: #374151; word-break: keep-all; }
+.uca-question { margin: 4px 0 0; font-size: 15px; font-weight: 600; color: #111827; word-break: keep-all; }
+.uca-tag { justify-self: start; padding: 2px 8px; border-radius: 9999px; background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 600; }
+
+.uca-shelf { display: grid; gap: 8px; }
+.uca-shelf > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.uca-pickers { display: grid; gap: 10px; }
+.uca-pickers > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.uca-pickers > div > span { width: 52px; flex: none; font-size: 12px; color: #6b7280; }
+.uca-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151; font-size: 14px; }
+button.uca-chip:hover { border-color: #93c5fd; }
+.uca-chip[aria-pressed="true"] { border: 2px solid #2563eb; background: #eff6ff; color: #1d4ed8; padding: 7px 13px; }
+.uca-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(17, 24, 39, .18); flex: none; }
+
+.uca-grid-wrap { overflow-x: auto; }
+/* .ut-preview table 기본 표 스타일보다 우선하도록 .uca 범위로 지정 */
+.uca .uca-grid { width: auto; border-collapse: separate; border-spacing: 6px; font-size: 13px; color: #374151; }
+.uca .uca-grid caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.uca .uca-grid thead { background: none; }
+.uca .uca-grid th { padding: 0 6px; border: 0; font-weight: 500; white-space: nowrap; text-align: left; }
+.uca .uca-grid thead th { text-align: center; }
+.uca .uca-grid th .uca-swatch { margin-right: 6px; vertical-align: -2px; }
+.uca .uca-grid td { width: 84px; height: 48px; padding: 0; border: 1px dashed #d1d5db; border-radius: 8px; background: #fff; text-align: center; color: #9ca3af; font-weight: 600; }
+.uca .uca-grid thead td, .uca .uca-grid td.uca-row-count { border: 0; background: none; width: auto; height: auto; }
+.uca .uca-grid td.uca-row-count { color: #2563eb; font-size: 12px; text-align: left; padding-left: 4px; }
+.uca .uca-grid td.is-made { border: 1px solid #bfdbfe; background: #eff6ff; }
+.uca .uca-grid td.is-missing { border: 2px dashed #ef4444; background: #fef2f2; color: #ef4444; }
+.uca .uca-grid td.is-flash { box-shadow: 0 0 0 3px #93c5fd; }
+.uca .uca-grid tr.is-extra th { color: #a16207; }
+.uca .uca-grid tr.is-new td:not(.uca-row-count) { border: 1px solid #86efac; background: #f0fdf4; }
+.uca .uca-grid tr.is-new td.uca-row-count { color: #15803d; font-weight: 600; }
+.uca-outfit { display: inline-flex; gap: 3px; }
+
+.uca-answer-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.uca-number { width: 140px; min-height: 48px; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 14px; font: inherit; font-size: 16px; background: #fff; color: #111827; }
+.uca-number:focus { outline: 2px solid #60a5fa; outline-offset: 2px; }
+.uca-expression { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 18px; color: #374151; }
+.uca-expression .uca-number { width: 72px; text-align: center; }
+
+.uca-primary { min-height: 48px; padding: 12px 20px; background: #2563eb; color: #fff; border: 0; border-radius: 8px; font-size: 15px; font-weight: 600; }
+.uca-primary:disabled { background: #d2d5da; }
+.uca-text { justify-self: start; border: 0; background: none; padding: 4px 0; color: #6b7280; font-size: 14px; }
+.uca-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.uca-footer > span { font-size: 13px; color: #6b7280; }
+
+.uca-message { margin: 0; padding: 12px 14px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: 14px; line-height: 1.6; word-break: keep-all; }
+.uca-message.is-wrong { background: #fff7ed; color: #9a3412; }
+.uca-compare { margin: 0; padding: 12px 14px; border-left: 3px solid #2563eb; background: #fff; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.7; color: #374151; word-break: keep-all; }
+.uca-missed { display: grid; gap: 12px; }
+
+.uca-tree { display: grid; gap: 10px; padding: 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; min-width: 0; }
+.uca-tree-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 32px; align-items: center; gap: 10px; }
+.uca-tree-label { display: grid; font-size: 13px; color: #374151; }
+.uca-tree-label small { font-size: 11px; color: #9ca3af; }
+.uca-tree-groups { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.uca-tree-group { display: inline-flex; gap: 3px; padding: 4px 5px; border: 1px solid #dbeafe; border-radius: 6px; }
+.uca-tree-group i { width: 8px; height: 8px; border-radius: 50%; background: #93c5fd; }
+.uca-tree-group i.is-leaf { background: #2563eb; }
+.uca-tree-row > b { text-align: right; font-size: 14px; color: #2563eb; font-variant-numeric: tabular-nums; }
+.uca-tree p { margin: 0; text-align: right; font-size: 14px; font-weight: 600; color: #111827; }
+
+.uca-summary { padding: 16px; background: #fff; border: 1px solid #bbf7d0; border-radius: 12px; }
+.uca-summary span { font-size: 12px; font-weight: 600; color: #15803d; }
+.uca-summary p { margin: 6px 0 0; font-size: 14px; line-height: 1.7; color: #374151; word-break: keep-all; }
+
+@media (max-width: 760px) {
+  .uca-stage { padding: 16px; }
+  .uca .uca-grid td { width: 64px; height: 44px; }
+  .uca-number { width: 120px; }
+  .uca-expression .uca-number { width: 60px; }
+  .uca-tree-row { grid-template-columns: 60px minmax(0, 1fr) 28px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .uca .uca-grid td.is-flash { transition: box-shadow .2s ease-out; }
+}
+
+.uca button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.uca-people { display: flex; flex-wrap: wrap; gap: 12px; }
+.uca-person { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid #bfdbfe; border-radius: 50%; background: #fff; color: #1d4ed8; font-weight: 700; font-size: 20px; }
+.uca-person:disabled { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; }
+.uca-person[aria-pressed="true"] { background: #2563eb; color: #fff; border-color: #2563eb; }
+.uca-seats { display: flex; flex-wrap: wrap; gap: 10px; }
+.uca-seats > div { display: grid; align-content: center; justify-items: center; gap: 8px; flex: 1 1 100px; min-height: 116px; padding: 12px 8px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; }
+.uca-seats > div.is-filled { border: 1px solid #93c5fd; background: #eff6ff; }
+.uca-seats small, .uca-seats span { font-size: 12px; color: #6b7280; text-align: center; }
+.uca-seats strong { color: #1d4ed8; font-size: 22px; }
+.uca-orders { display: flex; flex-wrap: wrap; gap: 8px; }
+.uca-orders > span { padding: 8px 12px; border: 1px solid #bfdbfe; border-radius: 8px; background: #fff; font-size: 14px; color: #1e40af; font-variant-numeric: tabular-nums; }
+.uca-factor-input { display: inline-flex; align-items: center; gap: 8px; }
+.uca-order-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.uca-order-buttons button { min-height: 48px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #374151; font-size: 16px; }
+.uca-order-buttons button[aria-pressed="true"] { background: #eff6ff; color: #1d4ed8; border: 2px solid #2563eb; }
+.uca-order-buttons button.is-grouped { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; opacity: 1; }
+.uca-bins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.uca-bin { display: grid; align-content: start; gap: 12px; padding: 16px 12px; border: 1px solid #e5e7eb; border-top: 3px solid #93c5fd; border-radius: 8px 8px 12px 12px; background: #fff; min-width: 0; }
+.uca-bin strong { font-size: 14px; color: #374151; }
+.uca-bin small { color: #6b7280; font-size: 12px; line-height: 1.5; }
+.uca-balls { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; min-height: 46px; }
+.uca-balls i { display: inline-block; height: 16px; width: 16px; border-radius: 50%; background: #2563eb; }
+.uca-balls i.is-fixed { background: #9ca3af; }
+.uca-balls span { color: #9ca3af; font-size: 14px; }
+.uca-bin-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.uca-bin-actions button { min-height: 44px; padding: 8px; flex: 1; white-space: nowrap; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; border-radius: 6px; font-size: 13px; }
+.uca-bin-actions button:disabled { background: #f9fafb; border-color: #e5e7eb; color: #9ca3af; }
+.uca-symbols { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 0; color: #2563eb; }
+.uca-symbols > span { display: grid; place-items: center; width: 28px; height: 36px; font-size: 24px; }
+.uca-symbols > span.is-bar { color: #374151; font-weight: 700; }
+.uca-symbol-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.uca-symbol-buttons button { display: grid; align-content: center; gap: 4px; min-width: 44px; min-height: 72px; padding: 8px; border: 1px solid #bfdbfe; border-radius: 8px; background: #fff; color: #2563eb; font-size: 24px; }
+.uca-symbol-buttons small { color: #9ca3af; font-size: 11px; }
+.uca-symbol-buttons button.is-bar { background: #eff6ff; border: 2px solid #2563eb; color: #1f2937; padding: 7px; font-weight: 700; }
+.uca-continue { display: flex; justify-content: flex-end; margin-top: 24px; }
+.uca-summary .katex-display { overflow-x: auto; overflow-y: hidden; }
+@media (max-width: 480px) {
+  .uca-steps { gap: 8px; }
+  .uca-steps li { font-size: 11px; gap: 4px; }
+  .uca-steps li > span { width: 18px; height: 18px; }
+  .uca-stage { padding: 16px 12px; }
+  .uca-bins { gap: 6px; }
+  .uca-bin { padding: 12px 8px; }
+  .uca-bin-actions { flex-direction: column; }
+  .uca-seats > div { flex-basis: 80px; }
+  .uca-symbol-buttons { gap: 6px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .uca-balls i, .uca-orders > span, .uca-seats .is-filled { animation: uca-appear .2s ease-out; }
+  .uca-person, .uca-order-buttons button, .uca-symbol-buttons button { transition: background .15s, border-color .15s; }
+  @keyframes uca-appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+}

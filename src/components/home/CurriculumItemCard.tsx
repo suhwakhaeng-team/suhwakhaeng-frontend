@@ -6,9 +6,10 @@ interface Props {
   isActive: boolean;
   onSolveClick: () => void;
   actionLabel?: string;
+  showReasoning?: boolean;
 }
 
-export default function CurriculumItemCard({ item, isActive, onSolveClick, actionLabel = '문제 풀기' }: Props) {
+export default function CurriculumItemCard({ item, isActive, onSolveClick, actionLabel = '문제 풀기', showReasoning = false }: Props) {
   return (
     <div
       style={{
@@ -32,6 +33,7 @@ export default function CurriculumItemCard({ item, isActive, onSolveClick, actio
       <span style={{ ...typography.captionMedium, color: colors.gray500 }}>
         {item.problemCount}문제
       </span>
+      {showReasoning && item.reasoning && <p style={{ ...typography.bodyTextLgRegular, color: colors.gray600, margin: 0 }}>{item.reasoning}</p>}
 
       {isActive && (
         <button
