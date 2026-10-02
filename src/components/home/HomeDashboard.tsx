@@ -9,6 +9,8 @@ import DailyStatsCard from './DailyStatsCard';
 // Shared presentation only. Live HomePage owns its API calls; previews supply local data.
 interface Props {
   nickname: string;
+  notice?: ReactNode;
+  footer?: ReactNode;
   grade?: number | null;
   recommendation: ReactNode;
   feedback: ReactNode;
@@ -26,6 +28,7 @@ interface Props {
 export default function HomeDashboard(props: Props) {
   return <div className="home-dashboard" style={{ background: colors.gray100, minHeight: '100%', margin: `-${spacing.xl}px`, padding: spacing.xl }}>
     <HomeHeader nickname={props.nickname} grade={props.grade} />
+    {props.notice}
     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
       <div className="home-dashboard-columns" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: spacing.lg, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
@@ -40,5 +43,6 @@ export default function HomeDashboard(props: Props) {
       </div>
       {props.maps}
     </div>
+    {props.footer}
   </div>;
 }

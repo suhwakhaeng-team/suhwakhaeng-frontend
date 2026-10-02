@@ -239,18 +239,36 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     </>}
   </main></div>;
   const map = <ProblemLearningMap goal={goal} nodes={UT_NODES} columnGap={260} horizontalPadding={54} state={state ?? null} diagnostic={diagnostic} currentId={passMap ? '' : state?.currentId ?? (stage === 'learning' && session ? recommendedUTNode(session, goal.rootId) : '')} />;
-  const foundationCards = <section style={card} id="ut-foundations"><h3 className="ut-section-title">기초 확인 문제</h3><p className="plm-live-muted">막힌 개념은 짧은 문제로 확인해요. 틀리면 개념을 직접 살펴보고 다시 풀어요.</p><div className="ut-foundation-list">{SKILLS.map(skill => <button key={skill} onClick={() => beginLearning(FOUNDATION_ROOTS[skill])} disabled={stage !== 'learning'}><span>{LABELS[skill]}</span><small>{session && runSummary(session.pre).complete ? `${runSummary(session.pre, skill).correct}/2 · 사전` : '사전 테스트 후'} →</small></button>)}</div></section>;
+  const foundationCards = <section className="ut-foundations" id="ut-foundations" aria-labelledby="ut-foundation-heading">
+    <h3 className="ut-section-title" id="ut-foundation-heading">기초 확인 문제</h3>
+    <p className="plm-live-muted">필요한 개념을 골라 짧은 문제로 확인해 보세요.</p>
+    <div className="ut-foundation-list">{SKILLS.map(skill => {
+      const summary = session && runSummary(session.pre, skill);
+      const confirmed = diagnostic[`c-${skill}`] === 'passed';
+      const available = stage === 'learning';
+      return <button key={skill} type="button" className={confirmed ? 'is-confirmed' : ''} onClick={() => beginLearning(FOUNDATION_ROOTS[skill])} disabled={!available}>
+        <span className="ut-foundation-top"><span className="ut-foundation-name">{LABELS[skill]}</span><span className="ut-foundation-arrow" aria-hidden="true">→</span></span>
+        <span className="ut-foundation-status">{confirmed ? '기초 확인 완료' : stage === 'pre' ? '테스트 후 열려요' : stage === 'done' || stage === 'post' ? '학습 종료' : '기초 확인 필요'}</span>
+        <small>{summary?.complete ? `사전 테스트 ${summary.correct}/${summary.total} 정답` : '사전 테스트 진행 전'}</small>
+      </button>;
+    })}</div>
+  </section>;
+  const homeNotice = notice && <p className="plm-live-notice ut-home-notice" role="status">{notice}</p>;
+  const participantFooter = <footer className="ut-participants">
+    {demo && !!store.sessions.length && <label>참가자 선택 <select aria-label="참가자 선택" value={store.activeId ?? ''} onChange={event => { update(pauseTimer); setStore(previous => ({ ...previous, activeId: event.target.value })); setAnswer(''); setSelectedGoal('bn-1'); setNotice(''); }}>{store.sessions.map(item => <option key={item.id} value={item.id}>{item.participant} · {item.stage === 'done' ? '완료' : '진행 중'}</option>)}</select></label>}
+    {session && <button type="button" className="ut-new-participant" disabled={blocked} onClick={() => { goHome(); setName(''); setEntry('nickname'); }}>새 참가자로 시작 <span aria-hidden="true">→</span></button>}
+  </footer>;
   const comparison = session && <Comparison session={session} />;
   return <div className="plm-live-preview ut-preview"><MainLayout activePath="/main/home" onNavigate={path => { goHome(); if (path === '/main/ai-concept') setNotice('홈 아래의 기초 확인 문제에서 개념 학습을 시작할 수 있어요.'); if (path === '/main/mypage') setNotice('참가자를 바꾸려면 홈 아래의 ‘새 참가자로 시작’을 눌러 주세요.'); }}>
     <main ref={mainRef} tabIndex={-1} data-screen={`ut1-${view}`}>
       {error && <p className="ut-error" role="alert">{error}{server && <button type="button" onClick={() => void remote.retry()}>다시 저장</button>}</p>}
       <fieldset disabled={server && blocked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-      {notice && <p className="plm-live-notice" role="status">{notice}</p>}
+      {notice && (view !== 'home' || !session) && <p className="plm-live-notice" role="status">{notice}</p>}
       {view === 'home' ? <>
         {!session ? <section className="ut-registration" style={card}><h1>중복조합 학습</h1><p>학습 전 테스트를 보고, 다섯 문제를 풀어본 뒤 다시 확인해요.</p>
           <label>닉네임<input aria-label="닉네임" value={name} onChange={event => setName(event.target.value)} placeholder="사용할 닉네임" maxLength={40} /></label>
           <button style={primary} disabled={blocked || !validUTNickname(name)} onClick={newParticipant}>시작하기 →</button></section>
-          : <HomeDashboard nickname={session.participant} recommendation={stage === 'learning' && (remaining.length || state) ? <CurriculumListSection
+          : <HomeDashboard nickname={session.participant} notice={homeNotice} footer={participantFooter} recommendation={stage === 'learning' && (remaining.length || state) ? <CurriculumListSection
             items={[{ id: recommendationGoal.id, topicName: preparing ? UT_NODES[recommendationNode].label : recommendationGoal.title,
               categoryPath: preparing ? '목표 문제를 위한 기초 학습' : UT_NODES[recommendationGoal.rootId].kind === 'BN' ? `중복조합 · 목표 문제 ${UT_GOALS.findIndex(item => item.id === recommendationGoal.id) + 1}` : '기초 확인 문제', problemCount: 1,
               reasoning: preparing ? '사전 테스트에서 확인하지 못한 기초부터 학습해요. 확인 문제를 풀면 다음 개념으로 이어져요.' : '필요한 기초가 확인됐어요. 이제 목표 문제에 적용해 보세요.' }]}
@@ -273,10 +291,6 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
                 <div className="plm-section-row"><span className="plm-live-muted">사전 결과 → 필요한 개념·확인 문제 → BN 목표</span><button style={{ ...textButton, color: colors.brand600 }} disabled={stage !== 'learning' || session.completed.includes(goal.id)} onClick={() => beginLearning(goal.rootId)}>학습 시작 →</button></div></section>
               {foundationCards}
             </>} />}
-        <section style={{ marginTop: 24 }} className="ut-participants">
-          {demo && !!store.sessions.length && <label>참가자 선택 <select aria-label="참가자 선택" value={store.activeId ?? ''} onChange={event => { update(pauseTimer); setStore(previous => ({ ...previous, activeId: event.target.value })); setAnswer(''); setSelectedGoal('bn-1'); setNotice(''); }}>{store.sessions.map(item => <option key={item.id} value={item.id}>{item.participant} · {item.stage === 'done' ? '완료' : '진행 중'}</option>)}</select></label>}
-          {session && <div className="ut-new-participant"><button style={textButton} disabled={blocked} onClick={() => { goHome(); setName(''); setEntry('nickname'); }}>새 참가자로 시작 →</button></div>}
-        </section>
       </> : view === 'test' && question && session ? <section className="plm-live-solver ut-test" style={{ maxWidth: 720, margin: '0 auto' }}>
         <div className="plm-section-row"><button style={textButton} onClick={goHome}>← 잠시 나가기</button><span className="plm-live-muted">{stage === 'pre' ? '학습 전' : '학습 후'} · {run!.responses.length + 1} / 10</span></div>
         <progress className="ut-progress" value={run!.responses.length} max={10} aria-label="테스트 진행도" />
