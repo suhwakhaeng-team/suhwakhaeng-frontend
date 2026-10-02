@@ -38,11 +38,6 @@ export default function CurriculumCardView({ card }: Props) {
           <div style={{ ...typography.headingMdBold, color: colors.gray900 }}>
             {card.unitName}
           </div>
-          {card.grade && (
-            <div style={{ ...typography.captionSemiBold, color: colors.gray400, marginTop: spacing.xxs }}>
-              {card.grade}
-            </div>
-          )}
         </div>
         <span style={{ ...typography.bodyTextXLSemiBold, color: masteryColor, flexShrink: 0 }}>
           {masteryText}

@@ -84,7 +84,7 @@ export default function PrerequisiteGraph({ index, selected, progress, onSelect 
             <circle className="kg-mini-halo" r={id === selected ? 10 : 8} />
             <circle className="kg-mini-core" r="3.5" />
             <text y="22" textAnchor="middle">{concept.name.length > 8 ? `${concept.name.slice(0, 8)}…` : concept.name}</text>
-            <text className="kg-mini-grade" y="34" textAnchor="middle">{concept.metadata?.grade ?? '학년 미정'}</text>
+
           </g>;
         }))}
       </svg>

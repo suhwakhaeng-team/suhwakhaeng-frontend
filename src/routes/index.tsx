@@ -13,6 +13,7 @@ import TestIntroPage from './onboarding/TestIntroPage';
 import LevelTestPage from './onboarding/LevelTestPage';
 import CurriculumResultPage from './onboarding/CurriculumResultPage';
 import HomePage from './main/HomePage';
+import TagCatalogPage from './main/TagCatalogPage';
 import ProblemSolvingPage from './main/ProblemSolvingPage';
 import ProblemResultPage from './main/ProblemResultPage';
 import MyPagePage from './main/MyPagePage';
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="home" replace /> },
       { path: 'home', element: <HomePage /> },
+      { path: 'tag-catalog', element: <TagCatalogPage /> },
       { path: 'problem/:id', element: <ProblemSolvingPage /> },
       { path: 'problem-result', element: <ProblemResultPage /> },
       { path: 'mypage', element: <MyPagePage /> },

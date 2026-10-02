@@ -222,7 +222,7 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
             <circle className="kg-node-ring" r="7" />
             <circle className="kg-node-core" r="3.5" />
             <text className="kg-concept-label" textAnchor="middle" y="-16">{concept.name.length > 11 ? `${concept.name.slice(0, 10)}…` : concept.name}</text>
-            <text className="kg-concept-grade" textAnchor="middle" y="19">{concept.metadata?.grade ?? '학년 미정'}</text>
+
           </g>;
         })}
       </g>

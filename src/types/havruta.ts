@@ -23,7 +23,6 @@ export interface HavrutaSessionResponse {
   sessionId: number;
   tagId: number;
   tagName: string | null;
-  chapterName: string | null;
   title: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -49,7 +48,6 @@ export interface HavrutaStartSessionResponse {
 export const isUserMessage = (m: HavrutaMessageResponse): boolean => m.senderType === 'USER';
 
 export const categoryLabel = (s: HavrutaSessionResponse): string => {
-  if (s.chapterName && s.tagName) return `${s.chapterName} > ${s.tagName}`;
   return s.tagName ?? '';
 };
 

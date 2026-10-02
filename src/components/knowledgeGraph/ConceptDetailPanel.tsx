@@ -158,7 +158,7 @@ export default function ConceptDetailPanel({ index, selected, progress, practice
       {showNote && shareError && <p className="kg-note-export-error" role="alert">{shareError}</p>}
       {showNote && note ? <ConceptNoteView note={note} uid={practiceUid} noteRef={noteRef} /> : <>
         <span className="kg-unit-breadcrumb">{unit.name}</span>
-        <div className="kg-title-row"><h2>{concept.name}</h2><span className="kg-grade-badge">{concept.metadata?.grade ?? '학년 미정'}</span><span className={`kg-current-status assessment-${concept.metadata?.assessmentStatus?.toLowerCase() ?? statusOf(progress, selected)}`}>{currentStatus}</span></div>
+        <div className="kg-title-row"><h2>{concept.name}</h2><span className={`kg-current-status assessment-${concept.metadata?.assessmentStatus?.toLowerCase() ?? statusOf(progress, selected)}`}>{currentStatus}</span></div>
         <section className="kg-practice" aria-label="선택한 개념 연습">
           <span>{isFrequencyLearning ? '개념 학습' : '연습 문제'}</span>
           <strong>{concept.name}</strong>

@@ -6,6 +6,7 @@ export default function MainLayout() {
 
   const navItems = [
     { path: '/main/home', label: '홈' },
+    { path: '/main/tag-catalog', label: '태그 목록' },
     { path: '/main/ai-concept', label: 'AI 개념정리' },
     { path: '/main/mypage', label: '마이페이지' },
   ];

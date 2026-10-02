@@ -80,11 +80,9 @@ function BatchLevelTest() {
 
   const loadProblems = useCallback(async () => {
     setLoadState('loading');
-    // 학년이 정해졌으면 해당 학년 이하 단원 문제만 받는다 (BE 가 grade<= 필터 + 12문제 상한 적용).
+    // 선택한 문제 레벨로 진단하며 학년으로 문제를 제한하지 않는다.
     // nodeLevel(BN/AN/SAN): test-intro에서 고른 시작 계층 문제만 받는다.
-    const gradeInt = gradeStringToInt(grade);
     const params = new URLSearchParams();
-    if (gradeInt != null) params.set('grade', String(gradeInt));
     if (startNodeLevel) params.set('nodeLevel', startNodeLevel);
     const qs = params.toString();
     const path = qs ? `/learning/problems?${qs}` : '/learning/problems';
