@@ -15,7 +15,10 @@ interface Props {
 
 type Block =
   | { kind: 'text'; text: string }
-  | { kind: 'table'; header: string[]; rows: string[][] };
+  | { kind: 'table'; header: string[]; rows: string[][] }
+  | { kind: 'image'; src: string; alt: string };
+
+const EXPLANATION_IMAGE = /^\[\[해설그림:([^|\]]+)\|([^\]]+)\]\]$/;
 
 // `| --- | :--: |` 같은 구분줄: 파이프/하이픈/콜론/공백만으로 이뤄지고 하이픈을 포함.
 function isSeparator(line: string): boolean {
@@ -39,7 +42,11 @@ function parseBlocks(content: string): Block[] {
   let i = 0;
 
   while (i < lines.length) {
-    if (isTableStart(lines, i)) {
+    const imageMatch = lines[i].trim().match(EXPLANATION_IMAGE);
+    if (imageMatch) {
+      blocks.push({ kind: 'image', src: imageMatch[1], alt: imageMatch[2] });
+      i += 1;
+    } else if (isTableStart(lines, i)) {
       const header = toCells(lines[i]);
       let j = i + 2; // 헤더 + 구분줄 다음
       const rows: string[][] = [];
@@ -51,7 +58,11 @@ function parseBlocks(content: string): Block[] {
       i = j;
     } else {
       const textLines: string[] = [];
-      while (i < lines.length && !isTableStart(lines, i)) {
+      while (
+        i < lines.length
+        && !isTableStart(lines, i)
+        && !EXPLANATION_IMAGE.test(lines[i].trim())
+      ) {
         textLines.push(lines[i]);
         i += 1;
       }
@@ -124,6 +135,34 @@ export default function ProblemContent({ content }: Props) {
               </tbody>
             </table>
             </div>
+          )}
+          {block.kind === 'image' && (
+            <figure style={{ margin: String(spacing.sm) + 'px 0', textAlign: 'center' }}>
+              <img
+                src={block.src}
+                alt={block.alt}
+                loading="lazy"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  maxWidth: 760,
+                  height: 'auto',
+                  margin: '0 auto',
+                  border: '1px solid ' + colors.gray200,
+                  borderRadius: radius.md,
+                  background: colors.white,
+                }}
+              />
+              <figcaption
+                style={{
+                  marginTop: spacing.xs,
+                  ...typography.captionMedium,
+                  color: colors.gray500,
+                }}
+              >
+                {block.alt}
+              </figcaption>
+            </figure>
           )}
         </Fragment>
       ))}

@@ -196,7 +196,7 @@ test('storage drops invalid status values and removed concept IDs', () => {
   assert.deepEqual(repository.load(), { a: 'known' });
 });
 
-test('topology adapter connects duplicate names safely by tag ID and exposes grade', () => {
+test('topology adapter connects names safely by tag ID and drops legacy grade metadata', () => {
   const dto = (id, tagName, categoryPath, grade = 5) => ({ id, tagName, categoryPath, status: 'MASTERED', colorDepth: 1, grade });
   const result = adaptTopology({ nodes: [dto('1', 'Shared', 'First'), dto('2', 'Shared', 'Second'), dto('3', 'Unique', 'Second'), dto('4', 'Next', 'Third')], edges: [
     { source: 'Shared', target: 'Unique', sourceTagId: '1', targetTagId: '3' },
@@ -208,7 +208,7 @@ test('topology adapter connects duplicate names safely by tag ID and exposes gra
   assert.deepEqual(result.data.concepts.find(c => c.id === '4').prerequisites, ['3']);
   assert.equal(result.data.initialProgress['4'], 'known');
   assert.equal(result.data.concepts.find(c => c.id === '4').metadata.assessmentStatus, 'MASTERED');
-  assert.equal(result.data.concepts.find(c => c.id === '4').metadata.grade, '고2');
+  assert.equal('grade' in result.data.concepts.find(c => c.id === '4').metadata, false);
   assert.doesNotThrow(() => createGraphIndex(result.data));
 });
 

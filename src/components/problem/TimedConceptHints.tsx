@@ -54,7 +54,7 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
       const tagName = tag.tagName.trim();
       if (!tagName) return;
 
-      const key = tag.tagId ? String(tag.tagId) : `${tag.chapterName}:${tagName}`;
+      const key = tag.tagId ? String(tag.tagId) : tagName;
       if (!uniqueConcepts.has(key)) {
         uniqueConcepts.set(key, { ...tag, tagName });
       }
@@ -133,9 +133,8 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
               <div className="timed-hints__topics" style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
                 {conceptHints.map(concept => (
                   <span
-                    key={`${concept.tagId}:${concept.chapterName}:${concept.tagName}`}
+                    key={`${concept.tagId}:${concept.tagName}`}
                     className="timed-hints__topic"
-                    title={concept.chapterName.trim() || undefined}
                     style={{
                       padding: `${spacing.xxs}px ${spacing.sm}px`,
                       background: colors.white,

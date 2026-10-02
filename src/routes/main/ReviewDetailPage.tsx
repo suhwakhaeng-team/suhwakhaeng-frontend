@@ -72,7 +72,7 @@ export default function ReviewDetailPage() {
       explanation: problem.explanation,
       difficulty: null,
       tags: problem.tagId != null
-        ? [{ tagId: problem.tagId, chapterId: 0, chapterName: '', tagName: problem.tagName ?? '', baseColor: '' }]
+        ? [{ tagId: problem.tagId, tagName: problem.tagName ?? '', baseColor: '' }]
         : [],
     };
     navigate('/main/problem/start', { state: { questions: [question], currentIndex: 0 } });

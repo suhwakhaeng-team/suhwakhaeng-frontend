@@ -1,8 +1,8 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-export default function MainLayout({ children, onNavigate, activePath }: {
-  children?: ReactNode; onNavigate?: (path: string) => void; activePath?: string;
+export default function MainLayout({ children, onNavigate, activePath, showTagCatalog = true }: {
+  children?: ReactNode; onNavigate?: (path: string) => void; activePath?: string; showTagCatalog?: boolean;
 } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,6 +11,7 @@ export default function MainLayout({ children, onNavigate, activePath }: {
 
   const navItems = [
     { path: '/main/home', label: '홈' },
+    { path: '/main/tag-catalog', label: '태그 목록' },
     { path: '/main/ai-concept', label: 'AI 개념정리' },
     { path: '/main/mypage', label: '마이페이지' },
   ];
@@ -19,7 +20,7 @@ export default function MainLayout({ children, onNavigate, activePath }: {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ display: 'flex', gap: '16px', padding: '12px 24px', borderBottom: '1px solid #eee' }}>
         <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => go('/main/home')}>수확행</strong>
-        {navItems.map((item) => (
+        {navItems.filter(item => showTagCatalog || item.path !== '/main/tag-catalog').map((item) => (
           <button
             key={item.path}
             onClick={() => go(item.path)}

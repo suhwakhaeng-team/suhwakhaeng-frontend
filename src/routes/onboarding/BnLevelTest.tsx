@@ -20,32 +20,6 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'error';
 type Phase = 'bn' | 'an';
 const UNKNOWN_ANSWER = '모르겠습니다';
 
-// BN 출제 순서를 단원명으로 못박는다 (노션 Q1~Q10 = 확률 영역 → 통계 영역).
-// BN 은 고정된 10문제라 이 배열이 진실 원천. BE 가 어떤 순서로 주든 FE 가 이 순서로 재정렬하므로
-// BE 영역계산/적재순서/빌드 상태와 무관하게 항상 일정하다. 목록에 없는 단원은 뒤로(원래 순서 유지).
-const BN_CHAPTER_ORDER: string[] = [
-  '경우의 수 기초',
-  '여러 가지 순열 및 여사건 제한형',
-  '기하학적 나열 및 공간 제약형',
-  '중복조합 및 함수의 개수 고난도 킬러형',
-  '이항 구조 전개 및 대수적 확률 연산형',
-  '조건부확률 및 반복 독립시행 융합형',
-  '중등 기술 통계 및 산포도 복합형',
-  '이산확률변수 통계량 및 선형 변환형',
-  '연속확률밀도 및 정규분포 표준화 연계형',
-  '통계적 표본 추출 및 모평균 신뢰구간 추정형',
-];
-
-function bnOrderIndex(topic: string): number {
-  const i = BN_CHAPTER_ORDER.indexOf((topic ?? '').trim());
-  return i === -1 ? BN_CHAPTER_ORDER.length : i;
-}
-
-// 받은 BN 문제를 단원명 기준으로 고정 순서 정렬 (Array.sort 는 안정 정렬 → 동순위는 원래 순서 유지).
-function sortBnByChapter(problems: LearningProblem[]): LearningProblem[] {
-  return [...problems].sort((a, b) => bnOrderIndex(a.topic) - bnOrderIndex(b.topic));
-}
-
 // 학년 enum → BE 정수 매핑 (중1=1 ~ 고3=6).
 function gradeStringToInt(g: Grade | null): number | undefined {
   if (!g) return undefined;
@@ -106,9 +80,7 @@ export default function BnLevelTest() {
 
   const loadBnProblems = useCallback(async () => {
     setLoadState('loading');
-    const gradeInt = gradeStringToInt(grade);
     const params = new URLSearchParams();
-    if (gradeInt != null) params.set('grade', String(gradeInt));
     params.set('nodeLevel', 'BN');
     const response = await apiClient.get<LearningProblemDTO[]>(`/learning/problems?${params.toString()}`);
     if (!mountedRef.current) return;
@@ -121,8 +93,8 @@ export default function BnLevelTest() {
       setLoadState('empty');
       return;
     }
-    // BE 응답 순서와 무관하게 단원명 기준 고정 순서로 출제 (확률 영역 → 통계 영역).
-    setBnProblems(sortBnByChapter(response.data));
+    // 서버가 저장된 진단 순서대로 반환한다.
+    setBnProblems(response.data);
     setBnIndex(0);
     setPhase('bn');
     setAnProblem(null);
@@ -130,7 +102,7 @@ export default function BnLevelTest() {
     setAccumulated([]);
     enterAtRef.current = Date.now();
     setLoadState('ready');
-  }, [grade]);
+  }, []);
 
   useEffect(() => {
     void loadBnProblems();

@@ -2,8 +2,6 @@
 
 export interface AdaptiveQuestionTag {
   tagId: number;
-  chapterId: number;
-  chapterName: string;
   tagName: string;
   baseColor: string;
 }

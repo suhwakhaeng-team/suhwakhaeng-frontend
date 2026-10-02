@@ -6,8 +6,6 @@ export interface TopologyNode {
   categoryPath: string;
   status: MasteryStatus;
   colorDepth: number | null;
-  /** Optional until the topology API exposes the chapter grade. */
-  grade?: number | string | null;
 }
 
 export interface TopologyEdge {

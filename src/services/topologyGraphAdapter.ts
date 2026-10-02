@@ -21,11 +21,6 @@ const COURSE_UNITS: readonly CourseUnitDefinition[] = [
 
 const courseUnitByConcept = new Map(COURSE_UNITS.flatMap(unit => unit.concepts.map(name => [name, unit] as const)));
 
-function gradeLabel(value: number | string | null | undefined) {
-  if (typeof value === 'number' && value >= 1 && value <= 6) return value <= 3 ? `중${value}` : `고${value - 3}`;
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-}
-
 export function adaptTopology(topology: TopologyResponse): { data: LearningGraphData; warnings: string[] } {
   const idsByName = new Map<string, string[]>();
   const warnings: string[] = [];
@@ -40,7 +35,7 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
       name: n.tagName,
       description: '',
       prerequisites: [] as string[],
-      metadata: { category: n.categoryPath || '미분류', assessmentStatus: n.status, grade: gradeLabel(n.grade) },
+      metadata: { category: n.categoryPath || '미분류', assessmentStatus: n.status },
     };
   });
   const byId = new Map(concepts.map(c => [c.id, c]));
@@ -69,7 +64,7 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
     .filter(node => !courseUnitByConcept.has(node.tagName))
     .map(node => node.categoryPath || '미분류'))];
   return { warnings, data: {
-    id: 'live-topology-v1', subject,
+    id: 'live-topology-v2', subject,
     units: [
       ...canonicalUnits,
       ...fallbackCategories

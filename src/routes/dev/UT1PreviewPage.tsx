@@ -274,7 +274,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     {session && <button type="button" className="ut-new-participant" disabled={blocked} onClick={() => { goHome(); resetEntry(); }}>새 참가자로 시작 <span aria-hidden="true">→</span></button>}
   </footer>;
   const comparison = session && <Comparison session={session} />;
-  return <div className="plm-live-preview ut-preview"><MainLayout activePath="/main/home" onNavigate={path => { goHome(); if (path === '/main/ai-concept') setNotice('홈 아래의 기초 확인 문제에서 개념 학습을 시작할 수 있어요.'); if (path === '/main/mypage') setNotice('참가자를 바꾸려면 홈 아래의 ‘새 참가자로 시작’을 눌러 주세요.'); }}>
+  return <div className="plm-live-preview ut-preview"><MainLayout showTagCatalog={false} activePath="/main/home" onNavigate={path => { goHome(); if (path === '/main/ai-concept') setNotice('홈 아래의 기초 확인 문제에서 개념 학습을 시작할 수 있어요.'); if (path === '/main/mypage') setNotice('참가자를 바꾸려면 홈 아래의 ‘새 참가자로 시작’을 눌러 주세요.'); }}>
     <main ref={mainRef} tabIndex={-1} data-screen={`ut1-${view}`}>
       {connectionNotice}
       <fieldset disabled={server && blocked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
