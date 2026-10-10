@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import { ut2Api } from './ut2ServerApi';
 import { ut1Api } from './ut1ServerApi';
-import './ConditionalProblemMapPage.css';
+import './UT1PreviewPage.css';
 
 export default function UTEntryPage() {
   const [password, setPassword] = useState('');
@@ -21,7 +22,11 @@ export default function UTEntryPage() {
     } catch (e) { setError(e instanceof Error ? e.message : '입장할 수 없어요.'); }
     finally { setBusy(false); }
   }
-  return <div className="cpm-page"><nav className="cpm-nav"><strong>수확행</strong><Link to="/">홈</Link></nav><main><section className="cpm-study"><h1>학습 체험하기</h1><p>안내받은 입장 암호를 입력해 주세요.</p>
-    <form onSubmit={e => { e.preventDefault(); void enter(); }}><label>입장 암호<input type="password" aria-label="입장 암호" autoComplete="off" autoFocus value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /></label><div className="cpm-actions"><button className="cpm-primary" disabled={busy || !password}>{busy ? '확인 중…' : '다음 →'}</button></div></form>{error && <p role="alert">{error}</p>}
-  </section></main></div>;
+  return <div className="ut-preview ut-entry"><main className="ut-registration" style={{ padding: spacing.xl, background: colors.white, borderRadius: radius.lg }}>
+    <div className="ut-entry-brand">수확행</div><h1>학습 체험하기</h1><p>안내받은 입장 암호를 입력해 주세요.</p>
+    <form onSubmit={e => { e.preventDefault(); void enter(); }}><label>입장 암호<input type="password" inputMode="text" aria-label="입장 암호" autoComplete="off" autoFocus value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /></label>
+      {error && <p className="ut-error" role="alert">{error}</p>}
+      <button style={{ padding:'14px 24px', background:colors.brand600, color:colors.white, border:'none', borderRadius:radius.sm, ...typography.bodyTextXLSemiBold, fontSize:16, cursor:'pointer' }} disabled={busy || !password}>{busy ? '확인 중…' : '다음 →'}</button>
+    </form>
+  </main></div>;
 }
