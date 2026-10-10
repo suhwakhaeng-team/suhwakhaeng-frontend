@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../../layouts/MainLayout';
 import HomeDashboard from '../../components/home/HomeDashboard';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
@@ -16,6 +16,7 @@ import type { Diagnostic } from './problemLearningModel';
 import { acceptsUTPreviewPassword, validUTNickname } from './ut1EntryModel';
 import useUT1Server from './useUT1Server';
 import UT1ConnectionNotice from './UT1ConnectionNotice';
+import { ut2Api } from './ut2ServerApi';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
 import './UT1PreviewPage.css';
@@ -109,13 +110,15 @@ function Comparison({ session }: { session: UTSession }) {
 
 export default function UT1PreviewPage({ server = false }: { server?: boolean }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const demo = new URLSearchParams(location.search).get('demo') === '1';
   const local = useLocalUT(`${UT_STORAGE_KEY}${demo ? ':demo' : ''}`, server);
   const remote = useUT1Server(server);
   const { store, setStore, error, blocked } = server ? remote : local;
   const session = store.sessions.find(item => item.id === store.activeId);
-  const [entry, setEntry] = useState<'password' | 'nickname' | 'ready'>('password');
-  const [password, setPassword] = useState(''); const [entryError, setEntryError] = useState('');
+  const entryPassword = server && typeof location.state?.entryPassword === 'string' ? location.state.entryPassword : '';
+  const [entry, setEntry] = useState<'password' | 'nickname' | 'ready'>(entryPassword ? 'nickname' : 'password');
+  const [password, setPassword] = useState(entryPassword); const [entryError, setEntryError] = useState('');
   const [entryBusy, setEntryBusy] = useState(false);
   const [view, setView] = useState<View>('home'); const [mapReturn, setMapReturn] = useState<View>('home');
   const [name, setName] = useState(''); const [answer, setAnswer] = useState(''); const [notice, setNotice] = useState('');
@@ -219,6 +222,11 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     if (entryBusy || blocked) return;
     setEntryBusy(true); setEntryError('');
     try {
+      if (server && password === 'abcd') {
+        await ut2Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT2_API_BASE_URL || '/api/v1').enter(password);
+        navigate('/ut2', { state: { entryPassword: password } });
+        return;
+      }
       if (server) await remote.enter(password);
       else if (!acceptsUTPreviewPassword(password)) throw new Error('입장 암호가 맞지 않아요. 다시 확인해 주세요.');
       if (!server) setPassword(''); setEntry('nickname');
@@ -242,7 +250,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     <p>{entry === 'password' ? '안내받은 입장 암호를 입력해 주세요.' : '이 닉네임으로 학습 전후 기록을 남겨요.'}</p>
     {connectionNotice}
     {entry === 'password' ? <form onSubmit={event => { event.preventDefault(); void checkEntry(); }}>
-      <label>입장 암호<input autoFocus type="password" inputMode="numeric" autoComplete="off" aria-label="입장 암호" value={password} onChange={event => { setPassword(event.target.value); setEntryError(''); }} /></label>
+      <label>입장 암호<input autoFocus type="password" inputMode="text" autoComplete="off" aria-label="입장 암호" value={password} onChange={event => { setPassword(event.target.value); setEntryError(''); }} /></label>
       {entryError && <p className="ut-error" role="alert">{entryError}</p>}
       <button type="submit" style={primary} disabled={!password || blocked || entryBusy}>{entryBusy ? '확인 중…' : '다음 →'}</button>
     </form> : <>

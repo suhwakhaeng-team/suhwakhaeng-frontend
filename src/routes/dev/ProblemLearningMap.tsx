@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { LEARNING_NODES, type Diagnostic, type LearningGoal, type LearningState, type LearningNode } from './problemLearningModel';
 
 // Uses the same circle glyphs, type, colors and canvas sizing as the level-test map.
-export default function ProblemLearningMap({ goal, state, diagnostic, currentId, nodes = LEARNING_NODES, columnGap = 250, horizontalPadding }: {
-  goal: LearningGoal; state: LearningState | null; diagnostic: Diagnostic; currentId: string;
+export default function ProblemLearningMap({ goal, state, diagnostic, currentId, nodes = LEARNING_NODES, columnGap = 250, horizontalPadding, onSelectNode, kindLabels }: {
+  goal: LearningGoal; state: Pick<LearningState, 'results' | 'complete'> | null; diagnostic: Diagnostic; currentId: string;
   nodes?: Record<string, LearningNode>;
   columnGap?: number;
   horizontalPadding?: number;
+  onSelectNode?: (id: string) => void;
+  kindLabels?: Partial<Record<LearningNode['kind'], string>>;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -50,10 +52,10 @@ export default function ProblemLearningMap({ goal, state, diagnostic, currentId,
           const status = passed(id) ? 'passed' : state?.results[id] === 'failed' || diagnostic[id] === 'failed'
             || (node.kind === 'concept' && diagnostic[node.conceptId!] === 'failed') ? 'failed' : 'idle';
           const alreadyConfirmed = status === 'passed' && state?.results[id] !== 'passed';
-          return <div key={id} role="img" aria-label={`${node.kind === 'concept' ? '개념' : node.kind} ${node.label}, ${isCurrent ? '현재 위치' : alreadyConfirmed ? '진단·이전 학습에서 확인' : status === 'passed' ? '이번 학습에서 해결' : status === 'failed' ? '학습 중' : '아직 풀지 않음'}`}
+          return <div key={id} role={onSelectNode ? 'button' : 'img'} tabIndex={onSelectNode ? 0 : undefined} onClick={onSelectNode ? () => onSelectNode(id) : undefined} onKeyDown={onSelectNode ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectNode(id); } } : undefined} aria-label={`${node.kind === 'concept' ? '개념' : node.kind} ${node.label}, ${isCurrent ? '현재 위치' : alreadyConfirmed ? '진단·이전 학습에서 확인' : status === 'passed' ? '이번 학습에서 해결' : status === 'failed' ? '학습 중' : '아직 풀지 않음'}`}
             className={`ltm-node is-${status}${isCurrent ? ' is-selected' : ''}`} style={{ left: p.x, top: p.y } as CSSProperties}>
             <span>{node.label}</span><i className="ltm-node-glyph" aria-hidden="true"><i /><i /></i>
-            <small className="plm-node-kind">{node.kind === 'concept' ? '개념' : node.source === 'bank' ? `${node.kind} #${node.questionId}` : node.kind === 'BN' ? 'BN · UT 목표' : 'AN · 보충'}</small>
+            <small className="plm-node-kind">{kindLabels?.[node.kind] ?? (node.kind === 'concept' ? '개념' : node.source === 'bank' ? `${node.kind} #${node.questionId}` : node.kind === 'BN' ? 'BN · UT 목표' : 'AN · 보충')}</small>
             {isCurrent ? <em>현재</em> : status !== 'idle' && <b aria-hidden="true">{status === 'passed' ? '✓' : '!'}</b>}
           </div>;
         })}

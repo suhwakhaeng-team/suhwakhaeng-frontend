@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OnboardingLayout from '../layouts/OnboardingLayout';
 import { OnboardingProvider } from '../contexts/OnboardingContext';
@@ -30,10 +31,18 @@ import GoalLearningPreviewPage from './dev/GoalLearningPreviewPage';
 import LevelTestMapPreviewPage from './dev/LevelTestMapPreviewPage';
 import ProblemLearningPreviewPage from './dev/ProblemLearningPreviewPage';
 import UT1PreviewPage, { UT1AdminPreviewPage } from './dev/UT1PreviewPage';
+const ConditionalProblemMapPage = lazy(() => import('./dev/ConditionalProblemMapPage'));
+const UT2Page = lazy(() => import('./dev/UT2Page'));
+const UTEntryPage = lazy(() => import('./dev/UTEntryPage'));
 
 export const router = createBrowserRouter([
+  { path: '/ut', element: <Suspense fallback={null}><UTEntryPage /></Suspense> },
+  { path: '/ut2', element: <Suspense fallback={null}><UT2Page /></Suspense> },
   { path: '/ut1', element: <UT1PreviewPage server /> },
   ...(import.meta.env.DEV ? [{
+    path: '/dev/ut2/problem-map',
+    element: <Suspense fallback={null}><ConditionalProblemMapPage /></Suspense>,
+  }, {
     path: '/dev/knowledge-graph',
     element: <KnowledgeGraphRoute preview />,
   }, {
