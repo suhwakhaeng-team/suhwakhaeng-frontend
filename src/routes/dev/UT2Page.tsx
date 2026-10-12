@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../../layouts/MainLayout';
 import HomeDashboard from '../../components/home/HomeDashboard';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
@@ -11,6 +11,7 @@ import ConditionalConceptLesson from './ConditionalConceptLesson';
 import { CONDITIONAL_GOALS, CONDITIONAL_NODES, parseProbabilityAnswer } from './conditionalProblemBreakdown';
 import useUT2Server from './useUT2Server';
 import { ut2Score, type UT2Session } from './ut2ServerApi';
+import { ut1Api } from './ut1ServerApi';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
 import './UT1PreviewPage.css';
@@ -54,10 +55,12 @@ function useQuestionTime(key: string) {
 export default function UT2Page() {
   const remote = useUT2Server();
   const location = useLocation();
+  const navigate = useNavigate();
   const entryPassword = typeof location.state?.entryPassword === 'string' ? location.state.entryPassword : '';
   const [password, setPassword] = useState(entryPassword);
   const [nickname, setNickname] = useState('');
   const [entered, setEntered] = useState(!!entryPassword);
+  const [registration, setRegistration] = useState(!!entryPassword);
   const [entryBusy, setEntryBusy] = useState(false);
   const [entryError, setEntryError] = useState('');
   const [view, setView] = useState<View>('home');
@@ -77,7 +80,14 @@ export default function UT2Page() {
   async function enter() {
     if (entryBusy) return;
     setEntryBusy(true); setEntryError('');
-    try { await remote.enter(password); setEntered(true); }
+    try {
+      if (password !== 'abcd') {
+        await ut1Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT1_API_BASE_URL || '/api/v1').enter(password);
+        navigate('/ut1', { state: { entryPassword: password }, replace: true });
+        return;
+      }
+      await remote.enter(password); setEntered(true);
+    }
     catch (e) { setEntryError(e instanceof Error ? e.message : '입장하지 못했어요.'); }
     finally { setEntryBusy(false); }
   }
@@ -90,7 +100,7 @@ export default function UT2Page() {
   }
   async function createParticipant() {
     const next = await remote.create(nickname.trim(), password);
-    if (next) { setNotice(''); setView('test'); }
+    if (next) { setRegistration(false); setPassword(''); setNickname(''); setNotice(''); setView('test'); }
   }
   function afterAssessment(next: UT2Session) {
     if (next.stage === 'learning') { setView('home'); setNotice('사전 테스트가 끝났어요. 결과에 맞춰 필요한 기초부터 학습해요.'); }
@@ -112,7 +122,7 @@ export default function UT2Page() {
     }}>다시 저장</button> : remote.error && <button className="ut-reconnect-button" onClick={() => window.location.reload()}>다시 연결</button>}</div></div>}
     {remote.conflict && <div className="ut-error"><p>다른 탭을 닫고 이어가세요. 미저장 답안은 이 기기에 별도 보관합니다.</p><button style={textButton} disabled={remote.busy} onClick={async () => { await remote.recoverConflict(); goHome(); }}>다른 탭 기록으로 이어가기</button></div>}
   </>;
-  if (!s) return <div className="ut-preview ut-entry"><main className="ut-registration" style={card}>
+  if (!s || registration) return <div className="ut-preview ut-entry"><main className="ut-registration" style={card}>
     <div className="ut-entry-brand">수확행</div>
     <h1>{entered ? '닉네임을 알려주세요' : '학습 체험하기'}</h1>
     <p>{entered ? '이 닉네임으로 학습 전후 기록을 남겨요.' : '안내받은 입장 암호를 입력해 주세요.'}</p>
@@ -123,6 +133,7 @@ export default function UT2Page() {
           <label>{entered ? '닉네임' : '입장 암호'}<input autoFocus key={String(entered)} type={entered ? 'text' : 'password'} autoComplete="off" aria-label={entered ? '닉네임' : '입장 암호'} maxLength={entered ? 40 : 100} value={entered ? nickname : password} onChange={e => entered ? setNickname(e.target.value) : setPassword(e.target.value)} placeholder={entered ? '사용할 닉네임' : undefined} /></label>
           <button style={primary} disabled={blocked || entryBusy || (entered ? !nickname.trim() : !password)}>{remote.busy || entryBusy ? '확인 중…' : entered ? '레벨테스트 시작 →' : '다음 →'}</button>
         </form>
+        {entered && s && <div className="ut-entry-resume"><p>이전 학습 이어하기</p><button style={textButton} disabled={blocked || entryBusy} onClick={() => { setRegistration(false); setPassword(''); goHome(); }}>{s.participant} · 이어하기 →</button></div>}
     </>}
   </main></div>;
   const phase = s.stage === 'pre' || s.stage === 'post';
@@ -130,13 +141,16 @@ export default function UT2Page() {
   return <div className="plm-live-preview ut-preview ut2-preview"><MainLayout showTagCatalog={false} activePath="/main/home" onNavigate={path => {
     goHome();
     if (path === '/main/ai-concept') setNotice('홈 아래의 기초 확인 문제에서 개념 학습을 시작할 수 있어요.');
-    if (path === '/main/mypage') setNotice('홈에서 이번 학습 진행과 결과를 확인할 수 있어요.');
+    if (path === '/main/mypage') setNotice('참가자를 바꾸려면 홈 아래의 ‘새 참가자로 시작’을 눌러 주세요.');
   }}><main ref={main} tabIndex={-1} data-screen={`ut2-${view}`}>
     {connectionNotice}
     <fieldset disabled={blocked} className="ut2-content">
       {view === 'home' ? <UT2Dashboard session={s} selectedGoal={selectedGoal} onSelectGoal={setSelectedGoal} notice={notice} blocked={blocked} onOpen={id => void open(id)} onMap={openMap}
         onTest={() => { if (s.stage === 'learning') void startPost(); else setView('test'); }} onResults={() => setView('results')}
-        onStartNew={() => { remote.startNew(); setEntered(false); setPassword(''); setNickname(''); goHome(); }} />
+        onStartNew={() => {
+          if (!remote.startNew()) return;
+          setRegistration(true); setEntered(false); setPassword(''); setNickname(''); setEntryError(''); goHome();
+        }} />
         : view === 'test' && phase && s.question ? <Assessment key={`${s.id}:${s.stage}:${s[s.stage as 'pre' | 'post'].responses.length}`} session={s} remote={remote} onHome={goHome} onAdvance={afterAssessment} />
           : view === 'study' && s.stage === 'learning' && s.learningNode ? <Study key={`${s.learningNode}:${s.attempts[s.learningNode] || 0}:${!!s.feedback}`} session={s} remote={remote} onHome={goHome} onMap={openMap} onPass={afterPass} />
             : view === 'map' ? <section style={card} className={`plm-live-full-map${passedNode ? ' ut-pass-map' : ''}`}>
@@ -180,7 +194,7 @@ export function UT2Dashboard({ session: s, selectedGoal, onSelectGoal, notice, b
     onReviewItemClick={item => { const id = CONCEPT_IDS.find(id => CONDITIONAL_NODES[id].label === item.topicName); if (id && !blocked) onOpen(id); }}
     progressPercent={s.completed.length / 3} progressLabel={`목표 문제 ${s.completed.length}/3 해결`} progressHeading="님의 이번 학습"
     todaySolvedCount={s.pre.responses.length + s.post.responses.length + s.history.length} streakDays={0}
-    footer={s.stage === 'done' && <footer className="ut-participants"><button className="ut-new-participant" disabled={blocked} onClick={onStartNew}>새 참가자로 시작 <span aria-hidden="true">→</span></button></footer>}
+    footer={<footer className="ut-participants"><button className="ut-new-participant" disabled={blocked} onClick={onStartNew}>새 참가자로 시작 <span aria-hidden="true">→</span></button></footer>}
     maps={<>
       <section style={card} className="plm-home-map"><div className="plm-section-row"><h3 className="ut-section-title">문제 지도</h3><button style={textButton} onClick={onMap}>크게 보기 →</button></div>
         <div className="ut-goal-tabs" role="tablist" aria-label="기출 문제 선택">{CONDITIONAL_GOALS.map((item, i) => <button key={item.id} role="tab" aria-selected={goal.id === item.id} className={goal.id === item.id ? 'is-current' : ''} onClick={() => onSelectGoal(item.id)}><span>{s.completed.includes(item.rootId) ? '✓' : i + 1}</span>{item.title}</button>)}</div>

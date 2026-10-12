@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ut2Api, UT2ApiError, validUT2Reply, UT2_CACHE_KEY, UT2_CREATE_KEY, UT2_PENDING_KEY, type UT2Action, type UT2Credential, type UT2Reply } from './ut2ServerApi';
+import { disconnectUT2Participant } from './ut2ParticipantSwitch';
 
 const api = ut2Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT2_API_BASE_URL || '/api/v1');
 type Cache = { credential: UT2Credential; reply: UT2Reply };
@@ -77,10 +78,12 @@ export default function useUT2Server() {
     catch { setError('복구용 답안을 이 기기에 보관하지 못했어요. 저장 공간을 확인해 주세요.'); return; }
     pending.current = next; setHasPending(true); return flush();
   }
-  function startNew() {
-    if (lock.current || pending.current || reply?.session.stage !== 'done') return;
-    // Disconnect only this completed participant. Never remove the server record or UT1 keys.
-    localStorage.removeItem(UT2_CACHE_KEY); cache.current = null; setReply(null); setError('');
+  function startNew(): boolean {
+    if (loading || blocked || lock.current || pending.current || !cache.current) return false;
+    try { disconnectUT2Participant(localStorage, crypto.randomUUID()); }
+    catch (e) { setError(e instanceof Error ? e.message : '이전 연결 정보를 안전하게 보관하지 못했어요.'); return false; }
+    setError(''); setHasPending(false); setConflict(false);
+    return true;
   }
   async function recoverConflict() {
     if (!conflict || lock.current || !pending.current || !cache.current) return;

@@ -81,6 +81,13 @@ test('home offers post-test only when all three goals and required concepts are 
   const completed = session('done');
   assert(dashboard(completed).includes('결과 보기') && dashboard(completed).includes('새 참가자로 시작'));
 });
+test('participant change is available during every UT2 phase, not only after completion', () => {
+  for (const stage of ['pre', 'learning', 'post', 'done']) assert(dashboard(session(stage)).includes('새 참가자로 시작'), stage);
+  const src = readFileSync(pageFile, 'utf8');
+  assert(src.includes('if (!remote.startNew()) return;'));
+  assert(src.includes('setRegistration(true); setEntered(false);'));
+  assert(src.includes('이전 학습 이어하기'));
+});
 test('assessment matches the live question card and progress UI without exposing answer or grading', () => {
   const html = renderToStaticMarkup(createElement(Assessment, { session: session('pre'), remote, onHome: noop, onAdvance: noop }));
   for (const label of ['잠시 나가기', '테스트 진행도', '표본공간과 사건', 'plm-number-answer', '모르겠습니다', '분수 또는 소수']) assert(html.includes(label), label);
