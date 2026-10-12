@@ -12,6 +12,7 @@ export default function MainLayout({ children, onNavigate, activePath, showTagCa
   const navItems = [
     { path: '/main/home', label: '홈' },
     { path: '/main/tag-catalog', label: '태그 목록' },
+    { path: '/concepts', label: '개념 설명' },
     { path: '/main/ai-concept', label: 'AI 개념정리' },
     { path: '/main/mypage', label: '마이페이지' },
   ];
@@ -20,7 +21,7 @@ export default function MainLayout({ children, onNavigate, activePath, showTagCa
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ display: 'flex', gap: '16px', padding: '12px 24px', borderBottom: '1px solid #eee' }}>
         <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => go('/main/home')}>수확행</strong>
-        {navItems.filter(item => showTagCatalog || item.path !== '/main/tag-catalog').map((item) => (
+        {navItems.filter(item => showTagCatalog || !['/main/tag-catalog', '/concepts'].includes(item.path)).map((item) => (
           <button
             key={item.path}
             onClick={() => go(item.path)}

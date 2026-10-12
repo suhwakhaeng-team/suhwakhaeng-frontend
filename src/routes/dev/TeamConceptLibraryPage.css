@@ -1,0 +1,20 @@
+.team-library { min-height:100vh; background:#f5f7fa; color:#172033; padding-bottom:48px; }
+.team-library nav { display:flex; flex-wrap:wrap; align-items:center; gap:24px; padding:18px 28px; background:#fff; border-bottom:1px solid #e2e8f0; }
+.team-library a { color:#2563eb; text-decoration:none; }
+.team-library header,.team-library-filters,.team-library-layout,.team-library-audit { max-width:1240px; margin:24px auto; padding:0 24px; }
+.team-library header h1 { font-size:26px; margin-bottom:10px; }
+.team-library header p { color:#64748b; line-height:1.7; }
+.team-library-filters { display:flex; flex-wrap:wrap; gap:20px; }
+.team-library-filters label { display:grid; gap:8px; font-size:14px; flex:1 1 180px; }
+.team-library-filters input,.team-library-filters select { padding:12px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; min-width:0; }
+.team-library-layout { display:grid; grid-template-columns:260px minmax(0,1fr); gap:24px; align-items:start; }
+.team-library-layout aside { background:#fff; border-radius:16px; padding:16px; max-height:70vh; overflow:auto; position:sticky; top:16px; }
+.team-library-layout aside button { display:block; width:100%; text-align:left; font:inherit; padding:12px; border:0; border-radius:8px; background:transparent; color:inherit; cursor:pointer; }
+.team-library-layout aside button[aria-pressed=true] { background:#eff6ff; color:#2563eb; font-weight:650; }
+.team-library-layout article { background:#fff; padding:32px; border-radius:16px; min-width:0; }
+.team-library-category { color:#64748b; font-size:13px; }
+.team-library-breakdown { border-top:1px solid #e2e8f0; padding-top:20px; margin-top:32px; line-height:1.7; }
+.team-library-breakdown summary,.team-library-audit summary { cursor:pointer; font-weight:650; }
+.team-library-child { display:block; background:#eff6ff; border:0; padding:12px; margin:8px 0; color:#2563eb; cursor:pointer; text-align:left; width:100%; }
+.team-library-audit { line-height:1.8; }
+@media(max-width:760px) { .team-library-layout { grid-template-columns:1fr; } .team-library-layout aside { position:static; max-height:240px; } .team-library-layout article { padding:20px; } }

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- This module exports router configuration, not a component refresh boundary. */
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import OnboardingLayout from '../layouts/OnboardingLayout';
@@ -31,15 +32,20 @@ import GoalLearningPreviewPage from './dev/GoalLearningPreviewPage';
 import LevelTestMapPreviewPage from './dev/LevelTestMapPreviewPage';
 import ProblemLearningPreviewPage from './dev/ProblemLearningPreviewPage';
 import UT1PreviewPage, { UT1AdminPreviewPage } from './dev/UT1PreviewPage';
+const TeamConceptLibraryPage = lazy(() => import('./dev/TeamConceptLibraryPage'));
 const ConditionalProblemMapPage = lazy(() => import('./dev/ConditionalProblemMapPage'));
 const UT2Page = lazy(() => import('./dev/UT2Page'));
 const UTEntryPage = lazy(() => import('./dev/UTEntryPage'));
 
 export const router = createBrowserRouter([
+  { path: '/concepts', element: <Suspense fallback={null}><TeamConceptLibraryPage /></Suspense> },
   { path: '/ut', element: <Suspense fallback={null}><UTEntryPage /></Suspense> },
   { path: '/ut2', element: <Suspense fallback={null}><UT2Page /></Suspense> },
   { path: '/ut1', element: <UT1PreviewPage server /> },
   ...(import.meta.env.DEV ? [{
+    path: '/dev/team-concepts',
+    element: <Suspense fallback={null}><TeamConceptLibraryPage /></Suspense>,
+  }, {
     path: '/dev/ut2/problem-map',
     element: <Suspense fallback={null}><ConditionalProblemMapPage /></Suspense>,
   }, {

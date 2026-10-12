@@ -1,0 +1,14 @@
+.team-concept-content { color:#253047; line-height:1.8; overflow-wrap:anywhere; }
+.team-concept-content details { border-bottom:1px solid #e2e8f0; padding:16px 0; }
+.team-concept-content summary { font-weight:650; cursor:pointer; padding:4px 0; }
+.team-concept-content h3,.team-concept-content h4 { color:#172033; margin:24px 0 12px; }
+.team-concept-content p,.team-concept-content li { white-space:pre-wrap; }
+.team-concept-content ul,.team-concept-content ol { padding-left:24px; }
+.team-concept-content img { max-width:100%; height:auto; display:block; margin:auto; border-radius:12px; }
+.team-concept-content figure { margin:24px 0; }
+.team-table-scroll { overflow-x:auto; max-width:100%; margin:20px 0; }
+.team-concept-content table { border-collapse:collapse; width:100%; min-width:340px; }
+.team-concept-content th,.team-concept-content td { border:1px solid #dce3ec; padding:12px; text-align:left; white-space:pre-wrap; }
+.team-concept-content th { background:#f1f5f9; }
+.team-concept-supplement { margin-top:28px; border-top:1px solid #e2e8f0; padding-top:20px; }
+.team-concept-supplement a { display:inline-block; margin:18px 0; color:#2563eb; }

@@ -1,3 +1,5 @@
+import { teamConceptCatalog, teamSectionsForConcept, type TeamSection } from './teamConcepts';
+
 export type ConceptNote = {
   title: string;
   summary: string;
@@ -7,9 +9,24 @@ export type ConceptNote = {
   example: { question: string; solution: string[]; answer: string };
   mistakes: { wrong: string; right: string }[];
   recap: string[];
+  teamSections?: TeamSection[];
 };
 
-export const conceptNotesByName: Record<string, ConceptNote> = {
+// Supplement existing notes without replacing their authored lessons or examples.
+function withTeamNotes(notes: Record<string, ConceptNote>): Record<string, ConceptNote> {
+  for (const mapping of teamConceptCatalog.tagMappings) {
+    const sections = teamSectionsForConcept(mapping.name);
+    if (!sections.length) continue;
+    const existing = notes[mapping.name];
+    notes[mapping.name] = existing ? { ...existing, teamSections: sections } : {
+      title: mapping.name, summary: '팀이 정리한 개념 설명과 응용 예제입니다.', plainWords: [], why: '', steps: [],
+      example: { question: '', solution: [], answer: '' }, mistakes: [], recap: [], teamSections: sections,
+    };
+  }
+  return notes;
+}
+
+export const conceptNotesByName: Record<string, ConceptNote> = withTeamNotes({
   평균: {
     title: '평균',
     summary: '여러 값을 모두 모아서 똑같이 나누었을 때의 값이에요.',
@@ -165,4 +182,4 @@ export const conceptNotesByName: Record<string, ConceptNote> = {
     ],
     recap: ['한 대상의 두 값을 점 하나로 표시', '오른쪽 위는 양의 상관, 오른쪽 아래는 음의 상관', '상관관계가 있다고 반드시 원인과 결과인 것은 아님'],
   },
-};
+});

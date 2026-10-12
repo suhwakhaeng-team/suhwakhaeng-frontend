@@ -3,8 +3,9 @@ import MathText from '../../components/MathText';
 import { ADDITION_REGIONS, CONCEPT_LESSONS, DICE_OUTCOMES, EXAMPLE_PEOPLE, inDiceEvent, referenceCounts } from './conditionalConceptLessons';
 import type { DiceEvent, LessonDiagram, ReferenceGroup } from './conditionalConceptLessons';
 import './ConditionalConceptLesson.css';
+import { TeamConceptSupplement } from '../../components/knowledgeGraph/TeamConceptContent';
 
-export default function ConditionalConceptLesson({ nodeId, onConfirm }: { nodeId: string; onConfirm: () => void }) {
+export default function ConditionalConceptLesson({ nodeId, onConfirm, teamReference = false }: { nodeId: string; onConfirm: () => void; teamReference?: boolean }) {
   const lesson = CONCEPT_LESSONS[nodeId];
   const [stepIndex, setStepIndex] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -24,6 +25,7 @@ export default function ConditionalConceptLesson({ nodeId, onConfirm }: { nodeId
       {step.formulas && <div className="ccl-formulas">{step.formulas.map(formula => <p key={formula}><MathText text={formula} /></p>)}</div>}
       <p className="ccl-takeaway"><MathText text={step.takeaway} /></p>
     </section>
+    {teamReference && <TeamConceptSupplement conceptName={({'c-events':'표본공간과 사건','c-complement':'여사건','c-addition':'확률의 덧셈 정리','c-conditional':'조건부확률','c-multiplication':'확률의 곱셈정리'} as Record<string,string>)[nodeId]} />}
     <div className="ccl-navigation"><span>{stepIndex + 1} / {lesson.steps.length}</span><div>
       {stepIndex > 0 && <button type="button" className="cpm-text-button" onClick={() => move(-1)}>← 이전</button>}
       <button type="button" className="cpm-primary" onClick={stepIndex < lesson.steps.length - 1 ? () => move(1) : onConfirm}>{stepIndex < lesson.steps.length - 1 ? '다음 →' : '확인 문제 풀기 →'}</button>

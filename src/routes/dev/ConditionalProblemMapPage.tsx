@@ -82,7 +82,7 @@ export default function ConditionalProblemMapPage() {
         <header><button className="cpm-text-button" onClick={() => setPanelId(null)}>← 지도로 돌아가기</button><span>{node.kind === 'BN' ? '목표 문제' : node.kind === 'AN' ? '미니 문제' : '개념'}</span></header>
         <div className="cpm-path">{parents.map(id => <span key={id}>{CONDITIONAL_NODES[id].label}<i>›</i></span>)}</div>
         <h2>{node.label}</h2>
-        {reading ? <ConditionalConceptLesson key={`${node.id}:${attempts[node.id] ?? 0}`} nodeId={node.id} onConfirm={() => setReading(false)} /> : <>
+        {reading ? <ConditionalConceptLesson key={`${node.id}:${attempts[node.id] ?? 0}`} nodeId={node.id} teamReference onConfirm={() => setReading(false)} /> : <>
           <p className="cpm-prompt"><MathText text={question.prompt} /></p>
           {node.kind === 'concept' && <button type="button" className="cpm-text-button cpm-review-concept" onClick={() => { setReading(true); setFeedback(null); setAnswer(''); }}>개념 다시 보기</button>}
           <form onSubmit={event => { event.preventDefault(); submit(); }}>

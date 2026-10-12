@@ -236,7 +236,7 @@ export function Study({ session: s, remote, onMap, onHome, onPass }: { session: 
   };
   return <section className="plm-live-solver" style={{ maxWidth: 760, margin: '0 auto' }}><div className="plm-section-row" style={{ marginBottom: 24 }}><button style={textButton} onClick={onHome}>← 나가기</button><button style={textButton} onClick={onMap}>문제 지도 보기 →</button></div>
     <div className="plm-live-path"><span>조건부확률</span><span className="is-current">› {node.label}</span></div>
-    {reading ? <><h2 style={typography.headingXLBold}>{node.label}</h2><ConditionalConceptLesson nodeId={id} onConfirm={() => setReading(false)} /></> : <>
+    {reading ? <><h2 style={typography.headingXLBold}>{node.label}</h2><ConditionalConceptLesson nodeId={id} teamReference onConfirm={() => setReading(false)} /></> : <>
       <ProblemQuestionCard tagLabel={`${node.kind === 'BN' ? '목표 문제' : node.kind === 'AN' ? '확인 문제' : '개념 확인'} · ${node.label}${(s.attempts[id] || 0) > 0 && !s.feedback ? ' · 숫자를 바꾼 문제' : ''}`} problem={{ description: s.feedback?.prompt || s.question!.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />
       {clock.error && <p role="alert">{clock.error}</p>}
       {s.feedback ? <div className="plm-live-feedback ut-feedback" role="status"><strong>{s.feedback.unknown ? '기초부터 확인해 볼까요?' : '필요한 부분을 다시 확인해요'}</strong>{s.feedback.explanation ? <div className="plm-live-muted"><ProblemContent content={s.feedback.explanation} /></div> : <p className="plm-live-muted">‘{CONDITIONAL_NODES[s.feedback.nextNode]?.label}’부터 확인한 뒤 이 문제로 돌아와요.</p>}<button style={primary} disabled={remote.busy || remote.hasPending} onClick={() => void remote.act({ type: 'continue' })}>{s.feedback.nextNode === id ? '숫자를 바꿔 다시 풀기 →' : '필요한 하위 학습으로 이어가기 →'}</button></div>

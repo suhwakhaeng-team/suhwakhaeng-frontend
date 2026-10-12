@@ -17,6 +17,7 @@ import { acceptsUTPreviewPassword, validUTNickname } from './ut1EntryModel';
 import useUT1Server from './useUT1Server';
 import UT1ConnectionNotice from './UT1ConnectionNotice';
 import { ut2Api } from './ut2ServerApi';
+import { TeamConceptSupplement } from '../../components/knowledgeGraph/TeamConceptContent';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
 import './UT1PreviewPage.css';
@@ -81,12 +82,13 @@ function NumericAnswer({ value, onChange, onSubmit, disabled = false }: {
 }
 
 // 활동 완료는 확인 문제를 열기만 한다. 통과/기록은 기존 submitUTLearning만 담당한다.
-function ConceptLesson({ nodeId, retry, onContinue }: { nodeId: string; retry: boolean; onContinue: () => void }) {
+function ConceptLesson({ nodeId, retry, onContinue, teamReference = false }: { nodeId: string; retry: boolean; onContinue: () => void; teamReference?: boolean }) {
   const guided = hasGuidedActivity(nodeId);
   const [ready, setReady] = useState(!guided);
   return <><h2 style={typography.headingXLBold}>{UT_NODES[nodeId].label}</h2>
     {guided ? <GuidedConceptActivity nodeId={nodeId} retry={retry} onComplete={() => setReady(true)} />
       : <div className="ut-concept-note"><ProblemContent content={UT_NODES[nodeId].note!} /></div>}
+    {teamReference && <TeamConceptSupplement conceptName={UT_NODES[nodeId].label} />}
     {ready && <div className="uca-continue"><button style={primary} onClick={onContinue}>확인 문제 풀기 →</button></div>}
   </>;
 }
@@ -326,7 +328,7 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
         {state.complete ? <><div className="plm-live-result"><span>✓</span><h2>{node.kind === 'BN' ? '목표 문제를 풀었어요' : '기초 확인을 마쳤어요'}</h2><p>{goal.title}</p></div><div className="ut-completion-map">{map}</div><button style={{ ...primary, width: '100%' }} onClick={finishGoal}>홈으로 →</button></>
           : <><div className="plm-live-path">{[...state.parents, state.currentId].map((id, index) => <span key={`${id}-${index}`} className={id === state.currentId ? 'is-current' : ''}>{index > 0 && '› '}{UT_NODES[id].label}</span>)}</div>
             {!!state.preparation?.length && <p className="plm-live-muted">목표: {goal.title} · 필요한 기초를 확인하고 목표 문제로 이어져요.</p>}
-            {state.reading ? <ConceptLesson key={`${session?.id}:${state.currentId}:${state.attempts[state.currentId] ?? 0}`} nodeId={state.currentId} retry={(state.attempts[state.currentId] ?? 0) > 0}
+            {state.reading ? <ConceptLesson key={`${session?.id}:${state.currentId}:${state.attempts[state.currentId] ?? 0}`} nodeId={state.currentId} retry={(state.attempts[state.currentId] ?? 0) > 0} teamReference
               onContinue={() => update(value => value.learning ? { ...value, learning: { ...value.learning, reading: false, startedAt: Date.now() } } : value)} />
               : <><ProblemQuestionCard tagLabel={`${node.kind === 'BN' ? '목표 문제' : node.kind === 'AN' ? '확인 문제' : '개념 확인'} · ${node.label}${(state.attempts[state.currentId] ?? 0) > 0 ? ' · 숫자를 바꾼 문제' : ''}`}
                 problem={{ description: learningQ.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />

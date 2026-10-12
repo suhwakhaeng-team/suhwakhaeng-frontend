@@ -2,12 +2,15 @@ import type { RefObject } from 'react';
 import type { ConceptNote } from '../../data/conceptNotes';
 import ConceptNoteRevisionForm from './ConceptNoteRevisionForm';
 import ConceptNoteVisual from './ConceptNoteVisual';
+import TeamConceptContent from './TeamConceptContent';
 
 export default function ConceptNoteView({ note, uid, noteRef }: {
   note: ConceptNote;
   uid: string | null;
   noteRef: RefObject<HTMLElement | null>;
 }) {
+  const referenceOnly = note.teamSections?.length && !note.steps.length;
+  if (referenceOnly) return <article className="kg-note" ref={noteRef}><section className="kg-note-hero"><h2>{note.title}</h2><p>{note.summary}</p></section><TeamConceptContent sections={note.teamSections!} collapsible={false} /><ConceptNoteRevisionForm conceptName={note.title} uid={uid} /></article>;
   return <article className="kg-note" ref={noteRef}>
     <section className="kg-note-hero">
       <h2>{note.title}</h2>
@@ -62,6 +65,7 @@ export default function ConceptNoteView({ note, uid, noteRef }: {
       <ul>{note.recap.map(line => <li key={line}>{line}</li>)}</ul>
     </section>
 
+    {note.teamSections && <section className="kg-note-section"><h3>보충 설명과 응용 예제</h3><TeamConceptContent sections={note.teamSections} collapsible={false} /></section>}
     <ConceptNoteRevisionForm conceptName={note.title} uid={uid} />
   </article>;
 }
