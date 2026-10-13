@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import { havrutaClient } from '../../lib/havrutaClient';
+import { aiQuestionClient, type AiQuestionUsage } from '../../lib/aiQuestionClient';
 import { tokenStorage } from '../../lib/tokenStorage';
 import { getDefaultSuggestedQuestions } from '../../lib/aiConceptTemplates';
 import {
@@ -38,6 +39,8 @@ export default function AIConceptPage() {
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [questionUsage, setQuestionUsage] = useState<AiQuestionUsage | null>(null);
+  const [usageError, setUsageError] = useState<string | null>(null);
   const [menuOpenSessionId, setMenuOpenSessionId] = useState<number | null>(null);
   const [renameTargetId, setRenameTargetId] = useState<number | null>(null);
   const [renameText, setRenameText] = useState('');
@@ -47,6 +50,36 @@ export default function AIConceptPage() {
   );
 
   const messageEndRef = useRef<HTMLDivElement>(null);
+  // State updates are asynchronous: prevent two rapid clicks from issuing two questions.
+  const sendingRef = useRef(false);
+
+  const refreshQuestionUsage = useCallback(async () => {
+    if (!uid) return;
+    try {
+      setQuestionUsage(await aiQuestionClient.fetchUsage());
+      setUsageError(null);
+    } catch (error) {
+      setUsageError(error instanceof Error ? error.message : '질문 횟수 조회 실패');
+    }
+  }, [uid]);
+
+  useEffect(() => {
+    void refreshQuestionUsage();
+    const onFocus = () => { void refreshQuestionUsage(); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [refreshQuestionUsage]);
+
+  useEffect(() => {
+    if (!questionUsage) return;
+    const resetTime = Date.parse(questionUsage.resetsAt);
+    if (!Number.isFinite(resetTime)) return;
+    const timer = window.setTimeout(() => { void refreshQuestionUsage(); },
+      Math.max(1000, resetTime - Date.now() + 1000));
+    return () => window.clearTimeout(timer);
+  }, [questionUsage, refreshQuestionUsage]);
+
+  const questionBlocked = !questionUsage || Boolean(usageError) || questionUsage.remaining <= 0;
 
   const selectedSession = useMemo(
     () => sessions.find((s) => s.sessionId === selectedSessionId) ?? null,
@@ -108,7 +141,12 @@ export default function AIConceptPage() {
    */
   const handleSend = async (override?: string) => {
     const transcript = (override ?? input).trim();
-    if (!uid || !transcript || isProcessing) return;
+    if (!uid || !transcript || !questionUsage || isProcessing || sendingRef.current || questionBlocked) return;
+    if (transcript.length > questionUsage.maxInputCharacters) {
+      setErrorMessage(`질문은 ${questionUsage.maxInputCharacters}자 이내로 입력해 주세요.`);
+      return;
+    }
+    sendingRef.current = true;
 
     const tempId = -Date.now();
     const optimistic: HavrutaMessageResponse = {
@@ -157,7 +195,11 @@ export default function AIConceptPage() {
     } catch (e) {
       setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
       setErrorMessage(e instanceof Error ? e.message : '메시지 전송 실패');
+      if (!override) setInput(transcript);
     } finally {
+      // The server counts admitted attempts, including provider failures.
+      await refreshQuestionUsage();
+      sendingRef.current = false;
       setIsProcessing(false);
     }
   };
@@ -249,6 +291,10 @@ export default function AIConceptPage() {
         messageEndRef={messageEndRef}
         suggestedPrompts={showSuggestedChips ? suggestedPrompts : []}
         onSuggestedPromptClick={handleSuggestedPromptClick}
+        questionUsage={questionUsage}
+        usageError={usageError}
+        questionBlocked={questionBlocked}
+        onRetryUsage={() => { void refreshQuestionUsage(); }}
       />
 
       {renameTargetId !== null && (
@@ -525,6 +571,10 @@ function MenuItem({ label, color, onClick }: { label: string; color: string; onC
 }
 
 interface ChatPanelProps {
+  questionUsage: AiQuestionUsage | null;
+  usageError: string | null;
+  questionBlocked: boolean;
+  onRetryUsage: () => void;
   headerTitle: string;
   headerSubtitle: string | null;
   messages: HavrutaMessageResponse[];
@@ -541,7 +591,7 @@ interface ChatPanelProps {
   onSuggestedPromptClick: (text: string) => void;
 }
 
-function ChatPanel(props: ChatPanelProps) {
+export function ChatPanel(props: ChatPanelProps) {
   const {
     headerTitle,
     headerSubtitle,
@@ -556,6 +606,10 @@ function ChatPanel(props: ChatPanelProps) {
     messageEndRef,
     suggestedPrompts,
     onSuggestedPromptClick,
+    questionUsage,
+    usageError,
+    questionBlocked,
+    onRetryUsage,
   } = props;
 
   return (
@@ -565,6 +619,24 @@ function ChatPanel(props: ChatPanelProps) {
         {headerSubtitle && (
           <span style={{ ...typography.captionSemiBold, color: colors.gray500 }}>{headerSubtitle}</span>
         )}
+      </div>
+
+      <div role="status" aria-live="polite" style={{
+        padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.sm,
+        background: colors.brand50, borderRadius: radius.sm, color: colors.gray700,
+      }}>
+        {usageError ? (
+          <><span>{usageError} </span><button type="button" onClick={onRetryUsage}>다시 확인</button></>
+        ) : questionUsage ? (
+          <>
+            <strong>오늘 AI 질문 {questionUsage.remaining}/{questionUsage.limit}회 남음</strong>
+            <div style={{ fontSize: 13, marginTop: 4 }}>
+              채팅·하브루타 합산 · 한국 시간 자정 초기화 · 답변 최대 {questionUsage.maxOutputTokens}토큰
+            </div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>접수된 질문 기준으로 차감돼요. 응답 오류가 나도 횟수는 복원되지 않아요.</div>
+            {questionUsage.remaining === 0 && <div>오늘 질문을 모두 사용했어요. 기존 대화는 계속 볼 수 있어요.</div>}
+          </>
+        ) : '오늘의 질문 횟수를 확인하고 있어요…'}
       </div>
 
       {errorMessage && (
@@ -622,7 +694,7 @@ function ChatPanel(props: ChatPanelProps) {
             >
               궁금한 개념을 질문해보세요!
             </p>
-            {suggestedPrompts.length > 0 && (
+            {suggestedPrompts.length > 0 && !questionBlocked && (
               <SuggestedPromptChips
                 prompts={suggestedPrompts}
                 onClick={onSuggestedPromptClick}
@@ -651,8 +723,10 @@ function ChatPanel(props: ChatPanelProps) {
               onSend();
             }
           }}
-          placeholder="질문을 입력하세요..."
-          disabled={isProcessing}
+          placeholder={questionUsage?.remaining === 0 ? '오늘 질문을 모두 사용했어요' : '질문을 입력하세요...'}
+          maxLength={questionUsage?.maxInputCharacters ?? 2000}
+          disabled={isProcessing || questionBlocked}
+          aria-label="AI 질문"
           style={{
             flex: 1,
             padding: spacing.md,
@@ -665,16 +739,16 @@ function ChatPanel(props: ChatPanelProps) {
         />
         <button
           onClick={onSend}
-          disabled={isProcessing || !input.trim()}
+          disabled={isProcessing || questionBlocked || !input.trim()}
           style={{
             padding: `${spacing.md}px ${spacing.xl}px`,
-            background: isProcessing || !input.trim() ? colors.gray300 : colors.brand600,
+            background: isProcessing || questionBlocked || !input.trim() ? colors.gray300 : colors.brand600,
             color: colors.white,
             border: 'none',
             borderRadius: radius.sm,
             ...typography.bodyTextXLSemiBold,
             fontSize: 15,
-            cursor: isProcessing || !input.trim() ? 'not-allowed' : 'pointer',
+            cursor: isProcessing || questionBlocked || !input.trim() ? 'not-allowed' : 'pointer',
           }}
         >
           전송
