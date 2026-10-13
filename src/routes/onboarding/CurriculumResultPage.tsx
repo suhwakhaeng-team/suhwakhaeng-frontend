@@ -58,6 +58,7 @@ export default function CurriculumResultPage() {
       .filter((plan) => plan.concepts.length > 0),
   })).filter((group) => group.plans.length > 0);
   const total = report.concepts.length || 1;
+  const diagnosedCount = report.concepts.length - report.counts['not-diagnosed'];
 
   return (
     <main className="diagnostic-report-page">
@@ -83,7 +84,7 @@ export default function CurriculumResultPage() {
         <h2 className="report-section-title" style={{ ...typography.headingXLBold, fontSize: 22 }}>진단 요약</h2>
         <div className="diagnostic-summary-grid">
           {[
-            { label: '진단 개념', value: report.concepts.length, color: colors.gray900, background: colors.white },
+            { label: '진단 개념', value: diagnosedCount, color: colors.gray900, background: colors.white },
             { label: '안정', value: report.counts.stable, color: STATUS_META.stable.color, background: STATUS_META.stable.background },
             { label: '불안정', value: report.counts.unstable, color: STATUS_META.unstable.color, background: STATUS_META.unstable.background },
             { label: '보완 필요', value: report.counts['needs-review'], color: STATUS_META['needs-review'].color, background: STATUS_META['needs-review'].background },
@@ -97,6 +98,11 @@ export default function CurriculumResultPage() {
             </div>
           ))}
         </div>
+        {report.counts['not-diagnosed'] > 0 && (
+          <p style={{ margin: `${spacing.md}px 0 0`, color: colors.gray500, ...typography.bodyTextLgRegular }}>
+            이번 테스트에서 확인하지 않은 개념이 {report.counts['not-diagnosed']}개 있습니다.
+          </p>
+        )}
         <div aria-label="개념 상태 분포" style={{ display: 'flex', height: 12, marginTop: spacing.md, overflow: 'hidden', borderRadius: radius.full, background: colors.gray100 }}>
           {(['stable', 'unstable', 'needs-review'] as const).map((status) => (
             <div key={status} style={{ width: `${(report.counts[status] / total) * 100}%`, background: STATUS_META[status].color }} />
@@ -110,7 +116,7 @@ export default function CurriculumResultPage() {
         <h2 className="report-section-title" style={{ ...typography.headingXLBold, fontSize: 22 }}>보완할 개념</h2>
         {weakConcepts.length === 0 ? (
           <div style={{ padding: spacing.xl, textAlign: 'center', borderRadius: radius.lg, background: STATUS_META.stable.background, color: STATUS_META.stable.color, ...typography.headingMdBold }}>
-            보완할 개념 없음
+            {diagnosedCount === 0 ? '아직 진단된 개념이 없습니다.' : '보완할 개념 없음'}
           </div>
         ) : (
           <div className="diagnostic-priority-list">

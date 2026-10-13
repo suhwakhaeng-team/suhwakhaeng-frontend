@@ -1,7 +1,7 @@
 import type { AnswerItem, LearningRouteResponse } from '../types/learning';
 
 export type DiagnosticStatus = 'stable' | 'unstable' | 'needs-review' | 'not-diagnosed';
-export type DiagnosticArea = '경우의 수' | '확률' | '통계';
+export type DiagnosticArea = '경우의 수' | '확률' | '통계' | '미분류';
 
 interface ConceptDefinition {
   question: number;
@@ -177,6 +177,31 @@ const PREVIEW_CONCEPTS: Record<string, string[]> = {
   '통계적 표본 추출 및 모평균 신뢰구간 추정형': ['모집단', '모평균', '신뢰구간', '표본비율', '표본평균', '표준편차'],
 };
 
+// 문항의 옛 복합 유형명이 아닌, 실제 개념 이름으로 영역을 구분한다.
+const conceptsByArea: Record<Exclude<DiagnosticArea, '미분류'>, string[]> = {
+  '경우의 수': ['합의 법칙', '곱의 법칙', '팩토리얼', '순열', '원순열', '같은 것이 있는 순열', '중복순열', '조합', '중복조합', '함수의 개수', '이항정리'],
+  '확률': ['표본공간과 사건', '수학적 확률', '여사건', '배반사건', '확률의 덧셈 정리', '조건부확률', '확률의 곱셈정리', '사건의 독립', '독립시행의 확률'],
+  '통계': ['평균', '중앙값', '최빈값', '편차', '분산', '표준편차', '산포도', '도수분포표', '히스토그램', '도수분포다각형', '줄기와 잎', '산점도', '상관관계', '확률변수', '이산확률변수', '이산확률분포', '기댓값', '이항분포', '연속확률변수', '확률밀도함수', '정규분포', '표준정규분포', '표준화', '이항분포의 정규근사', '모집단', '전수조사', '표본조사', '임의추출', '모평균', '표본평균', '표본비율', '신뢰구간'],
+};
+const conceptAreas = new Map<string, DiagnosticArea>(Object.entries(conceptsByArea)
+  .flatMap(([area, labels]) => labels.map((label) => [label, area as DiagnosticArea] as const)));
+// 이전 저장 답안과 개발용 시안의 이름도 원래 영역으로 표시한다.
+for (const definition of CONCEPTS) {
+  for (const label of PREVIEW_CONCEPTS[definition.sourceTopic] ?? []) {
+    if (!conceptAreas.has(label)) conceptAreas.set(label, definition.area);
+  }
+}
+// 일반 확률분포는 연속 분포도 포함하므로 이산확률분포로 이름을 바꾸지 않는다.
+conceptAreas.set('확률분포', '통계');
+const conceptAliases: Record<string, string> = {
+  '독립사건': '사건의 독립',
+  '독립시행': '독립시행의 확률',
+  '중복조합의 활용': '중복조합',
+  '이항계수의 활용': '이항정리',
+  '확률질량함수': '이산확률분포',
+};
+const canonicalLabel = (label: string): string => conceptAliases[label.trim()] ?? label.trim();
+
 // 발표·디자인 확인용 개발 환경 샘플. 실제 학생 결과 계산에는 사용하지 않는다.
 export const DIAGNOSTIC_REPORT_PREVIEW: LearningRouteResponse = {
   topicMastery: {
@@ -252,7 +277,7 @@ export const DIAGNOSTIC_REPORT_PREVIEWS: Record<string, LearningRouteResponse> =
 const conceptTopics = new Set(CONCEPTS.map((concept) => concept.sourceTopic));
 
 function fallbackStatus(score: number | undefined): DiagnosticStatus {
-  if (score == null || score < 0) return 'not-diagnosed';
+  if (score == null || !Number.isFinite(score) || score < 0) return 'not-diagnosed';
   // BN 한 문항 정답의 BKT 점수는 약 0.64이므로 0.6부터 안정으로 본다.
   if (score >= 0.6) return 'stable';
   if (score >= 0.4) return 'unstable';
@@ -261,7 +286,8 @@ function fallbackStatus(score: number | undefined): DiagnosticStatus {
 
 function isMainAnswer(answer: AnswerItem): boolean {
   return answer.diagnosticRole === 'main'
-    || (answer.diagnosticRole == null && conceptTopics.has(answer.topic));
+    || (answer.diagnosticRole == null
+      && (conceptTopics.has(answer.topic) || conceptAreas.has(canonicalLabel(answer.topic))));
 }
 
 function statusForAnswer(answers: AnswerItem[], index: number): DiagnosticStatus {
@@ -273,8 +299,10 @@ function statusForAnswer(answers: AnswerItem[], index: number): DiagnosticStatus
   return 'needs-review';
 }
 
-function areaForTopic(topic: string): DiagnosticArea {
-  return CONCEPTS.find((concept) => concept.sourceTopic === topic)?.area ?? '확률';
+function areaForConcept(label: string, sourceTopic: string): DiagnosticArea {
+  return conceptAreas.get(label)
+    ?? CONCEPTS.find((concept) => concept.sourceTopic === sourceTopic)?.area
+    ?? '미분류';
 }
 
 const severity: Record<DiagnosticStatus, number> = {
@@ -291,24 +319,35 @@ export function buildDiagnosticReport(result: LearningRouteResponse): Diagnostic
   answers.forEach((answer, index) => {
     if (!isMainAnswer(answer)) return;
     const definition = CONCEPTS.find((concept) => concept.sourceTopic === answer.topic);
-    const labels = answer.concepts?.length ? answer.concepts : [definition?.label ?? answer.topic];
+    // 빈 concepts는 이 문항에 진단 가능한 개념이 없다는 뜻이다.
+    // 필드 자체가 없는 이전 답안에서만 topic을 보충 정보로 사용한다.
+    const labels = [...new Set((answer.concepts ?? [definition?.label ?? answer.topic])
+      .map(canonicalLabel).filter(Boolean))];
     const status = statusForAnswer(answers, index);
     for (const label of labels) {
       const current = byConcept.get(label);
       if (!current || severity[status] > severity[current.status]) {
-        byConcept.set(label, { area: areaForTopic(answer.topic), label, status, score: null });
+        byConcept.set(label, { area: areaForConcept(label, answer.topic), label, status, score: null });
       }
     }
   });
 
-  if (byConcept.size === 0) {
-    for (const definition of CONCEPTS) {
-      const score = result.topicMastery[definition.sourceTopic];
-      byConcept.set(definition.label, {
-        area: definition.area,
-        label: definition.label,
-        status: fallbackStatus(score),
-        score: score == null || score < 0 ? null : score,
+  // 서버가 보내는 나머지 지도 개념은 미진단 상태까지 보존한다.
+  // 원답안이 있으면 개별 개념 상태를 사용하며 옛 복합 유형을 덧붙이지 않는다.
+  const answerConcepts = new Set(byConcept.keys());
+  for (const [topic, score] of Object.entries(result.topicMastery)) {
+    const definition = CONCEPTS.find((concept) => concept.sourceTopic === topic);
+    if (answerConcepts.size > 0 && definition) continue;
+    const label = canonicalLabel(definition?.label ?? topic);
+    if (!label || answerConcepts.has(label)) continue;
+    const status = fallbackStatus(score);
+    const current = byConcept.get(label);
+    if (!current || severity[status] > severity[current.status]) {
+      byConcept.set(label, {
+        area: areaForConcept(label, topic),
+        label,
+        status,
+        score: !Number.isFinite(score) || score < 0 ? null : score,
       });
     }
   }
@@ -319,7 +358,7 @@ export function buildDiagnosticReport(result: LearningRouteResponse): Diagnostic
     return acc;
   }, { stable: 0, unstable: 0, 'needs-review': 0, 'not-diagnosed': 0 });
   const weak = concepts.filter((concept) => concept.status === 'unstable' || concept.status === 'needs-review');
-  const learningPlans = (['경우의 수', '확률', '통계'] as DiagnosticArea[])
+  const learningPlans = (['경우의 수', '확률', '통계', '미분류'] as DiagnosticArea[])
     .map((area) => ({ area, concepts: weak.filter((concept) => concept.area === area) }))
     .filter((plan) => plan.concepts.length > 0);
 
