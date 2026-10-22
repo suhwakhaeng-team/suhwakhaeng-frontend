@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../../layouts/MainLayout';
 import HomeDashboard from '../../components/home/HomeDashboard';
+import { FeedbackForm } from '../../components/FeedbackForm';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
 import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import ProblemContent from '../../components/ProblemContent';
@@ -18,7 +19,7 @@ import './UT1PreviewPage.css';
 import './UT2Page.css';
 
 type Remote = ReturnType<typeof useUT2Server>;
-type View = 'home' | 'test' | 'study' | 'map' | 'results';
+type View = 'home' | 'test' | 'study' | 'map' | 'results' | 'survey';
 const card = { padding: spacing.xl, background: colors.white, borderRadius: radius.lg };
 const primary = { padding: '14px 24px', background: colors.brand600, color: colors.white, border: 'none', borderRadius: radius.sm,
   ...typography.bodyTextXLSemiBold, fontSize: 16, cursor: 'pointer' };
@@ -157,7 +158,8 @@ export default function UT2Page() {
               <div className="plm-section-row"><button style={textButton} onClick={() => { setPassedNode(null); setView(mapReturn); }}>← 돌아가기</button><h2 style={typography.headingXLBold}>{goal.title}</h2></div>
               <UT2Map session={s} goalId={selectedGoal} currentId={passedNode ? '' : s.learningNode || s.recommended || ''} onOpen={s.stage === 'learning' ? id => void open(id) : undefined} />
               {passedNode && <div className="ut-pass-actions"><span role="status">✓ {CONDITIONAL_NODES[passedNode].label}</span>{s.recommended ? <button style={primary} onClick={() => void open(s.recommended!)}>다음 {CONDITIONAL_NODES[s.recommended].kind === 'concept' ? '개념' : '문제'} →</button> : <button style={primary} onClick={goHome}>홈으로 →</button>}</div>}
-            </section> : view === 'results' && s.stage === 'done' ? <section style={{ ...card, maxWidth: 1000, margin: '0 auto' }}><div className="plm-section-row"><h1 style={typography.headingXLBold}>학습 전후 결과</h1><button style={textButton} onClick={goHome}>홈으로 →</button></div><Comparison session={s} /><p className="plm-live-muted">숫자가 다른 동일 유형에서의 변화예요. 이 수치만으로 서비스의 인과 효과를 단정하지 않아요.</p></section>
+            </section> : view === 'survey' && s.stage === 'done' ? <FeedbackForm key={s.id} ut2 submitted={s.surveySubmitted} rewardEntered={s.rewardEntered} onBack={() => setView('results')} onSubmit={remote.submitSurvey} />
+              : view === 'results' && s.stage === 'done' ? <section style={{ ...card, maxWidth: 1000, margin: '0 auto' }}><div className="plm-section-row"><h1 style={typography.headingXLBold}>학습 전후 결과</h1><button style={textButton} onClick={goHome}>홈으로 →</button></div><SurveyInvitation session={s} onSurvey={() => setView('survey')} /><Comparison session={s} /><p className="plm-live-muted">숫자가 다른 동일 유형에서의 변화예요. 이 수치만으로 서비스의 인과 효과를 단정하지 않아요.</p></section>
               : <section style={card}><p>현재 학습 단계로 돌아가 주세요.</p><button style={primary} onClick={goHome}>홈으로 →</button></section>}
     </fieldset>
   </main></MainLayout></div>;
@@ -168,6 +170,15 @@ export function UT2Map({ session: s, goalId, currentId, onOpen }: { session: UT2
   return <ProblemLearningMap goal={goal} nodes={CONDITIONAL_NODES} state={{ results: Object.fromEntries(Object.entries(s.results).filter(([id]) => s.history.some(r => r.nodeId === id))), complete: s.completed.includes(goal.rootId) }}
     diagnostic={s.stage === 'pre' ? {} : Object.fromEntries(CONCEPT_IDS.map(id => [id, s.weak.includes(id) ? 'failed' : 'passed']))} currentId={currentId}
     columnGap={260} horizontalPadding={54} onSelectNode={onOpen} kindLabels={{ BN: '기출 · 목표', AN: 'AN · 확인', concept: '개념' }} />;
+}
+
+export function SurveyInvitation({ session, onSurvey }: { session: UT2Session; onSurvey: () => void }) {
+  if (session.stage !== 'done') return null;
+  return <section className="ut2-survey-invitation" aria-label="피드백 설문">
+    <h2 style={typography.headingXLBold}>{session.surveySubmitted ? '피드백을 남겨 주셔서 감사해요' : '최종 레벨테스트까지 모두 마쳤어요!'}</h2>
+    <p>{session.surveySubmitted ? session.rewardEntered ? '빽다방 상품권 추첨에 응모되었어요. 당첨 시 남겨 주신 연락처로 안내해 드려요.' : '설문 제출이 완료되었어요. 연락처를 남기지 않아 추첨에는 응모되지 않았어요.' : '마지막으로 사용 경험을 들려주세요. 피드백 설문을 제출하고 연락처를 남긴 분 중 추첨을 통해 빽다방 상품권을 드려요.'}</p>
+    <button type="button" style={primary} onClick={onSurvey}>{session.surveySubmitted ? '설문 제출 확인 →' : '피드백 설문 작성하기 →'}</button>
+  </section>;
 }
 
 export function UT2Dashboard({ session: s, selectedGoal, onSelectGoal, notice, blocked, onOpen, onMap, onTest, onResults, onStartNew }: {

@@ -31,7 +31,8 @@ function load(file) {
   return module.exports;
 }
 const pageFile = fileURLToPath(new URL('../src/routes/dev/UT2Page.tsx', import.meta.url));
-const { UT2Dashboard, Assessment, Study } = load(pageFile);
+const { UT2Dashboard, Assessment, Study, SurveyInvitation } = load(pageFile);
+const { FeedbackForm } = load(fileURLToPath(new URL('../src/components/FeedbackForm.tsx', import.meta.url)));
 const MainLayout = load(fileURLToPath(new URL('../src/layouts/MainLayout.tsx', import.meta.url))).default;
 const noop = () => {};
 const remote = { busy: false, hasPending: false, act: async () => undefined };
@@ -87,6 +88,24 @@ test('participant change is available during every UT2 phase, not only after com
   assert(src.includes('if (!remote.startNew()) return;'));
   assert(src.includes('setRegistration(true); setEntered(false);'));
   assert(src.includes('이전 학습 이어하기'));
+});
+
+test('survey is offered only after the final test and clearly distinguishes entry without contact', () => {
+  for (const stage of ['pre', 'learning', 'post']) assert.equal(renderToStaticMarkup(createElement(SurveyInvitation, { session: session(stage), onSurvey: noop })), '');
+  const s = session('done');
+  const invitation = () => renderToStaticMarkup(createElement(SurveyInvitation, { session: s, onSurvey: noop }));
+  assert(invitation().includes('피드백 설문 작성하기') && invitation().includes('빽다방 상품권'));
+  s.surveySubmitted = true;
+  assert(invitation().includes('추첨에는 응모되지 않았어요'));
+  s.rewardEntered = true;
+  assert(invitation().includes('추첨에 응모되었어요'));
+});
+
+test('UT2 survey reuses the full form without account login or the previous reward offer', () => {
+  const html = renderToStaticMarkup(createElement(FeedbackForm, { ut2: true, onBack: noop, onSubmit: async () => {} }));
+  for (const label of ['최종 레벨테스트', '빽다방 상품권', '추첨', '전화번호', '피드백 제출하기']) assert(html.includes(label), label);
+  assert(!html.includes('올리브영') && !html.includes('10,000') && !html.includes('열 분'));
+  assert(html.includes('입력하지 않아도 설문은 제출할 수 있어요'));
 });
 test('assessment matches the live question card and progress UI without exposing answer or grading', () => {
   const html = renderToStaticMarkup(createElement(Assessment, { session: session('pre'), remote, onHome: noop, onAdvance: noop }));

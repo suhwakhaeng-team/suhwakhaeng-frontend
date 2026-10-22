@@ -7,7 +7,7 @@ import { ut2Api, UT2ApiError, ut2Score, validUT2Reply, UT2_CACHE_KEY, UT2_CREATE
 import { CONDITIONAL_NODES, parseProbabilityAnswer } from '../src/routes/dev/conditionalProblemBreakdown.ts';
 
 test('UT2 backend bank exactly matches the authored model; both forms have 10 concept and 3 application questions', () => {
-  const server = JSON.parse(readFileSync(new URL('../../suhwakhaeng-backend/src/main/resources/ut2/question-bank-v1.json', import.meta.url), 'utf8'));
+  const server = JSON.parse(readFileSync(new URL('../../suhwakhaeng-backend/src/main/resources/ut2/question-bank-v2.json', import.meta.url), 'utf8'));
   assert.deepEqual(server, UT2_BANK);
   for (const form of ['A', 'B']) {
     const questions = ut2Assessment(form);
@@ -27,8 +27,8 @@ test('UT2 backend bank exactly matches the authored model; both forms have 10 co
 });
 test('all assessment answers have independent numerical checks, including conditional direction and complements', () => {
   const expected = {
-    A: [3/10, (7+6-2)/16, 1-3/8, 7/10-1/5, 3/5+2/5-4/5, 11/12-7/12, 4/8, (1/4)/(1-3/8), (3/5)*(5/12), (3/20)/(3/10), (4/5-2/5)/(1-2/5), (1+4)/14, 1-(3/4)*(1/5)/(1-2/5)],
-    B: [4/12, (9+8-3)/20, 1-7/12, 5/6-1/3, 2/3+1/2-5/6, 8/9-5/9, 5/10, (3/10)/(1-1/4), (5/8)*(2/5), (3/14)/(3/7), (7/12-1/3)/(1-1/3), (1+5)/12, 1-(2/3)*(3/10)/(1-1/5)],
+    A: [3/10, (7+6-2)/16, 1-3/8, 7/10-1/5, 3/5+2/5-4/5, 11/12-7/12, 4/8, (1/4)/(1-3/8), (3/5)*(5/12), (3/20)/(3/10), (4/5-2/5)/(1-2/5), (1+4)/14, 1-(3/4)*(1/5)/(1-4/5)],
+    B: [4/12, (9+8-3)/20, 1-7/12, 5/6-1/3, 2/3+1/2-5/6, 8/9-5/9, 5/10, (3/10)/(1-1/4), (5/8)*(2/5), (3/14)/(3/7), (7/12-1/3)/(1-1/3), (1+5)/12, 1-(2/3)*(3/10)/(1-2/3)],
   };
   for (const form of ['A','B']) ut2Assessment(form).forEach((q,i) => assert(Math.abs(parseProbabilityAnswer(q.answer)-expected[form][i]) < 1e-10, q.id));
 });
@@ -39,10 +39,13 @@ test('UT2 API uses campaign-specific endpoints and participant tokens, no accoun
   await api.get({ id:'participant', token:'a'.repeat(64) });
   const action = { type:'answer', actionId:'uuid', revision:1, questionId:'events-1', answer:'1/3', seconds:5 };
   await api.act({ id:'participant', token:'a'.repeat(64) }, action);
+  await api.survey({ id:'participant', token:'a'.repeat(64) }, { criticalImprovement: '해설', phoneNumber: null });
   assert(requests.every(r => r.url.startsWith('/api/v1/ut2/')));
   assert.equal(requests[2].init.headers['X-UT-Token'], 'a'.repeat(64));
   assert(requests.every(r => !('Authorization' in r.init.headers)));
   assert.deepEqual(JSON.parse(requests[3].init.body), action);
+  assert.equal(requests[4].url, '/api/v1/ut2/sessions/participant/survey');
+  assert.equal(requests[4].init.headers['X-UT-Token'], 'a'.repeat(64));
   assert([UT2_CACHE_KEY, UT2_CREATE_KEY, UT2_PENDING_KEY].every(key => key.includes(':ut2:') && !key.includes(':ut1:')));
 });
 test('server connection errors and concurrency conflicts remain visible', async () => {

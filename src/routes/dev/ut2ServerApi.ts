@@ -1,10 +1,13 @@
+import type { FeedbackSubmission } from '../../types/feedback';
+
 export const UT2_CACHE_KEY = 'suhwakhaeng:ut2:server:v1';
 export const UT2_CREATE_KEY = 'suhwakhaeng:ut2:create:v1';
 export const UT2_PENDING_KEY = 'suhwakhaeng:ut2:pending:v1';
 export type UT2Response = { questionId?: string; nodeId?: string; variant?: number; answer: string | null; correct?: boolean; seconds: number; answeredAt: number };
 export type UT2Run = { form: 'A' | 'B'; total: number; responses: UT2Response[] };
 export type UT2Session = {
-  id: string; participant: string; createdAt: number; bankVersion: 1; stage: 'pre' | 'learning' | 'post' | 'done';
+  surveySubmitted?: boolean; rewardEntered?: boolean;
+  id: string; participant: string; createdAt: number; bankVersion: 1 | 2; stage: 'pre' | 'learning' | 'post' | 'done';
   pre: UT2Run; post: UT2Run; history: UT2Response[]; weak: string[]; completed: string[];
   results: Record<string, 'passed' | 'failed'>; attempts: Record<string, number>; learningNode: string | null;
   recommended: string | null; lastActionId: string | null;
@@ -36,12 +39,13 @@ export function ut2Api(base = '/api/v1', transport: typeof fetch = fetch) {
     enter: (password: string) => request<void>('/entry', 'POST', { password }),
     create: (password: string, nickname: string, token: string) => request<UT2Reply>('/sessions', 'POST', { password, nickname, token }),
     get: (c: UT2Credential) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}`, 'GET', undefined, c.token),
+    survey: (c: UT2Credential, answers: FeedbackSubmission) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}/survey`, 'POST', answers, c.token),
     act: (c: UT2Credential, a: UT2Action) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}/actions`, 'POST', a, c.token),
   };
 }
 export function validUT2Reply(value: unknown): value is UT2Reply {
   const r = value as UT2Reply | null;
-  return !!r && Number.isSafeInteger(r.revision) && !!r.session && r.session.bankVersion === 1
+  return !!r && Number.isSafeInteger(r.revision) && !!r.session && [1, 2].includes(r.session.bankVersion)
     && typeof r.session.id === 'string' && typeof r.session.participant === 'string'
     && ['pre', 'learning', 'post', 'done'].includes(r.session.stage)
     && [r.session.pre, r.session.post].every(run => run?.total === 13 && Array.isArray(run.responses) && run.responses.length <= 13)

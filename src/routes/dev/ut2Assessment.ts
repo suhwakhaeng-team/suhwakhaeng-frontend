@@ -18,7 +18,7 @@ export function ut2Assessment(form: 'A' | 'B') {
     item('multiplication-2', 'c-multiplication', b ? t`$P(A\cap B)=\frac3{14}$, $P(B\mid A)=\frac37$일 때 $P(A)$는?` : t`$P(A\cap B)=\frac3{20}$, $P(B\mid A)=\frac3{10}$일 때 $P(A)$는?`, '1/2'),
     item('application-1', 'bn-1', b ? t`$P(A\cup B)=\frac7{12}$, $P(B)=\frac13$일 때 $P(A\mid B^c)$는?` : t`$P(A\cup B)=\frac45$, $P(B)=\frac25$일 때 $P(A\mid B^c)$는?`, b ? '3/8' : '2/3', 'application'),
     item('application-2', 'bn-2', b ? t`$P(A\cap B)=\frac1{12}$, $P(B^c\mid A)=5P(B\mid A)$일 때 $P(A)$는?` : t`$P(A\cap B)=\frac1{14}$, $P(B^c\mid A)=4P(B\mid A)$일 때 $P(A)$는?`, b ? '1/2' : '5/14', 'application'),
-    item('application-3', 'bn-3', b ? t`$P(A)=\frac23$, $P(B^c)=\frac15$, $P(B\mid A)=\frac3{10}$일 때 $P(A^c\mid B)$는?` : t`$P(A)=\frac34$, $P(B^c)=\frac25$, $P(B\mid A)=\frac15$일 때 $P(A^c\mid B)$는?`, b ? '3/4' : '3/4', 'application'),
+    item('application-3', 'bn-3', b ? t`$P(A)=\frac23$, $P(B^c)=\frac23$, $P(B\mid A)=\frac3{10}$일 때 $P(A^c\mid B)$는?` : t`$P(A)=\frac34$, $P(B^c)=\frac45$, $P(B\mid A)=\frac15$일 때 $P(A^c\mid B)$는?`, b ? '2/5' : '1/4', 'application'),
   ];
 }
-export const UT2_BANK = { version: 1, forms: { A: ut2Assessment('A'), B: ut2Assessment('B') }, nodes: CONDITIONAL_NODES };
+export const UT2_BANK = { version: 2, forms: { A: ut2Assessment('A'), B: ut2Assessment('B') }, nodes: CONDITIONAL_NODES };

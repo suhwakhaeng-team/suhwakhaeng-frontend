@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ut2Api, UT2ApiError, validUT2Reply, UT2_CACHE_KEY, UT2_CREATE_KEY, UT2_PENDING_KEY, type UT2Action, type UT2Credential, type UT2Reply } from './ut2ServerApi';
 import { disconnectUT2Participant } from './ut2ParticipantSwitch';
+import type { FeedbackSubmission } from '../../types/feedback';
 
 const api = ut2Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT2_API_BASE_URL || '/api/v1');
 type Cache = { credential: UT2Credential; reply: UT2Reply };
@@ -96,5 +97,14 @@ export default function useUT2Server() {
     } catch (e) { setError(e instanceof Error ? e.message : '다른 탭의 기록을 가져오지 못했어요.'); }
     finally { lock.current = false; setBusy(false); }
   }
-  return { reply, loading, busy, error, blocked, conflict, hasPending, create, act, retry: flush, recoverConflict, startNew, enter: api.enter };
+  async function submitSurvey(answers: FeedbackSubmission) {
+    if (!cache.current || lock.current || pending.current || blocked) throw new Error('참가자 연결을 확인한 뒤 다시 제출해 주세요.');
+    lock.current = true; setBusy(true);
+    try {
+      const next = await api.survey(cache.current.credential, answers);
+      install(next, cache.current.credential);
+      return next;
+    } finally { lock.current = false; setBusy(false); }
+  }
+  return { reply, loading, busy, error, blocked, conflict, hasPending, create, act, retry: flush, recoverConflict, startNew, enter: api.enter, submitSurvey };
 }
