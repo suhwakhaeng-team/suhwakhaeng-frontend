@@ -1,5 +1,41 @@
 import type { ConceptStatus, GraphIndex, LearningGraphData, ProgressMap } from '../types/learningGraph.ts';
 
+/** Display only: hide links already explained by another visible path. */
+export function reduceDisplayEdges<T extends { source: string; target: string }>(edges: readonly T[]): T[] {
+  const unique = [...new Map(edges.map(edge => [JSON.stringify([edge.source, edge.target]), edge])).values()];
+  const outgoing = new Map<string, Set<string>>();
+  for (const edge of unique) {
+    if (!outgoing.has(edge.source)) outgoing.set(edge.source, new Set());
+    outgoing.get(edge.source)!.add(edge.target);
+  }
+  const hasPath = (source: string, target: string) => {
+    const queue = [source];
+    const visited = new Set(queue);
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      for (const next of outgoing.get(queue[cursor]) ?? []) {
+        if (next === target) return true;
+        if (!visited.has(next)) { visited.add(next); queue.push(next); }
+      }
+    }
+    return false;
+  };
+  // Judge each removal against the remaining links, preserving paths even in cycles.
+  // Call with the visible subgraph: an offscreen path cannot replace a visible link.
+  for (const edge of unique) {
+    if (edge.source === edge.target) continue;
+    outgoing.get(edge.source)!.delete(edge.target);
+    if (!hasPath(edge.source, edge.target)) outgoing.get(edge.source)!.add(edge.target);
+  }
+  return unique.filter(edge => outgoing.get(edge.source)!.has(edge.target));
+}
+
+/** Unit overview can show a study sequence while the index retains real prerequisites. */
+export function getDisplayUnitEdges(index: GraphIndex): GraphIndex['unitEdges'] {
+  if (!index.data.unitFlow?.length) return reduceDisplayEdges(index.unitEdges);
+  const order = [...new Set(index.data.unitFlow)].filter(id => index.units.has(id));
+  return order.slice(1).map((target, position) => ({ source: order[position], target }));
+}
+
 export function createGraphIndex(data: LearningGraphData): GraphIndex {
   const concepts = new Map(data.concepts.map(c => [c.id, c]));
   const units = new Map(data.units.map(u => [u.id, u]));

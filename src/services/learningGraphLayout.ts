@@ -131,6 +131,12 @@ function layeredLayout(ids: string[], prerequisites: PrerequisiteMap, horizontal
 }
 
 function layoutUnitGraph(index: GraphIndex) {
+  if (index.data.units.every(unit => unit.mapPosition)) {
+    return {
+      points: new Map(index.data.units.map(unit => [unit.id, { ...unit.mapPosition! }])),
+      lateBranchIds: new Set<string>(),
+    };
+  }
   const prerequisites = new Map(index.data.units.map(unit => [unit.id, [] as string[]]));
   index.unitEdges.forEach(edge => prerequisites.get(edge.target)!.push(edge.source));
   const lateBranchIds = new Set<string>();
@@ -140,6 +146,16 @@ function layoutUnitGraph(index: GraphIndex) {
 
 export function layoutUnits(index: GraphIndex) {
   return layoutUnitGraph(index).points;
+}
+
+/** Keep the unit overview above revealed details, including tall branches. */
+export function layoutContextUnits(unitPoints: ReadonlyMap<string, Point>, conceptPoints: ReadonlyMap<string, Point>) {
+  if (!unitPoints.size || !conceptPoints.size) return new Map(unitPoints);
+  const conceptTop = Math.min(...[...conceptPoints.values()].map(point => point.y));
+  const unitBottom = Math.max(...[...unitPoints.values()].map(point => point.y));
+  // Includes unit counts below their circles and concept labels above theirs.
+  const offset = Math.min(0, conceptTop - unitBottom - 130);
+  return new Map([...unitPoints].map(([id, point]) => [id, { x: point.x, y: point.y + offset }]));
 }
 
 export function layoutConcepts(ids: string[], center: Point, prerequisites: PrerequisiteMap = new Map()) {
@@ -160,6 +176,51 @@ export function layoutConcepts(ids: string[], center: Point, prerequisites: Prer
 export function layoutFocusedGraph(index: GraphIndex, ids: ReadonlySet<string>): FocusedGraphLayout {
   const concepts = index.data.concepts.filter(concept => ids.has(concept.id));
   if (!concepts.length) return { points: new Map(), routes: new Map() };
+  const target = concepts.find(concept => !(index.successors.get(concept.id) ?? []).some(id => ids.has(id)));
+  const targetUnit = target ? index.units.get(target.unitId) : undefined;
+  if (targetUnit?.mapPosition && concepts.every(concept => concept.mapPosition)) {
+    const includedUnits = index.data.units.filter(unit => concepts.some(concept => concept.unitId === unit.id));
+    const degrees = new Map(includedUnits.map(unit => [unit.id, 0]));
+    const nextUnits = new Map(includedUnits.map(unit => [unit.id, new Set<string>()]));
+    for (const concept of concepts) for (const source of concept.prerequisites) {
+      const sourceUnit = index.concepts.get(source)?.unitId;
+      if (!ids.has(source) || !sourceUnit || sourceUnit === concept.unitId) continue;
+      if (!nextUnits.get(sourceUnit)!.has(concept.unitId)) {
+        nextUnits.get(sourceUnit)!.add(concept.unitId);
+        degrees.set(concept.unitId, degrees.get(concept.unitId)! + 1);
+      }
+    }
+    const order = includedUnits.filter(unit => degrees.get(unit.id) === 0).map(unit => unit.id);
+    for (let cursor = 0; cursor < order.length; cursor++) {
+      for (const next of nextUnits.get(order[cursor]) ?? []) {
+        degrees.set(next, degrees.get(next)! - 1);
+        if (degrees.get(next) === 0) order.push(next);
+      }
+    }
+    for (const unit of includedUnits) if (!order.includes(unit.id)) order.push(unit.id);
+    const bounds = (unitId: string) => {
+      const xs = (index.unitConcepts.get(unitId) ?? []).filter(concept => concept.mapPosition)
+        .map(concept => concept.mapPosition!.x);
+      return { min: Math.min(...xs), max: Math.max(...xs) };
+    };
+    const centers = new Map([[targetUnit.id, targetUnit.mapPosition.x]]);
+    let cursorX = targetUnit.mapPosition.x + bounds(targetUnit.id).min - 140;
+    for (const unitId of order.filter(id => id !== targetUnit.id).reverse()) {
+      const unitBounds = bounds(unitId);
+      const centerX = cursorX - unitBounds.max;
+      centers.set(unitId, centerX);
+      cursorX = centerX + unitBounds.min - 140;
+    }
+    // Preserve the selected unit's familiar shape. Additional prerequisite
+    // units occupy separate clusters, without reshuffling its existing nodes.
+    return {
+      points: new Map(concepts.map(concept => [concept.id, {
+        x: centers.get(concept.unitId)! + concept.mapPosition!.x,
+        y: targetUnit.mapPosition!.y + concept.mapPosition!.y,
+      }])),
+      routes: new Map(),
+    };
+  }
   const prerequisites = new Map(concepts.map(concept => [
     concept.id,
     concept.prerequisites.filter(id => ids.has(id)),
@@ -304,6 +365,11 @@ export function layoutAllConcepts(index: GraphIndex, unitPoints: ReadonlyMap<str
       ? { ...unitPoint, y: unitPoint.y - LATE_BRANCH_CONCEPT_LIFT }
       : unitPoint;
     for (const [id, point] of layoutConcepts(concepts.map(concept => concept.id), conceptCenter, prerequisites)) {
+      const anchor = index.concepts.get(id)?.mapPosition;
+      if (anchor) {
+        result.set(id, { x: unitPoint.x + anchor.x, y: unitPoint.y + anchor.y });
+        continue;
+      }
       // Only lower this unit's details; keep its heading and other clusters fixed.
       result.set(id, unit.id === 'course:data-basics'
         ? { ...point, y: point.y + DATA_BASICS_DETAIL_OFFSET }
@@ -328,7 +394,7 @@ export function directedEdge(a: Point, b: Point, sourceRadius = 34, targetRadius
   const control = Math.max(55, distance * .48);
   // Long, level-skipping relationships arc above intermediate columns instead
   // of passing through the nodes that happen to sit between both endpoints.
-  const arc = distance > 330 ? -Math.min(105, distance * .18) : 0;
+  const arc = distance > 330 ? -direction * Math.min(105, distance * .18) : 0;
   return `M${startX},${a.y} C${startX + direction * control},${a.y + arc} ${endX - direction * control},${b.y + arc} ${endX},${b.y}`;
 }
 

@@ -1,31 +1,13 @@
 import { useMemo } from 'react';
 import type { GraphIndex, ProgressMap } from '../../types/learningGraph';
-import { getPrerequisiteStages, statusOf } from '../../services/learningGraph';
+import { getPrerequisiteStages, reduceDisplayEdges, statusOf } from '../../services/learningGraph';
 
 type Point = { x: number; y: number };
-type Edge = { source: string; target: string };
-
-function reduceEdges(edges: Edge[]) {
-  const outgoing = new Map<string, string[]>();
-  for (const edge of edges) outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]);
-  return edges.filter(edge => {
-    const queue = (outgoing.get(edge.source) ?? []).filter(id => id !== edge.target);
-    const visited = new Set(queue);
-    for (let cursor = 0; cursor < queue.length; cursor++) {
-      const current = queue[cursor];
-      if (current === edge.target) return false;
-      for (const next of outgoing.get(current) ?? []) {
-        if (!visited.has(next)) { visited.add(next); queue.push(next); }
-      }
-    }
-    return true;
-  });
-}
 
 function buildLayout(index: GraphIndex, selected: string) {
   const stages = getPrerequisiteStages(index, selected);
   const included = new Set(stages.flat());
-  const edges = reduceEdges(stages.flatMap(stage => stage.flatMap(target =>
+  const edges = reduceDisplayEdges(stages.flatMap(stage => stage.flatMap(target =>
     index.concepts.get(target)!.prerequisites
       .filter(source => included.has(source) && source !== target)
       .map(source => ({ source, target })),

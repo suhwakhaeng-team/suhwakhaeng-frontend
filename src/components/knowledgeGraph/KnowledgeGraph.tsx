@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import type { Concept, ConceptStatus, GraphIndex, ProgressMap } from '../../types/learningGraph';
-import { getRelatedConcepts, getRelatedUnits, getUnitProgress, statusOf } from '../../services/learningGraph';
-import { conceptEdgeKey, CONCEPT_PAGE_SIZE, directedEdge, layoutAllConcepts, layoutFocusedGraph, layoutUnits, routedConceptEdge, type Point } from '../../services/learningGraphLayout';
+import { getDisplayUnitEdges, getRelatedConcepts, getRelatedUnits, getUnitProgress, reduceDisplayEdges, statusOf } from '../../services/learningGraph';
+import { conceptEdgeKey, CONCEPT_PAGE_SIZE, directedEdge, layoutAllConcepts, layoutContextUnits, layoutFocusedGraph, layoutUnits, routedConceptEdge, type Point } from '../../services/learningGraphLayout';
 import GraphIcon from './GraphIcon';
 
 export interface FocusRequest { id: string; kind: 'unit' | 'concept' | 'all'; tick: number }
@@ -31,21 +31,6 @@ const conceptState = (concept: Concept, progress: ProgressMap) => concept.metada
   ? assessmentLabel[concept.metadata.assessmentStatus]
   : ({ known: '앎', unknown: '모름', unset: '미정' })[statusOf(progress, concept.id)];
 
-function reduceEdges(edges: GraphIndex['unitEdges']) {
-  const outgoing = new Map<string, string[]>();
-  edges.forEach(edge => outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), edge.target]));
-  return edges.filter(edge => {
-    const queue = (outgoing.get(edge.source) ?? []).filter(target => target !== edge.target);
-    const visited = new Set(queue);
-    for (let cursor = 0; cursor < queue.length; cursor++) {
-      const current = queue[cursor];
-      if (current === edge.target) return false;
-      for (const next of outgoing.get(current) ?? []) if (!visited.has(next)) { visited.add(next); queue.push(next); }
-    }
-    return true;
-  });
-}
-
 export default function KnowledgeGraph({ index, progress, expanded, selected, page, filter, gapPath, focus, onExpand, onSelect, onPage }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ width: 1000, height: 650 });
@@ -56,12 +41,11 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
   const cameraRef = useRef(camera);
   const pointers = useRef(new Map<number, Point>());
   const moved = useRef(false);
-  const units = useMemo(() => layoutUnits(index), [index]);
-  const allConceptPoints = useMemo(() => layoutAllConcepts(index, units), [index, units]);
-  const unitEdges = useMemo(() => reduceEdges(index.unitEdges), [index]);
+  const baseUnits = useMemo(() => layoutUnits(index), [index]);
+  const allConceptPoints = useMemo(() => layoutAllConcepts(index, baseUnits), [index, baseUnits]);
+  const unitEdges = useMemo(() => getDisplayUnitEdges(index), [index]);
   const unitConcepts = useMemo(() => expanded ? index.unitConcepts.get(expanded) ?? [] : [], [index, expanded]);
   const visibleConcepts = useMemo(() => unitConcepts.slice(page * CONCEPT_PAGE_SIZE, (page + 1) * CONCEPT_PAGE_SIZE), [unitConcepts, page]);
-  const activePoint = expanded ? units.get(expanded) : undefined;
   const focusedState = useMemo(() => {
     if (!layoutSelected) return null;
     const ancestors = getRelatedConcepts(index, layoutSelected, 'ancestors');
@@ -76,6 +60,11 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
   const points = useMemo(() => focusedGraph?.points
     ?? new Map(displayedConcepts.map(concept => [concept.id, allConceptPoints.get(concept.id)!])),
   [allConceptPoints, displayedConcepts, focusedGraph]);
+  const conceptEdges = useMemo(() => reduceDisplayEdges(displayedConcepts.flatMap(target =>
+    target.prerequisites.filter(source => points.has(source)).map(source => ({ source, target: target.id })),
+  )), [displayedConcepts, points]);
+  const units = useMemo(() => layoutContextUnits(baseUnits, points), [baseUnits, points]);
+  const activePoint = expanded ? units.get(expanded) : undefined;
   const activeHoveredConcept = hoveredConcept && points.has(hoveredConcept) ? hoveredConcept : null;
   const hoverPath = useMemo(() => {
     if (!activeHoveredConcept) return null;
@@ -86,6 +75,9 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
     if (!expanded) return null;
     if (prerequisiteConcepts) {
       return new Set([...prerequisiteConcepts].map(id => index.concepts.get(id)?.unitId).filter((id): id is string => Boolean(id)));
+    }
+    if (index.data.unitFlow?.includes(expanded)) {
+      return new Set(index.data.unitFlow.slice(0, index.data.unitFlow.indexOf(expanded) + 1));
     }
     return new Set([expanded, ...getRelatedUnits(index, expanded, 'ancestors')]);
   }, [expanded, index, prerequisiteConcepts]);
@@ -174,21 +166,20 @@ export default function KnowledgeGraph({ index, progress, expanded, selected, pa
         <marker id="kg-concept-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 10 5 0 10Z" /></marker>
         <marker id="kg-concept-arrow-active" className="kg-marker-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 10 5 0 10Z" /></marker>
       </defs>
+      <title>{index.data.unitFlow?.length ? '단원 화살표는 권장 학습 순서입니다. 세부 개념의 화살표는 실제 선수관계입니다.' : '개념 사이의 선수관계 지도'}</title>
       <g className="kg-camera" style={{ transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.k})`, transition: dragging ? 'none' : undefined }}>
         {unitEdges.map(edge => {
           const relevant = !prerequisiteUnits || (prerequisiteUnits.has(edge.source) && prerequisiteUnits.has(edge.target));
-          return <path key={`${edge.source}:${edge.target}`} className={`kg-unit-edge ${relevant && prerequisiteUnits ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''}`} d={directedEdge(units.get(edge.source)!, units.get(edge.target)!, 18, 18)} markerEnd="url(#kg-arrow)" />;
+          return <path key={`${edge.source}:${edge.target}`} data-source={edge.source} data-target={edge.target} data-relation={index.data.unitFlow?.length ? 'learning-order' : 'prerequisite'} className={`kg-unit-edge ${relevant && prerequisiteUnits ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''}`} d={directedEdge(units.get(edge.source)!, units.get(edge.target)!, 18, 18)} markerEnd="url(#kg-arrow)"><title>{index.data.unitFlow?.length ? '학습 순서' : '선수관계'}: {index.units.get(edge.source)!.name} → {index.units.get(edge.target)!.name}</title></path>;
         })}
-        {displayedConcepts.flatMap(target => target.prerequisites
-          .filter(source => points.has(source))
-          .map(source => {
-            const relevant = !prerequisiteConcepts || (prerequisiteConcepts.has(source) && prerequisiteConcepts.has(target.id));
-            const hoverRelevant = !hoverPath || (hoverPath.has(source) && hoverPath.has(target.id));
-            const route = focusedGraph?.routes.get(conceptEdgeKey(source, target.id));
-            const path = route ? routedConceptEdge(route) : directedEdge(points.get(source)!, points.get(target.id)!, 10, 10);
+        {conceptEdges.map(({ source, target }) => {
+            const relevant = !prerequisiteConcepts || (prerequisiteConcepts.has(source) && prerequisiteConcepts.has(target));
+            const hoverRelevant = !hoverPath || (hoverPath.has(source) && hoverPath.has(target));
+            const route = focusedGraph?.routes.get(conceptEdgeKey(source, target));
+            const path = route ? routedConceptEdge(route) : directedEdge(points.get(source)!, points.get(target)!, 10, 10);
             const highlighted = !!hoverPath && hoverRelevant;
-            return <path key={`concept:${source}:${target.id}`} className={`kg-concept-edge ${relevant && prerequisiteConcepts ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''} ${!hoverRelevant ? 'is-hover-dim' : ''} ${highlighted ? 'is-hover-active' : ''}`} d={path} markerMid={route && route.length > 2 && highlighted ? 'url(#kg-concept-arrow-active)' : undefined} markerEnd={highlighted ? 'url(#kg-concept-arrow-active)' : 'url(#kg-concept-arrow)'} />;
-          }))}
+            return <path key={`concept:${source}:${target}`} data-source={source} data-target={target} className={`kg-concept-edge ${relevant && prerequisiteConcepts ? 'is-relevant' : ''} ${!relevant ? 'is-dim' : ''} ${!hoverRelevant ? 'is-hover-dim' : ''} ${highlighted ? 'is-hover-active' : ''}`} d={path} markerMid={route && route.length > 2 && highlighted ? 'url(#kg-concept-arrow-active)' : undefined} markerEnd={highlighted ? 'url(#kg-concept-arrow-active)' : 'url(#kg-concept-arrow)'} />;
+          })}
         {index.data.units.map(unit => {
           const p = units.get(unit.id)!;
           const concepts = index.unitConcepts.get(unit.id) ?? [];

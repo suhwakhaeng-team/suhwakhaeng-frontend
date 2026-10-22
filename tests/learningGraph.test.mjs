@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGraphIndex, getRelatedConcepts, getRelatedUnits, getPrerequisiteStages, getMissingPrerequisites, getRootLearningGaps, getUnitProgress, getGapPath } from '../src/services/learningGraph.ts';
-import { layoutUnits, layoutConcepts, layoutAllConcepts, layoutFocusedConcepts, layoutFocusedGraph, routedConceptEdge, CONCEPT_PAGE_SIZE } from '../src/services/learningGraphLayout.ts';
+import { layoutUnits, layoutConcepts, layoutAllConcepts, layoutContextUnits, layoutFocusedConcepts, layoutFocusedGraph, routedConceptEdge, CONCEPT_PAGE_SIZE } from '../src/services/learningGraphLayout.ts';
 import { createLocalProgressRepository } from '../src/repositories/conceptProgress.ts';
 import { adaptTopology } from '../src/services/topologyGraphAdapter.ts';
 import { learningGraphExamples, probabilityExample, algorithmsExample } from '../src/data/learningGraphExamples.ts';
+import { LIVE_CONCEPT_CATALOG } from './fixtures/liveConceptCatalog.mjs';
 
 const graph = (relations) => createGraphIndex({
   id: 'test', subject: { id: 'subject', name: 'Any subject' },
@@ -238,7 +239,7 @@ test('topology adapter normalizes production math concepts into a readable cours
   assert.deepEqual([...layoutUnits(index).values()].map(point => point.y), [0, 0, 0]);
 });
 
-test('connects data organization before counting on a straight unit route', () => {
+test('자료의 정리와 경우의 수를 별개 선수 영역으로 유지하며 통계적 추정에서 연결한다', () => {
   const dto = (id, tagName) => ({ id, tagName, categoryPath: '확률과 통계', status: 'UNDIAGNOSED', colorDepth: 1, grade: 4 });
   const result = adaptTopology({ nodes: [
     dto('1', '곱의 법칙'),
@@ -255,20 +256,57 @@ test('connects data organization before counting on a straight unit route', () =
   const counting = units.get('course:counting');
   const data = units.get('course:data-basics');
   const permutation = units.get('course:permutation');
-  assert.equal(counting.x - data.x, 225);
   assert.equal(permutation.x - counting.x, 225);
-  assert.equal(data.y, counting.y);
-  assert.equal(new Set([...units.values()].map(point => point.y)).size, 1);
-  assert(index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:counting'));
+  assert.equal(new Set([...units.values()].map(point => `${point.x}:${point.y}`)).size, index.units.size);
+  assert(!index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:counting'));
   assert(!index.unitEdges.some(edge => edge.source === 'course:counting' && edge.target === 'course:data-basics'));
   assert(index.unitEdges.some(edge => edge.source === 'course:data-basics' && edge.target === 'course:inference'));
   const ancestors = getRelatedUnits(index, 'course:counting', 'ancestors');
-  assert.deepEqual(ancestors, new Set(['course:data-basics']));
+  assert.deepEqual(ancestors, new Set());
   const details = layoutAllConcepts(index, units);
-  assert(details.get('2').y > data.y);
+  assert(Number.isFinite(details.get('2').y));
+  assert(data.x < counting.x);
+  assert([...units.values()].every(point => point.y === data.y));
 });
 
-test('lowers only the six data organization details without moving unit headings', () => {
+test('통합된 52개 지도 개념을 모두 알맞은 단원에 넣고 실제 선수관계를 빠뜨리지 않는다', () => {
+  const names = new Map(LIVE_CONCEPT_CATALOG);
+  const relations = [[37, 25], [28, 25], [25, 23], [23, 53], [85, 5], [29, 32], [31, 46], [41, 42], [33, 35], [17, 21]];
+  const result = adaptTopology({
+    nodes: LIVE_CONCEPT_CATALOG.map(([id, tagName]) => ({
+      id: String(id), tagName, categoryPath: '기존 복합 유형', status: 'UNDIAGNOSED', colorDepth: null,
+    })),
+    edges: relations.map(([source, target]) => ({
+      source: names.get(source), target: names.get(target), sourceTagId: String(source), targetTagId: String(target),
+    })),
+  });
+  const index = createGraphIndex(result.data);
+  assert.equal(index.concepts.size, 52);
+  assert.equal(index.units.size, 8);
+  assert.deepEqual(result.warnings, []);
+  assert(result.data.concepts.every(concept => concept.unitId.startsWith('course:')));
+  for (const [source, target] of relations) assert(index.concepts.get(String(target)).prerequisites.includes(String(source)));
+  assert.equal(index.concepts.get('5').unitId, 'course:permutation');
+  assert.equal(index.concepts.get('14').unitId, 'course:permutation');
+  assert.equal(index.concepts.get('17').unitId, 'course:conditional');
+  assert.equal(index.concepts.get('24').unitId, 'course:distribution');
+  assert.equal(index.concepts.get('25').unitId, 'course:data-basics');
+  assert.equal(index.concepts.get('32').unitId, 'course:data-basics');
+  assert.equal(index.concepts.get('33').unitId, 'course:inference');
+  assert.equal(index.concepts.get('42').unitId, 'course:inference');
+  assert.equal(index.concepts.get('46').unitId, 'course:distribution');
+  assert.equal(index.concepts.get('46').name, '이산확률분포');
+  assert(!index.concepts.has('48'));
+  assert.equal(index.concepts.get('53').unitId, 'course:data-basics');
+  const units = layoutUnits(index);
+  assert.equal(units.size, 8);
+  assert.equal(new Set([...units.values()].map(point => `${point.x}:${point.y}`)).size, 8);
+  assert(units.get('course:data-basics').x < units.get('course:counting').x);
+  assert.equal(units.get('course:inference').x, 7 * 225);
+  assert.equal(layoutAllConcepts(index, units).size, 52);
+});
+
+test('live map anchors do not move the original unit headings', () => {
   const names = ['평균', '최빈값', '도수분포표', '히스토그램', '도수분포다각형', '산점도', '곱의 법칙'];
   const result = adaptTopology({ nodes: names.map((tagName, id) => ({
     id: String(id), tagName, categoryPath: '확률과 통계', status: 'UNDIAGNOSED', colorDepth: 1, grade: 4,
@@ -280,15 +318,33 @@ test('lowers only the six data organization details without moving unit headings
   assert.equal(index.unitConcepts.get('course:data-basics').length, 6);
   for (const unit of index.data.units) {
     const concepts = index.unitConcepts.get(unit.id);
-    const baseline = layoutConcepts(concepts.map(concept => concept.id), units.get(unit.id),
-      new Map(concepts.map(concept => [concept.id, concept.prerequisites])));
     for (const concept of concepts) {
-      assert.equal(details.get(concept.id).x, baseline.get(concept.id).x);
-      assert.equal(details.get(concept.id).y - baseline.get(concept.id).y,
-        unit.id === 'course:data-basics' ? 40 : 0);
+      assert.equal(details.get(concept.id).x, units.get(unit.id).x + concept.mapPosition.x);
+      assert.equal(details.get(concept.id).y, units.get(unit.id).y + concept.mapPosition.y);
     }
   }
   assert.deepEqual(units, originalUnits);
+});
+
+test('expanded and selected concept maps cannot cover the unit overview', () => {
+  for (const data of learningGraphExamples) {
+    const index = createGraphIndex(data);
+    const units = layoutUnits(index);
+    const before = [...units].map(([id, point]) => [id, { ...point }]);
+    const all = layoutAllConcepts(index, units);
+    for (const unit of data.units) {
+      const points = new Map(index.unitConcepts.get(unit.id).map(concept => [concept.id, all.get(concept.id)]));
+      const context = layoutContextUnits(units, points);
+      if (!points.size) continue;
+      assert(Math.min(...[...points.values()].map(p => p.y)) - Math.max(...[...context.values()].map(p => p.y)) >= 130);
+      for (const [id, point] of context) assert.equal(point.x, units.get(id).x);
+    }
+    const selected = layoutFocusedConcepts(index, new Set(data.concepts.map(concept => concept.id)));
+    const context = layoutContextUnits(units, selected);
+    assert(Math.min(...[...selected.values()].map(p => p.y)) - Math.max(...[...context.values()].map(p => p.y)) >= 130);
+    assert.deepEqual([...units], before);
+    assert.deepEqual(layoutContextUnits(units, new Map()), units);
+  }
 });
 
 test('invalid graphs fail with context rather than render incorrect relationships', () => {
