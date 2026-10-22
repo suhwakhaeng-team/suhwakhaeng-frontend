@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../../layouts/MainLayout';
 import HomeDashboard from '../../components/home/HomeDashboard';
-import { FeedbackForm } from '../../components/FeedbackForm';
+import { UT2SurveyForm } from '../../components/UT2SurveyForm';
 import CurriculumListSection from '../../components/home/CurriculumListSection';
 import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import ProblemContent from '../../components/ProblemContent';
@@ -158,7 +158,7 @@ export default function UT2Page() {
               <div className="plm-section-row"><button style={textButton} onClick={() => { setPassedNode(null); setView(mapReturn); }}>← 돌아가기</button><h2 style={typography.headingXLBold}>{goal.title}</h2></div>
               <UT2Map session={s} goalId={selectedGoal} currentId={passedNode ? '' : s.learningNode || s.recommended || ''} onOpen={s.stage === 'learning' ? id => void open(id) : undefined} />
               {passedNode && <div className="ut-pass-actions"><span role="status">✓ {CONDITIONAL_NODES[passedNode].label}</span>{s.recommended ? <button style={primary} onClick={() => void open(s.recommended!)}>다음 {CONDITIONAL_NODES[s.recommended].kind === 'concept' ? '개념' : '문제'} →</button> : <button style={primary} onClick={goHome}>홈으로 →</button>}</div>}
-            </section> : view === 'survey' && s.stage === 'done' ? <FeedbackForm key={s.id} ut2 submitted={s.surveySubmitted} rewardEntered={s.rewardEntered} onBack={() => setView('results')} onSubmit={remote.submitSurvey} />
+            </section> : view === 'survey' && s.stage === 'done' ? <UT2SurveyForm key={s.id} nickname={s.participant} submitted={s.surveySubmitted} rewardEntered={s.rewardEntered} onBack={() => setView('results')} onSubmit={remote.submitSurvey} />
               : view === 'results' && s.stage === 'done' ? <section style={{ ...card, maxWidth: 1000, margin: '0 auto' }}><div className="plm-section-row"><h1 style={typography.headingXLBold}>학습 전후 결과</h1><button style={textButton} onClick={goHome}>홈으로 →</button></div><SurveyInvitation session={s} onSurvey={() => setView('survey')} /><Comparison session={s} /><p className="plm-live-muted">숫자가 다른 동일 유형에서의 변화예요. 이 수치만으로 서비스의 인과 효과를 단정하지 않아요.</p></section>
               : <section style={card}><p>현재 학습 단계로 돌아가 주세요.</p><button style={primary} onClick={goHome}>홈으로 →</button></section>}
     </fieldset>

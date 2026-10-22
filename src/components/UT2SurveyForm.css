@@ -1,0 +1,19 @@
+.ut2-short-survey { padding:24px; }
+.ut2-short-survey .feedback-shell { max-width:680px; }
+.ut2-short-survey .feedback-hero { padding:24px; }
+.ut2-short-survey h1 { font-size:22px; word-break:keep-all; }
+.ut2-short-survey .feedback-hero p { margin:10px 0 0; font-size:14px; line-height:1.7; color:#596273; }
+.ut2-short-survey .feedback-hero .ut2-short-reward { color:#92400e; }
+.ut2-short-survey .feedback-form { padding:24px; }
+.ut2-survey-field { display:block; margin:0 0 18px; font-size:15px; font-weight:600; line-height:1.6; }
+.ut2-survey-field .feedback-input,.ut2-survey-field .feedback-textarea { display:block; margin-top:7px; padding:10px 12px; font-size:14px; font-weight:400; }
+.ut2-survey-field .feedback-textarea { min-height:72px; }
+.ut2-survey-pair { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ut2-survey-pair > * { min-width:0; }
+.ut2-survey-optional { color:#6d7280; font-size:13px; font-weight:400; }
+.ut2-short-survey .feedback-submit { margin-top:4px; }
+@media(max-width:540px) {
+  .ut2-short-survey { padding:16px 12px; }
+  .ut2-short-survey .feedback-hero,.ut2-short-survey .feedback-form { padding:20px 16px; }
+  .ut2-survey-pair { grid-template-columns:1fr; gap:0; }
+}

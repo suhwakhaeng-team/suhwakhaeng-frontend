@@ -1,4 +1,4 @@
-import type { FeedbackSubmission } from '../../types/feedback';
+import type { UT2SurveySubmission } from '../../types/ut2Survey';
 
 export const UT2_CACHE_KEY = 'suhwakhaeng:ut2:server:v1';
 export const UT2_CREATE_KEY = 'suhwakhaeng:ut2:create:v1';
@@ -39,7 +39,7 @@ export function ut2Api(base = '/api/v1', transport: typeof fetch = fetch) {
     enter: (password: string) => request<void>('/entry', 'POST', { password }),
     create: (password: string, nickname: string, token: string) => request<UT2Reply>('/sessions', 'POST', { password, nickname, token }),
     get: (c: UT2Credential) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}`, 'GET', undefined, c.token),
-    survey: (c: UT2Credential, answers: FeedbackSubmission) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}/survey`, 'POST', answers, c.token),
+    survey: (c: UT2Credential, answers: UT2SurveySubmission) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}/survey`, 'POST', answers, c.token),
     act: (c: UT2Credential, a: UT2Action) => request<UT2Reply>(`/sessions/${encodeURIComponent(c.id)}/actions`, 'POST', a, c.token),
   };
 }

@@ -32,7 +32,7 @@ function load(file) {
 }
 const pageFile = fileURLToPath(new URL('../src/routes/dev/UT2Page.tsx', import.meta.url));
 const { UT2Dashboard, Assessment, Study, SurveyInvitation } = load(pageFile);
-const { FeedbackForm } = load(fileURLToPath(new URL('../src/components/FeedbackForm.tsx', import.meta.url)));
+const { UT2SurveyForm } = load(fileURLToPath(new URL('../src/components/UT2SurveyForm.tsx', import.meta.url)));
 const MainLayout = load(fileURLToPath(new URL('../src/layouts/MainLayout.tsx', import.meta.url))).default;
 const noop = () => {};
 const remote = { busy: false, hasPending: false, act: async () => undefined };
@@ -101,11 +101,17 @@ test('survey is offered only after the final test and clearly distinguishes entr
   assert(invitation().includes('추첨에 응모되었어요'));
 });
 
-test('UT2 survey reuses the full form without account login or the previous reward offer', () => {
-  const html = renderToStaticMarkup(createElement(FeedbackForm, { ut2: true, onBack: noop, onSubmit: async () => {} }));
+test('UT2 survey has exactly the requested nine fields, a prefilled nickname and a free-text exam grade', () => {
+  const html = renderToStaticMarkup(createElement(UT2SurveyForm, { nickname: '테스트 닉네임', onBack: noop, onSubmit: async () => ({session:{}}) }));
   for (const label of ['최종 레벨테스트', '빽다방 상품권', '추첨', '전화번호', '피드백 제출하기']) assert(html.includes(label), label);
   assert(!html.includes('올리브영') && !html.includes('10,000') && !html.includes('열 분'));
   assert(html.includes('입력하지 않아도 설문은 제출할 수 있어요'));
+  assert.equal((html.match(/name="/g) || []).length, 9);
+  for (const name of ['name','nickname','overallDifficulty','learningExperience','goodPoints','improvements','participantStatus','mockExamGrade','phoneNumber']) assert(html.includes(`name="${name}"`), name);
+  assert(html.includes('value="테스트 닉네임"'));
+  assert.match(html, /<input[^>]*type="text"[^>]*name="mockExamGrade"/);
+  assert(html.includes('고등학생') && html.includes('대학생'));
+  assert(!/<input[^>]*name="phoneNumber"[^>]*required/.test(html));
 });
 test('assessment matches the live question card and progress UI without exposing answer or grading', () => {
   const html = renderToStaticMarkup(createElement(Assessment, { session: session('pre'), remote, onHome: noop, onAdvance: noop }));
