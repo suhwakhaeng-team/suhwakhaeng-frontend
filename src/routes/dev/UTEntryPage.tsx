@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import { ut2Api } from './ut2ServerApi';
+import { ut3Api } from './ut3ServerApi';
 import { ut1Api } from './ut1ServerApi';
 import './UT1PreviewPage.css';
 
@@ -15,10 +16,12 @@ export default function UTEntryPage() {
     setBusy(true); setError('');
     try {
       // Only routing is client-side; both campaigns validate the entry code on the server.
+      const third = password === 'math';
       const second = password === 'abcd';
-      if (second) await ut2Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT2_API_BASE_URL || '/api/v1').enter(password);
+      if (third) await ut3Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT3_API_BASE_URL || '/api/v1').enter(password);
+      else if (second) await ut2Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT2_API_BASE_URL || '/api/v1').enter(password);
       else await ut1Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT1_API_BASE_URL || '/api/v1').enter(password);
-      navigate(second ? '/ut2' : '/ut1', { state: { entryPassword: password }, replace: true });
+      navigate(third ? '/ut3' : second ? '/ut2' : '/ut1', { state: { entryPassword: password }, replace: true });
     } catch (e) { setError(e instanceof Error ? e.message : '입장할 수 없어요.'); }
     finally { setBusy(false); }
   }

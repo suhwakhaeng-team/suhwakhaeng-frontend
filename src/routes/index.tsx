@@ -35,11 +35,13 @@ import UT1PreviewPage, { UT1AdminPreviewPage } from './dev/UT1PreviewPage';
 const TeamConceptLibraryPage = lazy(() => import('./dev/TeamConceptLibraryPage'));
 const ConditionalProblemMapPage = lazy(() => import('./dev/ConditionalProblemMapPage'));
 const UT2Page = lazy(() => import('./dev/UT2Page'));
+const UT3Page = lazy(() => import('./dev/UT3Page'));
 const UTEntryPage = lazy(() => import('./dev/UTEntryPage'));
 
 export const router = createBrowserRouter([
   { path: '/concepts', element: <Suspense fallback={null}><TeamConceptLibraryPage /></Suspense> },
   { path: '/ut', element: <Suspense fallback={null}><UTEntryPage /></Suspense> },
+  { path: '/ut3', element: <Suspense fallback={null}><UT3Page /></Suspense> },
   { path: '/ut2', element: <Suspense fallback={null}><UT2Page /></Suspense> },
   { path: '/ut1', element: <UT1PreviewPage server /> },
   ...(import.meta.env.DEV ? [{

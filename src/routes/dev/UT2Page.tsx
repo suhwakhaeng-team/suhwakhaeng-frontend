@@ -13,6 +13,7 @@ import { CONDITIONAL_GOALS, CONDITIONAL_NODES, parseProbabilityAnswer } from './
 import useUT2Server from './useUT2Server';
 import { ut2Score, type UT2Session } from './ut2ServerApi';
 import { ut1Api } from './ut1ServerApi';
+import { ut3Api } from './ut3ServerApi';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
 import './UT1PreviewPage.css';
@@ -82,6 +83,11 @@ export default function UT2Page() {
     if (entryBusy) return;
     setEntryBusy(true); setEntryError('');
     try {
+      if (password === 'math') {
+        await ut3Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT3_API_BASE_URL || '/api/v1').enter(password);
+        navigate('/ut3', { state: { entryPassword: password }, replace: true });
+        return;
+      }
       if (password !== 'abcd') {
         await ut1Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT1_API_BASE_URL || '/api/v1').enter(password);
         navigate('/ut1', { state: { entryPassword: password }, replace: true });
