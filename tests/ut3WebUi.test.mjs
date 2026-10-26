@@ -44,7 +44,7 @@ function session(stage='learning'){
 function dashboard(s){return renderToStaticMarkup(createElement(UT3Dashboard,{session:s,selectedGoal:'conditional-inference',onSelectGoal:noop,notice:'',blocked:false,onOpen:noop,onMap:noop,onTest:noop,onResults:noop,onStartNew:noop}));}
 test('UT3 uses UT2 layout components, one goal and a 4-learning-4 progress display',()=>{
  const src=readFileSync(pageFile,'utf8');
- for(const c of ['MainLayout','HomeDashboard','CurriculumListSection','ProblemQuestionCard','UT2SurveyForm'])assert(src.includes('<'+c),c);
+ for(const c of ['MainLayout','HomeDashboard','ProblemQuestionCard','UT2SurveyForm'])assert(src.includes('<'+c),c);
  const html=dashboard(session('pre'));
  for(const t of ['학습 전 레벨테스트','기초 3문항','기출형 1문항','문제 지도','0/4','0/1','두 조건부확률로 여사건 추론'])assert(html.includes(t),t);
  assert(!html.includes('/13')&&!html.includes('/3 해결')&&!html.includes('is-confirmed'));
@@ -54,7 +54,8 @@ test('only the single learned goal unlocks post-test and each basic diagnosis us
  s.completed=['bn-conditional'];s.recommended=null;
  assert(dashboard(s).includes('학습 후 테스트 시작'));
  const html=dashboard(session());assert(html.includes('사전 테스트 1/1 정답'));
- assert(dashboard(session('done')).includes('결과 보기'));
+ const done=session('done');done.surveySubmitted=true;
+ assert(dashboard(done).includes('결과 보기'));
  for(const stage of ['pre','learning','post','done'])assert(dashboard(session(stage)).includes('새 참가자로 시작'));
 });
 test('assessment shows four questions and never reveals the answer or correctness',()=>{

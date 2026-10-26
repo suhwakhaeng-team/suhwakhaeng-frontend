@@ -16,6 +16,7 @@ interface Props {
   feedback: ReactNode;
   maps: ReactNode;
   reviewItems: ReviewItem[];
+  reviewSection?: ReactNode;
   progressPercent: number;
   progressLabel: string;
   progressHeading?: string;
@@ -36,7 +37,7 @@ export default function HomeDashboard(props: Props) {
           {props.feedback}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-          <ReviewListSection items={props.reviewItems} onSeeAllClick={props.onReviewSeeAll} onItemClick={props.onReviewItemClick} />
+          {props.reviewSection === undefined ? <ReviewListSection items={props.reviewItems} onSeeAllClick={props.onReviewSeeAll} onItemClick={props.onReviewItemClick} /> : props.reviewSection}
           <ProgressGauge nickname={props.nickname} percent={props.progressPercent} label={props.progressLabel} heading={props.progressHeading} />
           <DailyStatsCard todaySolvedCount={props.todaySolvedCount} streakDays={props.streakDays} />
         </div>

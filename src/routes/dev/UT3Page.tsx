@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../../layouts/MainLayout';
 import HomeDashboard from '../../components/home/HomeDashboard';
 import { UT2SurveyForm } from '../../components/UT2SurveyForm';
-import CurriculumListSection from '../../components/home/CurriculumListSection';
 import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import ProblemContent from '../../components/ProblemContent';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
@@ -97,7 +96,7 @@ export default function UT3Page() {
     if (next) { navigate('/ut3', { replace: true, state: null }); setRegistration(false); setPassword(''); setNickname(''); setNotice(''); setView('test'); }
   }
   function afterAssessment(next: UT3Session) {
-    if (next.stage === 'learning') { setView('home'); setNotice('사전 테스트가 끝났어요. 목표 문제부터 풀고, 막히면 필요한 부분을 학습해요.'); }
+    if (next.stage === 'learning') { setView('home'); setNotice(''); }
     else if (next.stage === 'done') setView('results');
   }
   function afterPass(id: string) { alignGoal(id); setPassedNode(id); setMapReturn('home'); setView('map'); }
@@ -183,16 +182,32 @@ export function UT3Dashboard({ session: s, selectedGoal, onSelectGoal, notice, b
   const learning = s.stage === 'learning';
   const readyPost = learning && s.completed.length === 1 && !s.recommended;
   const run = s.stage === 'post' ? s.post : s.pre;
-  return <HomeDashboard nickname={s.participant} notice={notice && <p className="plm-live-notice ut-home-notice" role="status">{notice}</p>}
-    recommendation={learning && recommended ? <CurriculumListSection items={[{ id: recommended.id, topicName: recommended.label,
-      categoryPath: recommended.kind === 'concept' ? '목표 문제를 위한 기초 학습' : '조건부확률 · 목표 기출형', problemCount: 1,
-      reasoning: recommended.kind === 'concept' ? '사전 테스트에서 확인하지 못한 기초부터 학습해요. 확인 문제를 풀면 다음 개념으로 이어져요.' : '필요한 기초를 목표 문제에 적용해 보세요. 막히면 하위 문제부터 확인해요.' }]}
-      activeId={recommended.id} showReasoning actionLabel={s.feedback ? '학습 이어가기' : recommended.kind === 'concept' ? '기초부터 학습' : '문제 풀기'} onSolveClick={() => onOpen(recommended.id)} />
-      : <section style={card}><h3 className="ut-section-title">{s.stage === 'done' ? '학습 결과' : s.stage === 'pre' ? '학습 전 레벨테스트' : '학습 후 레벨테스트'}</h3>
-        <p className="plm-live-muted">{s.stage === 'done' ? '학습 전후 정답률과 풀이 시간을 비교해 보세요.' : readyPost ? '목표 기출형 1문제 학습을 마쳤어요. 숫자를 바꾼 문제로 다시 확인해요.' : '기초 3문항 · 기출형 1문항. 답은 분수 또는 소수로 적어 주세요.'}</p>
-        <button style={primary} disabled={blocked} onClick={s.stage === 'done' ? onResults : onTest}>{s.stage === 'done' ? '결과 보기 →' : readyPost ? '학습 후 테스트 시작 →' : run.responses.length ? `${run.responses.length + 1}번부터 이어서 →` : '테스트 시작 →'}</button>
-      </section>}
-    feedback={<section style={card}><h3 className="ut-section-title">이번 학습</h3><ol className="ut-flow-list" aria-label="학습 진행 단계"><li className={s.stage === 'pre' ? 'is-current' : ''}>학습 전 테스트 <small>{s.pre.responses.length}/4</small></li><li className={learning ? 'is-current' : ''}>조건부확률 문제 학습 <small>{s.completed.length}/1</small></li><li className={s.stage === 'post' ? 'is-current' : ''}>학습 후 테스트 <small>{s.post.responses.length}/4</small></li></ol><p className="plm-live-muted">테스트 중에는 해설을 보여주지 않아요. ‘모르겠습니다’도 기록돼요.</p></section>}
+  const activeStep = s.stage === 'pre' ? 1 : learning && !readyPost ? 2 : 3;
+  const learningAction = learning && recommended;
+  const goalAction = learningAction && recommended.id === goal.rootId;
+  const title = learningAction ? s.feedback ? '멈춘 곳부터 학습을 이어가세요' : goalAction ? '다음은 목표 문제 1개를 풀 차례예요' : '목표 문제에 필요한 기초를 확인해요'
+    : s.stage === 'done' ? s.surveySubmitted ? '모든 참여를 마쳤어요' : '테스트가 끝났어요. 피드백을 남겨 주세요'
+      : readyPost ? '학습을 마쳤어요. 마지막 테스트를 시작해요' : s.stage === 'pre' ? '먼저 학습 전 레벨테스트를 풀어 주세요' : '학습 후 레벨테스트를 마저 풀어 주세요';
+  const description = learningAction ? goalAction ? '먼저 목표 문제를 풀어 보세요. 막히면 필요한 개념부터 안내해 드려요.' : recommended.kind === 'concept' ? '개념을 읽고 확인 문제에 답하면 다음 학습으로 이어져요.' : '이 확인 문제를 풀면 목표 문제에 다시 도전할 수 있어요.'
+    : s.stage === 'done' ? s.surveySubmitted ? '결과와 제출한 설문을 확인할 수 있어요.' : '결과를 확인한 뒤 마지막 피드백 설문에 참여해 주세요.'
+      : readyPost ? '숫자를 바꾼 기초 3문항 · 기출형 1문항으로 다시 확인해요.' : '기초 3문항 · 기출형 1문항. 답은 분수 또는 소수로 적어 주세요.';
+  const actionLabel = learningAction ? s.feedback ? '학습 이어가기 →' : goalAction ? '목표 문제 풀기 →' : recommended.kind === 'concept' ? '개념 학습 시작 →' : '확인 문제 풀기 →'
+    : s.stage === 'done' ? s.surveySubmitted ? '결과 보기 →' : '결과 확인하고 피드백 남기기 →'
+      : readyPost ? '학습 후 테스트 시작 →' : run.responses.length ? `${run.responses.length + 1}번부터 이어서 →` : s.stage === 'post' ? '학습 후 테스트 시작 →' : '학습 전 테스트 시작 →';
+  return <HomeDashboard nickname={s.participant} notice={<>
+      {notice && <p className="plm-live-notice ut-home-notice" role="status">{notice}</p>}
+      <section className="ut3-next-step" aria-labelledby="ut3-next-heading">
+        <div className="ut3-next-copy"><span className="ut3-step-label">{s.stage === 'done' ? '마무리' : `${activeStep} / 3 단계`} · 지금 할 일</span>
+          <h1 id="ut3-next-heading">{title}</h1>
+          {learningAction && <p className="ut3-next-topic">{recommended.label}</p>}
+          <p className="ut3-next-description">{description}</p>
+        </div>
+        <button className="ut3-next-button" type="button" disabled={blocked} onClick={learningAction ? () => onOpen(recommended.id) : s.stage === 'done' ? onResults : onTest}>{actionLabel}</button>
+      </section>
+    </>}
+    recommendation={null}
+    feedback={<section style={card}><h3 className="ut-section-title">이번 학습 순서</h3><ol className="ut-flow-list" aria-label="학습 진행 단계"><li className={activeStep === 1 && s.stage !== 'done' ? 'is-current' : ''} aria-current={activeStep === 1 && s.stage !== 'done' ? 'step' : undefined}>학습 전 테스트 <small>{s.pre.responses.length}/4 {s.pre.responses.length === 4 ? '완료' : '문항'}</small></li><li className={activeStep === 2 ? 'is-current' : ''} aria-current={activeStep === 2 ? 'step' : undefined}>조건부확률 문제 학습 <small>{s.completed.length}/1 {s.completed.length === 1 ? '완료' : '목표'}</small></li><li className={activeStep === 3 && s.stage !== 'done' ? 'is-current' : ''} aria-current={activeStep === 3 && s.stage !== 'done' ? 'step' : undefined}>학습 후 테스트 <small>{s.post.responses.length}/4 {s.stage === 'done' ? '완료' : '문항'}</small></li></ol><p className="plm-live-muted">학습 후 테스트를 마치면 마지막 피드백 설문이 열려요.</p></section>}
+    reviewSection={<details className="ut3-optional-review"><summary>필요할 때 개념 복습하기 <span>선택</span></summary><p>바로 시작하려면 위의 파란 버튼을 눌러 주세요. 아래 개념은 필요할 때 따로 확인할 수 있어요.</p><div>{CONCEPT_IDS.map(id => <button key={id} type="button" disabled={blocked || !learning} onClick={() => onOpen(id)}>{UT3_NODES[id].label}<span aria-hidden="true">→</span></button>)}</div></details>}
     reviewItems={learning ? s.weak.filter(id => s.results[id] !== 'passed').map((id, index) => ({ id: index, topicName: UT3_NODES[id].label, categoryName: '학습 전 테스트에서 확인할 개념' })) : []}
     onReviewSeeAll={() => document.getElementById('ut3-foundations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
     onReviewItemClick={item => { const id = CONCEPT_IDS.find(id => UT3_NODES[id].label === item.topicName); if (id && !blocked) onOpen(id); }}
