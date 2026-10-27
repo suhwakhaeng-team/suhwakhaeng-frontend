@@ -7,8 +7,8 @@ import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import ProblemContent from '../../components/ProblemContent';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import ProblemLearningMap from './ProblemLearningMap';
-import ConditionalConceptLesson from './ConditionalConceptLesson';
-import { UT3_CONCEPT_LESSONS, UT3_LEARNING_SUPPORT } from './ut3LearningSupport';
+import UT3InteractiveLesson from './UT3InteractiveLesson';
+import { UT3_LEARNING_SUPPORT } from './ut3LearningSupport';
 import { UT3_GOALS, UT3_NODES, parseProbabilityAnswer } from './ut3Model';
 import useUT3Server from './useUT3Server';
 import { ut3Score, type UT3Session } from './ut3ServerApi';
@@ -88,6 +88,7 @@ export default function UT3Page() {
   }
   async function open(id: string) {
     if (blocked || s?.stage !== 'learning') return;
+    if (s.feedback?.nodeId === id) { alignGoal(id); setPassedNode(null); setView('study'); setNotice(''); return; }
     const next = await remote.act({ type: 'open', nodeId: id });
     if (next) {
       alignGoal(id); setPassedNode(null); setView('study'); setNotice('');
@@ -112,7 +113,8 @@ export default function UT3Page() {
       if (next.session.stage === 'pre' || next.session.stage === 'post') setView('test');
       else if (next.session.stage === 'done') setView('results');
       else if (next.session.feedback) { alignGoal(next.session.learningNode!); setView('study'); }
-      else if (view === 'study' && s?.learningNode) afterPass(s.learningNode);
+      else if (view === 'study' && s?.learningNode && next.session.history.length > s.history.length && next.session.history.at(-1)?.correct) afterPass(s.learningNode);
+      else if (view === 'study') setView('study');
       else setView('home');
     }}>다시 저장</button> : remote.error && <button className="ut-reconnect-button" onClick={() => window.location.reload()}>다시 연결</button>}</div></div>}
     {remote.conflict && <div className="ut-error"><p>다른 탭을 닫고 이어가세요. 미저장 답안은 이 기기에 별도 보관합니다.</p><button style={textButton} disabled={remote.busy} onClick={async () => { await remote.recoverConflict(); goHome(); }}>다른 탭 기록으로 이어가기</button></div>}
@@ -180,7 +182,8 @@ export function UT3Dashboard({ session: s, selectedGoal, onSelectGoal, notice, b
   onMap: () => void; onTest: () => void; onResults: () => void; onStartNew: () => void;
 }) {
   const goal = UT3_GOALS.find(g => g.id === selectedGoal)!;
-  const recommended = s.recommended && UT3_NODES[s.recommended];
+  const nextId = s.feedback?.nodeId || s.recommended;
+  const recommended = nextId && UT3_NODES[nextId];
   const learning = s.stage === 'learning';
   const readyPost = learning && s.completed.length === 1 && !s.recommended;
   const run = s.stage === 'post' ? s.post : s.pre;
@@ -255,7 +258,13 @@ export function Study({ session: s, remote, onMap, onHome, onPass }: { session: 
   const [answer, setAnswer] = useState('');
   const clock = useQuestionTime(`${s.id}:learning:${id}:${s.attempts[id] || 0}`);
   const lessonId = reviewId || id;
+  const canSkip = !!s.learnedConcepts?.includes(lessonId);
   const returnToProblem = () => { setReading(false); setReviewId(null); window.scrollTo(0, 0); };
+  const finishLesson = async () => {
+    if (canSkip) { returnToProblem(); return; }
+    const next = await remote.act({ type: 'lesson', nodeId: lessonId });
+    if (next) returnToProblem();
+  };
   const submit = async (unknown = false) => {
     const next = await remote.act({ type: 'answer', nodeId: id, variant: s.attempts[id] || 0, answer: unknown ? null : answer, seconds: clock.seconds() });
     if (next && !next.session.feedback) onPass(id);
@@ -265,8 +274,8 @@ export function Study({ session: s, remote, onMap, onHome, onPass }: { session: 
     {reading || reviewId ? <>
       {reviewId && <button className="ut3-return-to-problem" style={textButton} onClick={returnToProblem}>← 풀던 문제로 돌아가기</button>}
       <h2 ref={lessonHeading} tabIndex={-1} style={typography.headingXLBold}>{UT3_NODES[lessonId].label}</h2>
-      {reviewId && <p className="plm-live-muted">설명만 확인하는 중이에요. 답안과 학습 진행은 그대로 유지돼요.</p>}
-      <ConditionalConceptLesson key={lessonId} nodeId={lessonId} lesson={UT3_CONCEPT_LESSONS[lessonId]} onConfirm={returnToProblem} confirmLabel={reviewId ? '풀던 문제로 돌아가기 →' : '확인 문제 풀기 →'} />
+      {reviewId && <p className="plm-live-muted">개념을 직접 확인하는 중이에요. 풀던 답안은 그대로 유지돼요.</p>}
+      <UT3InteractiveLesson key={lessonId} nodeId={lessonId} disabled={remote.busy || remote.hasPending} onComplete={() => void finishLesson()} onSkip={canSkip ? returnToProblem : undefined} confirmLabel={reviewId ? '풀던 문제로 돌아가기 →' : '확인 문제 풀기 →'} />
     </> : <>
       <ProblemQuestionCard tagLabel={`${node.kind === 'BN' ? '목표 문제' : node.kind === 'AN' ? '확인 문제' : '개념 확인'} · ${node.label}${(s.attempts[id] || 0) > 0 && !s.feedback ? ' · 숫자를 바꾼 문제' : ''}`} problem={{ description: s.feedback?.prompt || s.question!.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />
       {clock.error && <p role="alert">{clock.error}</p>}

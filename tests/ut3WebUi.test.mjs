@@ -9,6 +9,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { UT3_NODES, ut3Assessment } from '../src/routes/dev/ut3Model.ts';
+import { activityCorrect, UT3_INTERACTIVE_LESSONS } from '../src/routes/dev/ut3InteractiveLessons.ts';
 
 const require = createRequire(import.meta.url);
 const cache = new Map();
@@ -70,7 +71,29 @@ test('goal feedback routes to prerequisites and concept explanation covers De Mo
  for(const label of ['조건부확률 설명 보기','확률의 덧셈정리 설명 보기','여사건과 드모르간 설명 보기'])assert(html.includes(label),label);
  s.learningNode='c-complement';s.feedback=null;
  html=renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
- assert(html.includes('드모르간')&&html.includes('개념 설명 단계')&&html.includes('한 사건의 여사건은 전체 1에서 빼요')&&!html.includes('katex-error'));
+ assert(html.includes('드모르간')&&html.includes('참여형 학습 단계')&&html.includes('B가 아닌 영역을 직접 골라 보세요')&&!html.includes('katex-error'));
+});
+
+test('skipping a concept requires its saved lesson completion, never just a correct pretest',()=>{
+ const s=session();s.learningNode='c-conditional';
+ const render=()=>renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
+ assert(!render().includes('넘어가기'));
+ s.learnedConcepts=['c-addition'];assert(!render().includes('넘어가기'));
+ s.learnedConcepts=['c-conditional'];assert(render().includes('넘어가기'));
+});
+
+test('interactive activities require exact event regions and completed fraction construction',()=>{
+ for(const steps of Object.values(UT3_INTERACTIVE_LESSONS))for(const step of steps){
+  assert(!activityCorrect(step,{}));
+  const answers=Object.fromEntries(step.groups.map(group=>[group.id,group.correct]));
+  assert(activityCorrect(step,answers));
+  for(const group of step.groups){
+   const wrong=group.options.find(option=>!group.correct.includes(option.id));
+   if(wrong)assert(!activityCorrect(step,{...answers,[group.id]:[...group.correct,wrong.id]}));
+  }
+ }
+ assert.deepEqual(UT3_INTERACTIVE_LESSONS['c-complement'][0].groups[0].correct,['a-only','neither']);
+ assert.deepEqual(UT3_INTERACTIVE_LESSONS['c-complement'][1].groups[0].correct,['neither']);
 });
 
 test('every learning error includes teaching and examples even when the basic concepts passed the pretest',()=>{

@@ -7,6 +7,7 @@ export type UT3Response = { questionId?: string; nodeId?: string; variant?: numb
 export type UT3Run = { form: 'A' | 'B'; total: number; responses: UT3Response[] };
 export type UT3Session = {
   surveySubmitted?: boolean; rewardEntered?: boolean;
+  learnedConcepts?: string[];
   id: string; participant: string; createdAt: number; bankVersion: 1; stage: 'pre' | 'learning' | 'post' | 'done';
   pre: UT3Run; post: UT3Run; history: UT3Response[]; weak: string[]; completed: string[];
   results: Record<string, 'passed' | 'failed'>; attempts: Record<string, number>; learningNode: string | null;
@@ -16,7 +17,7 @@ export type UT3Session = {
 };
 export type UT3Reply = { session: UT3Session; revision: number };
 export type UT3Credential = { id: string; token: string };
-export type UT3Action = { actionId: string; revision: number; type: 'answer' | 'open' | 'continue' | 'post'; questionId?: string; nodeId?: string; variant?: number; answer?: string | null; seconds?: number };
+export type UT3Action = { actionId: string; revision: number; type: 'answer' | 'open' | 'continue' | 'post' | 'lesson'; questionId?: string; nodeId?: string; variant?: number; answer?: string | null; seconds?: number };
 export class UT3ApiError extends Error {
   status: number;
   constructor(message: string, status = 0) { super(message); this.status = status; }
