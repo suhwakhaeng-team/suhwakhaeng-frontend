@@ -7,6 +7,8 @@ import ProblemQuestionCard from '../../components/ProblemQuestionCard';
 import ProblemContent from '../../components/ProblemContent';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
 import ProblemLearningMap from './ProblemLearningMap';
+import ConditionalConceptLesson from './ConditionalConceptLesson';
+import { UT3_CONCEPT_LESSONS, UT3_LEARNING_SUPPORT } from './ut3LearningSupport';
 import { UT3_GOALS, UT3_NODES, parseProbabilityAnswer } from './ut3Model';
 import useUT3Server from './useUT3Server';
 import { ut3Score, type UT3Session } from './ut3ServerApi';
@@ -247,21 +249,41 @@ export function Assessment({ session: s, remote, onHome, onAdvance }: { session:
 export function Study({ session: s, remote, onMap, onHome, onPass }: { session: UT3Session; remote: Remote; onMap: () => void; onHome: () => void; onPass: (id: string) => void }) {
   const id = s.learningNode!; const node = UT3_NODES[id];
   const [reading, setReading] = useState(node.kind === 'concept' && !s.feedback);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const lessonHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (reading || reviewId) lessonHeading.current?.focus(); }, [reading, reviewId]);
   const [answer, setAnswer] = useState('');
   const clock = useQuestionTime(`${s.id}:learning:${id}:${s.attempts[id] || 0}`);
+  const lessonId = reviewId || id;
+  const returnToProblem = () => { setReading(false); setReviewId(null); window.scrollTo(0, 0); };
   const submit = async (unknown = false) => {
     const next = await remote.act({ type: 'answer', nodeId: id, variant: s.attempts[id] || 0, answer: unknown ? null : answer, seconds: clock.seconds() });
     if (next && !next.session.feedback) onPass(id);
   };
   return <section className="plm-live-solver" style={{ maxWidth: 760, margin: '0 auto' }}><div className="plm-section-row" style={{ marginBottom: 24 }}><button style={textButton} onClick={onHome}>← 나가기</button><button style={textButton} onClick={onMap}>문제 지도 보기 →</button></div>
     <div className="plm-live-path"><span>조건부확률</span><span className="is-current">› {node.label}</span></div>
-    {reading ? <><h2 style={typography.headingXLBold}>{node.label}</h2><div className="ccl-lesson"><ProblemContent content={node.note || ''} /><div className="plm-live-actions"><button style={primary} onClick={() => setReading(false)}>확인 문제 풀기 →</button></div></div></> : <>
+    {reading || reviewId ? <>
+      {reviewId && <button className="ut3-return-to-problem" style={textButton} onClick={returnToProblem}>← 풀던 문제로 돌아가기</button>}
+      <h2 ref={lessonHeading} tabIndex={-1} style={typography.headingXLBold}>{UT3_NODES[lessonId].label}</h2>
+      {reviewId && <p className="plm-live-muted">설명만 확인하는 중이에요. 답안과 학습 진행은 그대로 유지돼요.</p>}
+      <ConditionalConceptLesson key={lessonId} nodeId={lessonId} lesson={UT3_CONCEPT_LESSONS[lessonId]} onConfirm={returnToProblem} confirmLabel={reviewId ? '풀던 문제로 돌아가기 →' : '확인 문제 풀기 →'} />
+    </> : <>
       <ProblemQuestionCard tagLabel={`${node.kind === 'BN' ? '목표 문제' : node.kind === 'AN' ? '확인 문제' : '개념 확인'} · ${node.label}${(s.attempts[id] || 0) > 0 && !s.feedback ? ' · 숫자를 바꾼 문제' : ''}`} problem={{ description: s.feedback?.prompt || s.question!.prompt, answerType: 'NUMBER' }} value="" onChange={() => {}} />
       {clock.error && <p role="alert">{clock.error}</p>}
-      {s.feedback ? <div className="plm-live-feedback ut-feedback" role="status"><strong>{s.feedback.unknown ? '기초부터 확인해 볼까요?' : '필요한 부분을 다시 확인해요'}</strong>{s.feedback.explanation ? <div className="plm-live-muted"><ProblemContent content={s.feedback.explanation} /></div> : <p className="plm-live-muted">‘{UT3_NODES[s.feedback.nextNode]?.label}’부터 확인한 뒤 이 문제로 돌아와요.</p>}<button style={primary} disabled={remote.busy || remote.hasPending} onClick={() => void remote.act({ type: 'continue' })}>{s.feedback.nextNode === id ? '숫자를 바꿔 다시 풀기 →' : '필요한 하위 학습으로 이어가기 →'}</button></div>
-        : <><AnswerForm answer={answer} setAnswer={setAnswer} disabled={remote.busy || remote.hasPending || !!clock.error} onSubmit={() => void submit()} onUnknown={() => void submit(true)} />
-          {node.kind === 'concept' && <button style={textButton} className="ut3-review-concept" onClick={() => setReading(true)}>개념 설명 다시 보기</button>}</>}
+      {s.feedback ? <div className="plm-live-feedback ut-feedback" role="status"><strong>{s.feedback.unknown ? '기초부터 확인해 볼까요?' : '답을 다시 확인해 볼게요'}</strong>
+        <LearningHelp nodeId={id} expanded disabled={remote.busy || remote.hasPending} onReview={setReviewId} />
+        {s.feedback.explanation ? <div className="plm-live-muted"><ProblemContent content={s.feedback.explanation} /></div> : <p className="plm-live-muted">‘{UT3_NODES[s.feedback.nextNode]?.label}’부터 확인한 뒤 이 문제로 돌아와요.</p>}<button style={primary} disabled={remote.busy || remote.hasPending} onClick={() => void remote.act({ type: 'continue' })}>{s.feedback.nextNode === id ? '숫자를 바꿔 다시 풀기 →' : '필요한 하위 학습으로 이어가기 →'}</button></div>
+        : <><LearningHelp nodeId={id} expanded={false} disabled={remote.busy || remote.hasPending} onReview={setReviewId} />
+          <AnswerForm answer={answer} setAnswer={setAnswer} disabled={remote.busy || remote.hasPending || !!clock.error} onSubmit={() => void submit()} onUnknown={() => void submit(true)} /></>}
     </>}
+  </section>;
+}
+function LearningHelp({ nodeId, expanded, disabled, onReview }: { nodeId: string; expanded: boolean; disabled: boolean; onReview: (id: string) => void }) {
+  const support = UT3_LEARNING_SUPPORT[nodeId];
+  return <section className={`ut3-learning-help${expanded ? ' is-expanded' : ''}`} aria-label="이 문제에 필요한 개념">
+    <h3>{expanded ? '이 개념부터 다시 확인해요' : '개념이 헷갈리나요?'}</h3>
+    {expanded && <><div className="ut3-help-explanation"><ProblemContent content={support.explanation} /></div><div className="ut3-help-example"><ProblemContent content={support.example} /></div></>}
+    <div className="ut3-concept-links">{support.concepts.map(id => <button key={id} type="button" disabled={disabled} onClick={() => onReview(id)}>{UT3_NODES[id].label} 설명 보기 <span aria-hidden="true">→</span></button>)}</div>
   </section>;
 }
 function AnswerForm({ answer, setAnswer, disabled, onSubmit, onUnknown }: { answer: string; setAnswer: (v: string) => void; disabled: boolean; onSubmit: () => void; onUnknown: () => void }) {

@@ -66,10 +66,23 @@ test('assessment shows four questions and never reveals the answer or correctnes
 test('goal feedback routes to prerequisites and concept explanation covers De Morgan',()=>{
  const s=session();s.learningNode='bn-conditional';s.feedback={nodeId:'bn-conditional',nextNode:'c-conditional',prompt:'목표 기출형',explanation:'',unknown:true};
  let html=renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
- assert(html.includes('필요한 하위 학습으로 이어가기')&&!html.includes('분모는'));
+ assert(html.includes('필요한 하위 학습으로 이어가기')&&html.includes('이 개념부터 다시 확인해요'));
+ for(const label of ['조건부확률 설명 보기','확률의 덧셈정리 설명 보기','여사건과 드모르간 설명 보기'])assert(html.includes(label),label);
  s.learningNode='c-complement';s.feedback=null;
  html=renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
- assert(html.includes('드모르간')&&html.includes('확인 문제 풀기')&&!html.includes('katex-error'));
+ assert(html.includes('드모르간')&&html.includes('개념 설명 단계')&&html.includes('한 사건의 여사건은 전체 1에서 빼요')&&!html.includes('katex-error'));
+});
+
+test('every learning error includes teaching and examples even when the basic concepts passed the pretest',()=>{
+ for(const node of Object.values(UT3_NODES)){
+  const s=session();s.learningNode=node.id;s.feedback={nodeId:node.id,nextNode:node.requires[0]||node.id,prompt:node.questions[0].prompt,explanation:'',unknown:false};
+  const html=renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
+  for(const text of ['이 개념부터 다시 확인해요','설명 보기','ut3-help-example'])assert(html.includes(text),node.id+': '+text);
+  assert(!html.includes('katex-error'),node.id);
+ }
+ const s=session();
+ const html=renderToStaticMarkup(createElement(Study,{session:s,remote,onHome:noop,onMap:noop,onPass:noop}));
+ assert(html.includes('조건부확률 설명 보기')&&html.includes('여사건과 드모르간 설명 보기'));
 });
 test('survey is available after completion and the math password routes to UT3 from every entry',()=>{
  assert.equal(renderToStaticMarkup(createElement(SurveyInvitation,{session:session('post'),onSurvey:noop})), '');

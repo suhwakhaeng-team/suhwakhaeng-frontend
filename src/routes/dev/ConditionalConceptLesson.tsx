@@ -1,12 +1,12 @@
 import { useId, useRef, useState } from 'react';
 import MathText from '../../components/MathText';
 import { ADDITION_REGIONS, CONCEPT_LESSONS, DICE_OUTCOMES, EXAMPLE_PEOPLE, inDiceEvent, referenceCounts } from './conditionalConceptLessons';
-import type { DiceEvent, LessonDiagram, ReferenceGroup } from './conditionalConceptLessons';
+import type { ConceptLesson, DiceEvent, LessonDiagram, ReferenceGroup } from './conditionalConceptLessons';
 import './ConditionalConceptLesson.css';
 import { TeamConceptSupplement } from '../../components/knowledgeGraph/TeamConceptContent';
 
-export default function ConditionalConceptLesson({ nodeId, onConfirm, teamReference = false }: { nodeId: string; onConfirm: () => void; teamReference?: boolean }) {
-  const lesson = CONCEPT_LESSONS[nodeId];
+export default function ConditionalConceptLesson({ nodeId, onConfirm, teamReference = false, lesson: customLesson, confirmLabel = '확인 문제 풀기 →' }: { nodeId: string; onConfirm: () => void; teamReference?: boolean; lesson?: ConceptLesson; confirmLabel?: string }) {
+  const lesson = customLesson ?? CONCEPT_LESSONS[nodeId];
   const [stepIndex, setStepIndex] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   if (!lesson) return null;
@@ -28,7 +28,7 @@ export default function ConditionalConceptLesson({ nodeId, onConfirm, teamRefere
     {teamReference && <TeamConceptSupplement conceptName={({'c-events':'표본공간과 사건','c-complement':'여사건','c-addition':'확률의 덧셈 정리','c-conditional':'조건부확률','c-multiplication':'확률의 곱셈정리'} as Record<string,string>)[nodeId]} />}
     <div className="ccl-navigation"><span>{stepIndex + 1} / {lesson.steps.length}</span><div>
       {stepIndex > 0 && <button type="button" className="cpm-text-button" onClick={() => move(-1)}>← 이전</button>}
-      <button type="button" className="cpm-primary" onClick={stepIndex < lesson.steps.length - 1 ? () => move(1) : onConfirm}>{stepIndex < lesson.steps.length - 1 ? '다음 →' : '확인 문제 풀기 →'}</button>
+      <button type="button" className="cpm-primary" onClick={stepIndex < lesson.steps.length - 1 ? () => move(1) : onConfirm}>{stepIndex < lesson.steps.length - 1 ? '다음 →' : confirmLabel}</button>
     </div></div>
   </div>;
 }
@@ -38,6 +38,7 @@ function LessonVisual({ kind, nodeId, stepIndex }: { kind: LessonDiagram; nodeId
   if (kind === 'conditional' || kind === 'multiplication') return <PeopleVisual initialGroup={kind === 'multiplication' || stepIndex === 1 ? 'A' : 'B'} multiplying={kind === 'multiplication'} />;
   if (kind === 'addition') return <AdditionVisual />;
   if (kind === 'complement') return <ComplementVisual />;
+  if (kind === 'neither') return <figure className="ccl-visual"><Venn region="neither" label="두 사건 A와 B의 합집합 바깥, 즉 A도 B도 일어나지 않는 영역" /><figcaption>A도 B도 아닌 부분은 두 원의 바깥 전체예요.</figcaption></figure>;
   return <PartitionVisual mode={nodeId === 'c-complement' ? 'B' : stepIndex === 1 ? 'A' : 'outsideB'} />;
 }
 
@@ -52,20 +53,22 @@ function DiceVisual({ combined }: { combined: boolean }) {
   </figure>;
 }
 
-type Region = 'A' | 'B' | 'union' | 'intersection' | 'complement' | 'aOnly' | 'bOnly';
+type Region = 'A' | 'B' | 'union' | 'intersection' | 'complement' | 'aOnly' | 'bOnly' | 'neither';
 /** A set diagram illustrates membership only; circle areas do not encode probabilities. */
 function Venn({ region, single = false, counts = false, overlapTwice = false, label }: { region: Region; single?: boolean; counts?: boolean; overlapTwice?: boolean; label: string }) {
   const unique = useId().replace(/:/g, '');
-  const aClip = `${unique}-a`, aHole = `${unique}-ah`, bHole = `${unique}-bh`;
+  const aClip = `${unique}-a`, aHole = `${unique}-ah`, bHole = `${unique}-bh`, unionHole = `${unique}-uh`;
   const fill = '#bfdbfe';
   return <svg className="ccl-venn" viewBox="0 0 360 200" role="img" aria-label={label}>
     <defs>
       <clipPath id={aClip}><circle cx={single ? 150 : 140} cy="105" r="62" /></clipPath>
       <mask id={aHole}><rect width="360" height="200" fill="white" /><circle cx={single ? 150 : 140} cy="105" r="62" fill="black" /></mask>
       <mask id={bHole}><rect width="360" height="200" fill="white" /><circle cx="220" cy="105" r="62" fill="black" /></mask>
+      <mask id={unionHole}><rect width="360" height="200" fill="white" /><circle cx="140" cy="105" r="62" fill="black" /><circle cx="220" cy="105" r="62" fill="black" /></mask>
     </defs>
     <rect x="20" y="18" width="320" height="164" rx="12" fill="#fff" stroke="#cbd5e1" />
     {region === 'complement' && <rect x="20" y="18" width="320" height="164" rx="12" fill={fill} mask={`url(#${aHole})`} />}
+    {region === 'neither' && <rect x="20" y="18" width="320" height="164" rx="12" fill={fill} mask={`url(#${unionHole})`} />}
     {(region === 'A' || region === 'union') && <circle cx={single ? 150 : 140} cy="105" r="62" fill={fill} />}
     {(region === 'B' || region === 'union') && <circle cx="220" cy="105" r="62" fill={fill} />}
     {region === 'intersection' && <circle cx="220" cy="105" r="62" fill={fill} clipPath={`url(#${aClip})`} />}

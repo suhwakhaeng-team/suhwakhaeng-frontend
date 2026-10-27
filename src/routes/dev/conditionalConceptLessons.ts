@@ -1,5 +1,5 @@
 /** Original teaching examples based on the supplied reference, not textbook page copies. */
-export type LessonDiagram = 'dice' | 'events' | 'complement' | 'partition' | 'addition' | 'conditional' | 'multiplication';
+export type LessonDiagram = 'dice' | 'events' | 'complement' | 'partition' | 'addition' | 'conditional' | 'multiplication' | 'neither';
 export type LessonStep = {
   title: string;
   paragraphs: string[];
