@@ -114,3 +114,18 @@ test('survey is available after completion and the math password routes to UT3 f
   const src=readFileSync(new URL('../src/routes/dev/'+file,import.meta.url),'utf8');assert(src.includes("password === 'math'")&&src.includes("'/ut3'"),file);
  }
 });
+
+ test('formula previews render placeholders and every operation as valid math', () => {
+  const file = new URL('../src/routes/dev/UT3InteractiveLesson.tsx', import.meta.url);
+  const source = readFileSync(file, 'utf8');
+  const part = source.slice(source.indexOf('function formulaPreview('), source.indexOf('function People('));
+  const js = ts.transpileModule(part, {compilerOptions: {target: ts.ScriptTarget.ES2022}}).outputText;
+  const preview = new Function(js + '; return formulaPreview;')();
+  const katex = require('katex');
+  for (const node of ['c-addition', 'c-conditional', 'c-complement']) {
+   for (const operation of [undefined, '+', '-', '*']) {
+    const text = preview(node, operation ? {operation: [operation]} : {});
+    assert.doesNotThrow(() => katex.renderToString(text.slice(1, -1), {throwOnError: true}), text);
+   }
+  }
+ });
