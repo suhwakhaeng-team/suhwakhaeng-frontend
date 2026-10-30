@@ -25,7 +25,7 @@ export default function TestIntroPage() {
     <div style={{ textAlign: 'center', paddingTop: spacing.x3l, paddingBottom: spacing.x3l }}>
       <h2 style={{ ...typography.headingXLBold, color: colors.black, margin: 0 }}>커리큘럼 테스트</h2>
       <p style={{ ...typography.bodyTextXLRegular, color: colors.gray600, marginTop: spacing.lg, lineHeight: 1.6 }}>
-        맞춤형 커리큘럼을 만들기 위해 레벨테스트를 시작합니다. (10-15문제)<br />
+        현재 개념지도를 기준으로 맞춤형 커리큘럼을 만들기 위한 레벨테스트를 시작합니다.<br />
         원활한 레벨테스트를 위해 필기도구를 준비해주세요.
       </p>
 
