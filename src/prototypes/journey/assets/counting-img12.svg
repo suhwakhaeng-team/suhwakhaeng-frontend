@@ -1,0 +1,18 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="200.556" height="200.556" viewBox="0 0 200.556 200.556" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="&#237;&#129;&#176; &#234;&#176;&#156;&#235;&#133;&#144; &#236;&#151;&#173; &#194;&#183; &#236;&#136;&#156;&#236;&#151;&#180;" filter="url(#filter0_d_0_39)">
+<circle cx="100.278" cy="100.278" r="47.5" fill="white"/>
+<circle cx="100.278" cy="100.278" r="45.5208" stroke="#0066FF" stroke-width="3.95833"/>
+</g>
+<defs>
+<filter id="filter0_d_0_39" x="0" y="0" width="200.556" height="200.556" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="26.3889"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.244629 0 0 0 0 0.546777 0 0 0 0 1 0 0 0 0.3 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_39"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_39" result="shape"/>
+</filter>
+</defs>
+</svg>
