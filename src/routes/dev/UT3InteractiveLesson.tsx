@@ -43,7 +43,7 @@ export default function UT3InteractiveLesson({ nodeId, disabled, onComplete, onS
 
 function formulaPreview(nodeId: string, answers: Record<string, string[]>): string {
   const terms: Record<string, string> = { AB: 'P(A\\cap B)', union: 'P(A\\cup B)', A: 'P(A)', B: 'P(B)' };
-  if (nodeId === 'c-addition') return `$P(A\\cup B)=P(A)+P(B)${answers.operation?.[0] === '*' ? '\\times' : answers.operation?.[0] || '\\square'}P(A\\cap B)$`;
+  if (nodeId === 'c-addition') return `$P(A\\cup B)=P(A)+P(B)${answers.operation?.[0] === '*' ? '\\times' : answers.operation?.[0] || '\\square'} P(A\\cap B)$`;
   const value = (group: string) => nodeId === 'c-conditional' ? terms[answers[group]?.[0]] || '\\square' : answers[group]?.[0] || '\\square';
   return `$P(${nodeId === 'c-conditional' ? 'A\\mid B' : 'A^c\\mid B^c'})=\\frac{${value('numerator')}}{${value('denominator')}}$`;
 }
