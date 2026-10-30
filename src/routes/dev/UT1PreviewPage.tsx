@@ -18,6 +18,7 @@ import useUT1Server from './useUT1Server';
 import UT1ConnectionNotice from './UT1ConnectionNotice';
 import { ut2Api } from './ut2ServerApi';
 import { ut3Api } from './ut3ServerApi';
+import { ut4Api } from './ut4ServerApi';
 import { TeamConceptSupplement } from '../../components/knowledgeGraph/TeamConceptContent';
 import './LevelTestMapPreviewPage.css';
 import './ProblemLearningPreviewPage.css';
@@ -225,6 +226,11 @@ export default function UT1PreviewPage({ server = false }: { server?: boolean })
     if (entryBusy || blocked) return;
     setEntryBusy(true); setEntryError('');
     try {
+      if (server && password === 'banana') {
+        await ut4Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT4_API_BASE_URL || '/api/v1').enter(password);
+        navigate('/ut4', { state: { entryPassword: password }, replace: true });
+        return;
+      }
       if (server && password === 'math') {
         await ut3Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT3_API_BASE_URL || '/api/v1').enter(password);
         navigate('/ut3', { state: { entryPassword: password } });

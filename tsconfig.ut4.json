@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": { "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.ut4.tsbuildinfo" },
+  "include": ["src/routes/dev/UT4*.tsx", "src/routes/dev/ut4*.ts", "src/routes/dev/useUT4Server.ts", "src/vite-env.d.ts"]
+}

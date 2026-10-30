@@ -1,0 +1,17 @@
+.ut4-review-toolbar,.ut4-visual-step,.ut4-visual-lesson>footer{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.ut4-review-toolbar{margin:20px 0;color:#718198;font-size:13px}
+.ut4-review-toolbar button,.ut4-visual-step button{border:1px solid #cddff7;background:#f2f7ff;color:#1760bf;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+.ut4-visual-lesson{padding:24px;border:1px solid #dce6f3;border-radius:18px;background:white}
+.ut4-visual-step{font-size:13px;color:#6b7f99;margin-bottom:22px}
+.ut4-visual-lesson h3{font-size:23px;line-height:1.6;outline:0}
+.ut4-visual-lesson>p{line-height:1.9;color:#52647d;word-break:keep-all}
+.ut4-diagram-single figure,.ut4-diagram-grid figure{margin:0;min-width:0}
+.ut4-diagram-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}
+.ut4-diagram-grid figure:last-child:nth-child(odd){grid-column:1/-1;max-width:440px;justify-self:center}
+.ut4-concept-support img{display:block;max-width:100%;height:auto;border:1px solid #e5eaf2;border-radius:12px}
+.ut4-concept-support figcaption{font-size:12px;color:#75859a;line-height:1.6;margin:8px 0 18px}
+.ut4-visual-formula{padding:20px;background:#f4f8ff;border-radius:12px;margin:20px 0;overflow-x:auto;line-height:1.9}
+.ut4-visual-lesson>footer button{border:1px solid #dce4ee;background:white;color:#536981;padding:12px 16px;border-radius:10px;font:inherit;cursor:pointer}
+.ut4-visual-lesson>footer button:last-child{background:#0066ff;color:white;border-color:#0066ff}
+.ut4-concept-support button:disabled{opacity:.45;cursor:default}
+@media(max-width:600px){.ut4-visual-lesson{padding:18px}.ut4-visual-lesson h3{font-size:20px}.ut4-diagram-grid{grid-template-columns:1fr}.ut4-diagram-grid figure:last-child:nth-child(odd){grid-column:auto;max-width:none}.ut4-review-toolbar button{width:100%}}
