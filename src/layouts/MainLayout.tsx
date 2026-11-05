@@ -1,8 +1,8 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-export default function MainLayout({ children, onNavigate, activePath, showTagCatalog = true }: {
-  children?: ReactNode; onNavigate?: (path: string) => void; activePath?: string; showTagCatalog?: boolean;
+export default function MainLayout({ children, onNavigate, activePath, showTagCatalog = true, navigationDisabled = false }: {
+  children?: ReactNode; onNavigate?: (path: string) => void; activePath?: string; showTagCatalog?: boolean; navigationDisabled?: boolean;
 } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,15 +20,16 @@ export default function MainLayout({ children, onNavigate, activePath, showTagCa
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ display: 'flex', gap: '16px', padding: '12px 24px', borderBottom: '1px solid #eee' }}>
-        <strong style={{ marginRight: 'auto', cursor: 'pointer' }} onClick={() => go('/main/home')}>수확행</strong>
+        <strong style={{ marginRight: 'auto', cursor: navigationDisabled ? 'default' : 'pointer' }} onClick={() => {if (!navigationDisabled) go('/main/home');}}>수확행</strong>
         {navItems.filter(item => showTagCatalog || !['/main/tag-catalog', '/concepts'].includes(item.path)).map((item) => (
           <button
             key={item.path}
+            disabled={navigationDisabled}
             onClick={() => go(item.path)}
             style={{
               border: 'none',
               background: 'none',
-              cursor: 'pointer',
+              cursor: navigationDisabled ? 'default' : 'pointer',
               fontWeight: currentPath === item.path ? 'bold' : 'normal',
               color: currentPath === item.path ? '#2563EB' : '#666',
             }}
