@@ -2,13 +2,14 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { LEARNING_NODES, type Diagnostic, type LearningGoal, type LearningState, type LearningNode } from './problemLearningModel';
 
 // Uses the same circle glyphs, type, colors and canvas sizing as the level-test map.
-export default function ProblemLearningMap({ goal, state, diagnostic, currentId, nodes = LEARNING_NODES, columnGap = 250, horizontalPadding, onSelectNode, kindLabels }: {
+export default function ProblemLearningMap({ goal, state, diagnostic, currentId, nodes = LEARNING_NODES, columnGap = 250, horizontalPadding, onSelectNode, kindLabels, ariaLabel = '목표 문제와 하위 문제, 개념의 연결 지도' }: {
   goal: LearningGoal; state: Pick<LearningState, 'results' | 'complete'> | null; diagnostic: Diagnostic; currentId: string;
   nodes?: Record<string, LearningNode>;
   columnGap?: number;
   horizontalPadding?: number;
   onSelectNode?: (id: string) => void;
   kindLabels?: Partial<Record<LearningNode['kind'], string>>;
+  ariaLabel?: string;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -32,7 +33,7 @@ export default function ProblemLearningMap({ goal, state, diagnostic, currentId,
   };
   const passed = (id: string) => state?.results[id] ? state.results[id] === 'passed'
     : diagnostic[id] === 'passed' || (nodes[id].kind === 'concept' && diagnostic[nodes[id].conceptId!] === 'passed');
-  return <div ref={viewportRef} className="ltm-unit-map-window ltm-result-unit-map plm-map-window" role="region" tabIndex={0} aria-label="목표 문제와 하위 문제, 개념의 연결 지도">
+  return <div ref={viewportRef} className="ltm-unit-map-window ltm-result-unit-map plm-map-window" role="region" tabIndex={0} aria-label={ariaLabel}>
     <div className="ltm-unit-map-size" style={{ width: width * scale, height: height * scale }}>
       <div className="ltm-unit-map-canvas" style={{ width, height, transform: `scale(${scale})` }}>
         <svg className="ltm-edges" style={{ width, height }} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">

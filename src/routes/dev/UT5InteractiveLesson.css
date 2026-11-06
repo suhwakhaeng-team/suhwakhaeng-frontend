@@ -1,0 +1,5 @@
+.ut5-activity .ut4-activity-formula {
+  overflow: visible;
+  padding-block: 6px;
+}
+.ut5-activity .ut4-activity-formula .katex { white-space: normal; }
