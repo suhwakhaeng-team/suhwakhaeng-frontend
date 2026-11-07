@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ut5Api, UT5ApiError, validUT5Reply, UT5_CACHE_KEY, UT5_CREATE_KEY, UT5_PENDING_KEY, type UT5Action, type UT5Credential, type UT5Reply } from './ut5ServerApi';
 import { disconnectUT5Participant } from './ut5ParticipantSwitch';
-import type { UT2SurveySubmission } from '../../types/ut2Survey';
 
 const api = ut5Api(import.meta.env.PROD ? '/api/v1' : import.meta.env.VITE_UT5_API_BASE_URL || '/api/v1');
 type Cache = { credential: UT5Credential; reply: UT5Reply };
@@ -37,7 +36,10 @@ export default function useUT5Server() {
         install(remote, saved.credential);
         if (outstanding?.id === remote.session.id) {
           if (outstanding.action.actionId === remote.session.lastActionId) clearPending();
-          else {
+          else if (saved.reply.session.stage === 'learning' || saved.reply.session.stage === 'post') {
+            localStorage.setItem(`${UT5_PENDING_KEY}:preserved:${outstanding.action.actionId}`, JSON.stringify(outstanding));
+            clearPending();
+          } else {
             pending.current = outstanding; setHasPending(true);
             setConflict(outstanding.action.revision !== remote.revision);
             setError('이전에 제출한 답안이 미저장 상태예요. 다시 저장해 주세요.');
@@ -98,14 +100,11 @@ export default function useUT5Server() {
     } catch (e) { setError(e instanceof Error ? e.message : '다른 탭의 기록을 가져오지 못했어요.'); }
     finally { lock.current = false; setBusy(false); }
   }
-  async function submitSurvey(answers: UT2SurveySubmission) {
-    if (!cache.current || lock.current || pending.current || blocked) throw new Error('참가자 연결을 확인한 뒤 다시 제출해 주세요.');
-    lock.current = true; setBusy(true);
-    try {
-      const next = await api.survey(cache.current.credential, answers);
-      install(next, cache.current.credential);
-      return next;
-    } finally { lock.current = false; setBusy(false); }
-  }
-  return { reply, loading, busy, error, blocked, conflict, hasPending, create, act, retry: flush, recoverConflict, startNew, enter: api.enter, submitSurvey };
+  const photos = useCallback(() => cache.current
+    ? api.photos(cache.current.credential)
+    : Promise.reject(new Error('참가자 연결을 확인해 주세요.')), []);
+  const uploadPhoto = (number: number, file: File) => cache.current
+    ? api.uploadPhoto(cache.current.credential, number, file)
+    : Promise.reject(new Error('참가자 연결을 확인해 주세요.'));
+  return { reply, loading, busy, error, blocked, conflict, hasPending, create, act, retry: flush, recoverConflict, startNew, enter: api.enter, photos, uploadPhoto };
 }

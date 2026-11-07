@@ -1,18 +1,24 @@
 .ut5-timing-banner{position:sticky;top:0;z-index:10;display:grid;gap:6px;padding:16px 20px;margin:0 0 22px;border:1px solid #bcd1ff;border-radius:12px;background:#edf4ff;color:#2449a1;box-shadow:0 3px 12px #1d4ed80a}.ut5-timing-banner strong{font-size:16px;line-height:1.6}.ut5-timing-banner span{font-size:14px;line-height:1.6}
-.ut5-timing-intro{box-sizing:border-box;max-width:680px;margin:24px auto;padding:36px;background:white;border:1px solid #e2e8f0;border-radius:18px;color:#1e293b}
-.ut5-intro-meta{display:flex;align-items:center;justify-content:space-between;gap:16px;color:#64748b;font-size:14px}
-.ut5-intro-meta span:last-child{padding:5px 10px;background:#f1f5f9;border-radius:20px;font-size:12px}
-.ut5-intro-clock{display:flex;align-items:center;justify-content:center;width:52px;height:52px;margin:28px 0 20px;border-radius:14px;background:#edf3ff;color:#315ff5}
-.ut5-timing-intro h1{font-size:26px;line-height:1.45;letter-spacing:-.7px;margin:0 0 12px;word-break:keep-all}
+.ut5-timing-intro{box-sizing:border-box;max-width:620px;margin:24px auto;padding:28px;background:white;border:1px solid #e2e8f0;border-radius:18px;color:#1e293b}
+.ut5-timing-intro h1{font-size:26px;line-height:1.45;letter-spacing:-.7px;margin:0 0 8px;word-break:keep-all}
 .ut5-intro-lead{font-size:15px;line-height:1.8;color:#64748b;margin:0}
-.ut5-intro-details{display:grid;gap:20px;margin:28px 0;padding:24px;background:#f8fafc;border-radius:12px}
-.ut5-intro-details strong{font-size:15px;line-height:1.6;font-weight:600}
-.ut5-intro-details p{font-size:14px;line-height:1.7;color:#64748b;margin:5px 0 0}
-.ut5-intro-reassurance{font-size:14px;color:#64748b;line-height:1.7;margin:0 0 28px}
-.ut5-intro-actions{display:flex;gap:12px;padding-top:24px;border-top:1px solid #edf0f5}
+.ut5-intro-actions{display:flex;gap:12px;}
 .ut5-intro-actions button{min-height:50px;border-radius:10px;padding:12px 20px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .ut5-intro-actions button:disabled{opacity:.5;cursor:default}
 .ut5-intro-back{flex:1;border:1px solid #dbe2ea;background:white;color:#475569}
 .ut5-intro-start{flex:2;display:flex;align-items:center;justify-content:center;gap:16px;background:#315ff5;border:1px solid #315ff5;color:white}
 .ut5-intro-start:hover:not(:disabled){background:#2449d8}
-@media(max-width:600px){.ut5-timing-intro{margin:0 auto;padding:24px 20px;border-radius:14px}.ut5-timing-intro h1{font-size:23px}.ut5-intro-details{padding:18px}.ut5-intro-actions{gap:10px}.ut5-intro-actions button{padding:12px 14px}}
+@media(max-width:600px){.ut5-timing-intro{margin:0 auto;padding:24px 20px;border-radius:14px}.ut5-timing-intro h1{font-size:23px}.ut5-intro-actions{gap:10px}.ut5-intro-actions button{padding:12px 14px}}
+
+.ut5-photo-reminder {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border-left: 3px solid #b66b13;
+  border-radius: 10px;
+  background: #fff7e5;
+  color: #603708;
+}
+.ut5-photo-reminder h2 { margin: 0 0 8px; font-size: 18px; }
+.ut5-photo-reminder p { margin: 4px 0; line-height: 1.55; }
+
+.ut5-intro-meta { margin: 0 0 8px; color: #64748b; font-size: 14px; }

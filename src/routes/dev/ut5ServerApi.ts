@@ -30,8 +30,8 @@ export function ut5Api(base = '/api/v1', transport: typeof fetch = fetch) {
     let response: globalThis.Response;
     try {
       response = await transport(`${base.replace(/\/$/, '')}/ut5${path}`, { method,
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-UT-Token': token } : {}) },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+        headers: { 'Content-Type': body instanceof Blob ? body.type || 'application/octet-stream' : 'application/json', ...(token ? { 'X-UT-Token': token } : {}) },
+        ...(body === undefined ? {} : { body: body instanceof Blob ? body : JSON.stringify(body) }) });
     } catch { throw new UT5ApiError('서버에 연결하지 못했어요. 입력은 보관 중이니 다시 저장해 주세요.'); }
     if (!response.ok) {
       const data = await response.json().catch(() => null);
@@ -43,6 +43,8 @@ export function ut5Api(base = '/api/v1', transport: typeof fetch = fetch) {
     enter: (password: string) => request<void>('/entry', 'POST', { password }),
     create: (password: string, nickname: string, token: string) => request<UT5Reply>('/sessions', 'POST', { password, nickname, token }),
     get: (c: UT5Credential) => request<UT5Reply>(`/sessions/${encodeURIComponent(c.id)}`, 'GET', undefined, c.token),
+    photos: (c: UT5Credential) => request<number[]>(`/sessions/${encodeURIComponent(c.id)}/photos`, 'GET', undefined, c.token),
+    uploadPhoto: (c: UT5Credential, number: number, file: File) => request<void>(`/sessions/${encodeURIComponent(c.id)}/photos/${number}`, 'PUT', file, c.token),
     survey: (c: UT5Credential, answers: UT2SurveySubmission) => request<UT5Reply>(`/sessions/${encodeURIComponent(c.id)}/survey`, 'POST', answers, c.token),
     act: (c: UT5Credential, a: UT5Action) => request<UT5Reply>(`/sessions/${encodeURIComponent(c.id)}/actions`, 'POST', a, c.token),
   };
