@@ -142,7 +142,8 @@ function TimingIntro({busy,onBack,onStart}:{busy:boolean;onBack:()=>void;onStart
    <aside className="ut5-photo-reminder" aria-labelledby="ut5-photo-reminder-title">
      <h2 id="ut5-photo-reminder-title">시작 전에 종이와 펜을 준비해 주세요</h2>
      <p>문제를 풀면서 <strong>풀이 과정</strong>을 종이에 적어 주세요.</p>
-     <p>테스트가 끝나면 <strong>문항별 풀이 사진</strong>을 찍어 올려 주세요.</p>
+     <p>테스트가 끝나면 <strong>문항별로 풀이 사진을 한 장씩</strong> 올려 주세요.</p>
+     <p>같은 종이에 여러 문제를 풀었다면, <strong>해당 문항의 풀이만 따로 찍거나 전체 사진에서 잘라</strong> 올려 주세요.</p>
    </aside>
    <div className="ut5-intro-actions"><button type="button" className="ut5-intro-back" disabled={busy} onClick={onBack}>돌아가기</button><button type="button" className="ut5-intro-start" disabled={busy} onClick={onStart}>테스트 시작 <span aria-hidden="true">→</span></button></div>
  </section>;
