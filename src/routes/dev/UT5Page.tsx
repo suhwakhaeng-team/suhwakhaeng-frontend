@@ -142,8 +142,7 @@ function TimingIntro({busy,onBack,onStart}:{busy:boolean;onBack:()=>void;onStart
    <aside className="ut5-photo-reminder" aria-labelledby="ut5-photo-reminder-title">
      <h2 id="ut5-photo-reminder-title">시작 전에 종이와 펜을 준비해 주세요</h2>
      <p>문제를 풀면서 <strong>풀이 과정</strong>을 종이에 적어 주세요.</p>
-     <p>테스트가 끝나면 <strong>문항별로 풀이 사진을 한 장씩</strong> 올려 주세요.</p>
-     <p>같은 종이에 여러 문제를 풀었다면, <strong>해당 문항의 풀이만 따로 찍거나 전체 사진에서 잘라</strong> 올려 주세요.</p>
+     <p>테스트가 끝나면 <strong>풀이한 종이를 찍은 사진</strong>을 올려 주세요.</p>
    </aside>
    <div className="ut5-intro-actions"><button type="button" className="ut5-intro-back" disabled={busy} onClick={onBack}>돌아가기</button><button type="button" className="ut5-intro-start" disabled={busy} onClick={onStart}>테스트 시작 <span aria-hidden="true">→</span></button></div>
  </section>;
@@ -185,60 +184,87 @@ function TestResults({ session, onBack, remote }: { session: UT5Session; onBack:
       </table></div>
       <p className="ut5-time-footnote">‘모름’으로 제출한 문제는 평균 풀이 시간 계산에서 제외해요.</p>
     </section>
-    <SolutionPhotos total={session.pre.total} load={remote.photos} upload={remote.uploadPhoto} />
+    <SolutionPhotos load={remote.photos} upload={remote.uploadPhoto} />
   </section>;
 }
 
 
-function SolutionPhotos({ total, load, upload }: {
-  total: number;
+const FULL_SOLUTION_SLOTS = [0, 6, 7, 8, 9];
+
+function SolutionPhotos({ load, upload }: {
   load: () => Promise<number[]>;
   upload: (number: number, file: File) => Promise<void>;
 }) {
   const [uploaded, setUploaded] = useState<number[]>([]);
   const [status, setStatus] = useState('');
-  const [busy, setBusy] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [photosReady, setPhotosReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    load().then(numbers => { if (!cancelled) setUploaded(numbers); })
+    load().then(numbers => { if (!cancelled) { setUploaded(numbers); setPhotosReady(true); } })
       .catch(() => { if (!cancelled) setStatus('사진 제출 상태를 불러오지 못했어요. 새로고침해 주세요.'); });
     return () => { cancelled = true; };
   }, [load]);
 
-  async function submit(number: number, file?: File) {
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      setStatus('사진은 10MB 이하로 올려 주세요.');
+  const savedFullCount = FULL_SOLUTION_SLOTS.filter(slot => uploaded.includes(slot)).length;
+
+  async function submitFull(files: File[]) {
+    if (!files.length || busy || !photosReady) return;
+    const available = FULL_SOLUTION_SLOTS.filter(slot => !uploaded.includes(slot));
+    if (files.length > available.length) {
+      setStatus(available.length
+        ? `전체 풀이 사진을 ${available.length}장 더 올릴 수 있어요.`
+        : '전체 풀이 사진 5장이 이미 제출됐어요.');
       return;
     }
-    setBusy(number);
+    if (files.some(file => file.size > 10 * 1024 * 1024)) {
+      setStatus('사진은 한 장당 10MB 이하로 올려 주세요.');
+      return;
+    }
+    setBusy(true);
     setStatus('');
+    let saved = 0;
+    const failed: string[] = [];
     try {
-      await upload(number, file);
-      setUploaded(current => current.includes(number) ? current : [...current, number]);
-      setStatus(`${number}번 풀이 사진을 저장했어요.`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : '사진을 저장하지 못했어요. 다시 시도해 주세요.');
+      for (const [index, file] of files.entries()) {
+        const slot = available[index];
+        try {
+          await upload(slot, file);
+          setUploaded(current => current.includes(slot) ? current : [...current, slot]);
+          saved++;
+        } catch {
+          failed.push(file.name);
+        }
+      }
+      setStatus(failed.length
+        ? `${saved}장 저장했어요. 저장하지 못한 사진을 다시 올려 주세요: ${failed.join(', ')}`
+        : `전체 풀이 사진 ${saved}장을 저장했어요.`);
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
   return <section className="ut5-question-times" aria-labelledby="ut5-photos-heading">
     <h2 id="ut5-photos-heading">손풀이 사진 올리기</h2>
-    <p>종이에 적은 풀이가 잘 보이도록 찍어서 해당 문항에 올려 주세요. 문항마다 JPG 또는 PNG 사진 한 장을 올릴 수 있어요. (최대 10MB)</p>
-    <div className="ut5-photo-list">
-      {Array.from({ length: total }, (_, index) => index + 1).map(number => <label key={number}>
-        <strong>{number}번 풀이 사진</strong>
-        <span>{busy === number ? '저장 중…' : uploaded.includes(number) ? '제출 완료 · 다시 올리면 교체돼요' : '미제출'}</span>
-        <input type="file" accept="image/jpeg,image/png" disabled={busy !== null} onChange={event => {
-          const file = event.currentTarget.files?.[0];
-          event.currentTarget.value = '';
-          void submit(number, file);
-        }} />
-      </label>)}
-    </div>
+    <p>종이에 쓴 풀이를 사진으로 찍어 올려 주세요. JPG 또는 PNG, 한 장당 최대 10MB예요.</p>
+    <section className="ut5-photo-group ut5-photo-group-batch" aria-labelledby="ut5-photo-full">
+      <h3 id="ut5-photo-full">전체 풀이 사진 올리기</h3>
+      <p>풀이한 종이를 찍은 사진을 최대 5장까지 한 번에 올릴 수 있어요.</p>
+      <div className="ut5-photo-list">
+        <label className="ut5-photo-drop" onDragOver={event => event.preventDefault()} onDrop={event => {
+          event.preventDefault();
+          void submitFull(Array.from(event.dataTransfer.files));
+        }}>
+          <strong>사진을 여기에 끌어다 놓거나 파일을 선택해 주세요</strong>
+          <span>{busy ? '저장 중…' : `${savedFullCount} / 5장 저장됨`}</span>
+          <input type="file" accept="image/jpeg,image/png" multiple disabled={busy || !photosReady || savedFullCount === 5} onChange={event => {
+            void submitFull(Array.from(event.currentTarget.files ?? []));
+            event.currentTarget.value = '';
+          }} />
+        </label>
+      </div>
+    </section>
     <p role="status">{status}</p>
   </section>;
 }
