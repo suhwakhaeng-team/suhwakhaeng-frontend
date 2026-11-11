@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient';
 import { Link } from 'react-router-dom';
 import { teamSectionsForConcept } from '../../data/teamConcepts';
-type Tag = {id:number;name:string;color:string;graphVisible:boolean};
+type Tag = {id:number;name:string;color:string;graphVisible:boolean;majorUnit?:string;sectionName?:string;practiceCount?:number};
 export default function TagCatalogPage() {
   const [tags,setTags]=useState<Tag[]>([]);
   const [query,setQuery]=useState('');
@@ -19,7 +19,12 @@ export default function TagCatalogPage() {
     {loading ? <p>불러오는 중…</p> : error ? <p role="alert">{error}</p> : <>
       <p>전체 {tags.length}개 · 검색 결과 {shown.length}개</p>
       {shown.length===0 && <p>해당하는 태그가 없습니다.</p>}
-      <ul style={{listStyle:'none',padding:0}}>{shown.map(tag=><li key={tag.id} style={{padding:'12px 0',borderBottom:'1px solid #ddd'}}>{tag.name} {teamSectionsForConcept(tag.name).length > 0 && <Link to={`/concepts?concept=${encodeURIComponent(tag.name)}`} style={{marginLeft:16}}>개념 설명 →</Link>}</li>)}</ul>
+      <ul style={{listStyle:'none',padding:0}}>{shown.map(tag=><li key={tag.id} style={{padding:'12px 0',borderBottom:'1px solid #ddd'}}>
+        {tag.majorUnit && <small style={{display:'block'}}>{tag.majorUnit} · {tag.sectionName}</small>}
+        {tag.name}
+        {tag.practiceCount !== undefined && tag.practiceCount > 0 && <Link to={`/main/problem/start?tagId=${tag.id}`} style={{marginLeft:16}}>문제 풀기 ({tag.practiceCount}) →</Link>}
+        {teamSectionsForConcept(tag.name).length > 0 && <Link to={`/concepts?concept=${encodeURIComponent(tag.name)}`} style={{marginLeft:16}}>개념 설명 →</Link>}
+      </li>)}</ul>
     </>}
   </section>;
 }

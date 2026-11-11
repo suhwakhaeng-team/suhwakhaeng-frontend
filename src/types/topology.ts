@@ -6,6 +6,7 @@ export interface TopologyNode {
   categoryPath: string;
   status: MasteryStatus;
   colorDepth: number | null;
+  layoutConceptName?: string | null;
 }
 
 export interface TopologyEdge {

@@ -29,7 +29,8 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
   const subject = { id: 'my-curriculum', name: '내 커리큘럼', description: '현재 커리큘럼의 개념 관계와 학습 상태입니다.' };
   const concepts = topology.nodes.map(n => {
     const id = String(n.id);
-    const courseUnit = courseUnitByConcept.get(n.tagName);
+    const layoutName = n.layoutConceptName || n.tagName;
+    const courseUnit = courseUnitByConcept.get(layoutName);
     idsByName.set(n.tagName, [...(idsByName.get(n.tagName) ?? []), id]);
     return {
       id,
@@ -37,7 +38,7 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
       name: n.tagName,
       description: '',
       prerequisites: [] as string[],
-      mapPosition: courseUnit ? curriculumConceptPosition(n.tagName) : undefined,
+      mapPosition: courseUnit ? curriculumConceptPosition(layoutName) : undefined,
       metadata: { category: n.categoryPath || '미분류', assessmentStatus: n.status },
     };
   });
@@ -66,7 +67,7 @@ export function adaptTopology(topology: TopologyResponse): { data: LearningGraph
   }));
   const canonicalUnitIds = new Set(canonicalUnits.map(unit => unit.id));
   const fallbackCategories = [...new Set(topology.nodes
-    .filter(node => !courseUnitByConcept.has(node.tagName))
+    .filter(node => !courseUnitByConcept.has(node.layoutConceptName || node.tagName))
     .map(node => node.categoryPath || '미분류'))];
   return { warnings, data: {
     id: 'live-topology-v2', subject,
