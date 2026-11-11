@@ -22,6 +22,11 @@ import CurriculumListSection from '../../components/home/CurriculumListSection';
 import HomeKnowledgeGraphSection from '../../components/home/HomeKnowledgeGraphSection';
 import FeedbackCard from '../../components/home/FeedbackCard';
 
+const serviceQuestionBank = import.meta.env.VITE_SERVICE_QUESTION_BANK === 'true';
+const homeRecommendations = serviceQuestionBank
+  ? (items: CurriculumItem[], activeId: string | null) => ({ items, activeId })
+  : applyUtFrequencyRecommendation;
+
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,7 +67,7 @@ export default function HomePage() {
     fetchCurriculum(uid)
       .then((result) => {
         if (cancelled) return;
-        const utResult = applyUtFrequencyRecommendation(result.items, result.activeId);
+        const utResult = homeRecommendations(result.items, result.activeId);
         setCurriculumItems(utResult.items);
         setActiveCurriculumId(utResult.activeId);
       })
@@ -114,6 +119,10 @@ export default function HomePage() {
   }, []);
 
   const handleSolveClick = (item: CurriculumItem) => {
+    if (serviceQuestionBank) {
+      navigate(`/main/problem/start?tagId=${encodeURIComponent(item.id)}`);
+      return;
+    }
     if (isUtFrequencyConcept(item.topicName)) {
       navigate(UT_FREQUENCY_LEARNING_ROUTE);
       return;
@@ -128,7 +137,7 @@ export default function HomePage() {
     setCurriculumError(null);
     fetchCurriculum(uid)
       .then((result) => {
-        const utResult = applyUtFrequencyRecommendation(result.items, result.activeId);
+        const utResult = homeRecommendations(result.items, result.activeId);
         setCurriculumItems(utResult.items);
         setActiveCurriculumId(utResult.activeId);
       })

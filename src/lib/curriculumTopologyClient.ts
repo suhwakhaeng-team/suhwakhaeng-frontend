@@ -9,6 +9,7 @@ interface TopologyNodeDTO {
   categoryPath: string;
   status: string;
   colorDepth: number | null;
+  layoutConceptName?: string | null;
 }
 
 interface TopologyEdgeDTO {
@@ -39,6 +40,7 @@ export async function fetchTopology(uid: string): Promise<TopologyResponse> {
     categoryPath: dto.categoryPath,
     status: coerceStatus(dto.status),
     colorDepth: dto.colorDepth ?? null,
+    layoutConceptName: dto.layoutConceptName,
   }));
 
   const edges: TopologyEdge[] = res.data.edges.map((dto) => ({

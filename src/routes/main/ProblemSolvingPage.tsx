@@ -18,6 +18,7 @@ interface LocationState {
 export default function ProblemSolvingPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const tagId = new URLSearchParams(location.search).get('tagId');
 
   const [questions, setQuestions] = useState<AdaptiveQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -53,16 +54,18 @@ export default function ProblemSolvingPage() {
     setIsLoading(true);
     setError(null);
 
-    const res = await apiClient.get<AdaptiveQuestion[]>(`/adaptive/questions?uid=${uid}`);
+    const params = new URLSearchParams({ uid });
+    if (tagId) params.set('tagId', tagId);
+    const res = await apiClient.get<AdaptiveQuestion[]>(`/adaptive/questions?${params}`);
     if (res.success && Array.isArray(res.data) && res.data.length > 0) {
       setQuestions(res.data);
       setCurrentIndex(0);
       resetQuestionState();
     } else {
-      setError(res.error ?? '문제를 불러올 수 없습니다.');
+      setError(res.error ?? (tagId && res.success ? '이 개념에는 출제 가능한 연습문제가 없습니다.' : '문제를 불러올 수 없습니다.'));
     }
     setIsLoading(false);
-  }, [resetQuestionState]);
+  }, [resetQuestionState, tagId]);
 
   // location.key 변경 감지로 navigate마다 상태 동기화
   useEffect(() => {

@@ -15,7 +15,9 @@ import './KnowledgeGraphPage.css';
 
 export default function KnowledgeGraphPage({ preview = false, embedded = false }: { preview?: boolean; embedded?: boolean }) {
   const { user } = useAuth();
-  const [dataset, setDataset] = useState(learningGraphExamples[0]);
+  const [dataset, setDataset] = useState<LearningGraphData | null>(
+    preview || import.meta.env.VITE_SERVICE_QUESTION_BANK !== 'true' ? learningGraphExamples[0] : null,
+  );
   const [notice, setNotice] = useState('');
   useEffect(() => {
     if (preview || !user) return;
@@ -29,6 +31,9 @@ export default function KnowledgeGraphPage({ preview = false, embedded = false }
     });
     return () => { active = false; };
   }, [preview, user]);
+  if (!dataset) return <div className="kg-notice" role={notice ? 'alert' : 'status'}>
+    {notice || '개념 지도를 불러오는 중입니다…'}
+  </div>;
   const account = preview ? 'local-preview' : user?.uid ?? 'guest-preview';
   return <div className={`kg-page ${embedded ? 'kg-page-embedded' : ''}`}>
     {!embedded && <header className="kg-page-heading">
