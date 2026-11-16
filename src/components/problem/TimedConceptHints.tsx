@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { colors, radius, spacing, typography } from '../../lib/designTokens';
+import { apiClient } from '../../lib/apiClient';
 import type { AdaptiveQuestionTag } from '../../types/adaptive';
 import './TimedConceptHints.css';
 
 interface Props {
+  questionId: number;
   tags: AdaptiveQuestionTag[];
   solutionHint?: string | null;
 }
@@ -17,9 +19,11 @@ function formatCountdown(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-export default function TimedConceptHints({ tags, solutionHint }: Props) {
+export default function TimedConceptHints({ questionId, tags, solutionHint }: Props) {
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
+  const [supportingTags, setSupportingTags] = useState<AdaptiveQuestionTag[] | null>(null);
+  const [isHintLoading, setIsHintLoading] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
   const [hasConceptHintBeenOpened, setHasConceptHintBeenOpened] = useState(false);
   const [isSolutionHintOpen, setIsSolutionHintOpen] = useState(false);
@@ -50,7 +54,8 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
   const conceptHints = useMemo(() => {
     const uniqueConcepts = new Map<string, AdaptiveQuestionTag>();
 
-    tags.forEach(tag => {
+    const hintTags = supportingTags?.length ? supportingTags : tags;
+    hintTags.forEach(tag => {
       const tagName = tag.tagName.trim();
       if (!tagName) return;
 
@@ -61,7 +66,7 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
     });
 
     return [...uniqueConcepts.values()];
-  }, [tags]);
+  }, [supportingTags, tags]);
 
   const handleConceptHintToggle = () => {
     if (isHintOpen) {
@@ -72,6 +77,15 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
 
     setHasConceptHintBeenOpened(true);
     setIsHintOpen(true);
+    if (supportingTags !== null || isHintLoading) return;
+
+    setIsHintLoading(true);
+    void apiClient.get<AdaptiveQuestionTag[]>(`/adaptive/questions/${questionId}/concept-hint`)
+      .then(response => {
+        if (response.success && Array.isArray(response.data)) setSupportingTags(response.data);
+      })
+      .catch(() => { /* The existing target tags remain available. */ })
+      .finally(() => setIsHintLoading(false));
   };
 
   const handleSolutionHintToggle = () => {
@@ -125,7 +139,7 @@ export default function TimedConceptHints({ tags, solutionHint }: Props) {
             <span aria-hidden="true" style={{ fontSize: 20 }}>💡</span>
             <strong style={{ ...typography.bodyTextXLSemiBold }}>이 문제에 필요한 모든 개념</strong>
           </div>
-          {conceptHints.length > 0 ? (
+          {isHintLoading ? <p>개념 힌트를 불러오는 중이에요.</p> : conceptHints.length > 0 ? (
             <>
               <p style={{ margin: `0 0 ${spacing.sm}px`, ...typography.bodyTextXLRegular, lineHeight: 1.6 }}>
                 연결된 {conceptHints.length}개 개념의 정의와 핵심 성질을 먼저 떠올려 보세요.
