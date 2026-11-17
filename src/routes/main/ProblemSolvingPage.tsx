@@ -313,6 +313,7 @@ export default function ProblemSolvingPage() {
       {/* 문제와 답안을 먼저 읽은 뒤 필요할 때 확인하는 힌트 영역 */}
       <TimedConceptHints
         key={currentQuestion.questionId}
+        questionId={currentQuestion.questionId}
         tags={currentQuestion.tags ?? []}
         solutionHint={solutionHint}
       />
